@@ -31,6 +31,7 @@ shinyServer(function(input, output, session) {
     rv <- reactiveValues(doDatLoad = FALSE,
                          doSPICT = FALSE,
                          doRETRO = FALSE,
+                         doSENSI = FALSE,
                          doMANA = FALSE)
 
     ## Defaults
@@ -38,6 +39,7 @@ shinyServer(function(input, output, session) {
         rv$doDatLoad <- FALSE
         rv$doSPICT <- FALSE
         rv$doRETRO <- FALSE
+        rv$doSENSI <- FALSE
         rv$doMANA <- FALSE
         rv$datORI <- NULL
         rv$colNames <- NULL
@@ -404,14 +406,11 @@ shinyServer(function(input, output, session) {
                        choices = NULL,
                        multiple = TRUE,
                        options = list(create = TRUE),
-                       width = "30%"
+                       width = "100%"
                        )
     })
 
     update.inp <- reactive({
-        req(input$dteuler)
-        req(input$timerange)
-        req(input$maninterval)
         if(is.null(rv$inp)){
             showNotification(
                 paste("No data has been choosen. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
@@ -424,7 +423,9 @@ shinyServer(function(input, output, session) {
             ## update rv elements (only if GUI depend on them/each other)
             ## update inp
             inp <- rv$inpORI
+            ## dteuler
             inp$dteuler <- as.numeric(input$dteuler)
+            ## timing indices
             if(!is.null(input$timeIshift)){
                 if(length(input$timeIshift) == length(inp$timeI)){
                     if(inherits(inp$timeI, "list")){
@@ -439,9 +440,14 @@ shinyServer(function(input, output, session) {
                 }
             }
             inp <- shorten.inp(inp, mintime = input$timerange[1], maxtime = input$timerange[2])
+            ## forecast times
             inp$maninterval <- input$maninterval
+            inp$maneval <- input$maneval
+            ## nseasons
             inp$nseasons <- as.numeric(input$nseasons)
+            ## catchunit
             inp$catchunit <- input$cunit
+            ## robflags
             inp$robflagc <- ifelse(input$robflagc == TRUE, 1, 0)
             robflagi <- input$robflagi
             if(is.null(robflagi) || length(robflagi) == length(inp$timeI)){
@@ -449,9 +455,29 @@ shinyServer(function(input, output, session) {
             }
             inp$robflagi <- robflagi
             inp$robflage <- ifelse(input$robflage == TRUE, 1, 0)
+            ## splineorder
             inp$splineorder <- as.numeric(input$splineorder)
+            ## checkinp
             inp <- check.man.time(inp)
             inp <- check.inp(inp)
+            ## priors
+            if(input$lognPrior)
+                inp$priors$logn <- c(input$lognPriorMu,input$lognPriorSd,1)
+            else
+                inp$priors$logn <- c(input$lognPriorMu,input$lognPriorSd,0)
+            if(input$logAlphaPrior)
+                inp$priors$logalpha <- c(input$logAlphaPriorMu,input$logAlphaPriorSd,1)
+            else
+                inp$priors$logalpha <- c(input$logAlphaPriorMu,input$logAlphaPriorSd,0)
+            if(input$logBetaPrior)
+                inp$priors$logbeta <- c(input$logBetaPriorMu,input$logBetaPriorSd,1)
+            else
+                inp$priors$logbeta <- c(input$logBetaPriorMu,input$logBetaPriorSd,0)
+            if(input$BmsyB0Prior)
+                inp$priors$BmsyB0 <- c(input$BmsyB0PriorMu,input$BmsyB0PriorSd,1)
+            else
+                inp$priors$BmsyB0 <- c(input$BmsyB0PriorMu,input$BmsyB0PriorSd,0)
+            ## save
             rv$inp <- inp
         }
     })
@@ -482,6 +508,25 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    output$priorplot <- renderPlot({
+        req(rv$inp)
+        if(rv$doDatLoad == FALSE){
+            return()
+        }else{
+            inp <- rv$inp
+            nopriors <- get.no.active.priors(inp)
+            automfrow <- FALSE
+            if(nopriors < 4)
+                par(mfrow = c(1,3))
+            else if(nopriors < 7)
+                par(mfrow = c(2,3))
+            else if(nopriors < 10)
+                par(mfrow = c(3,3))
+            else
+                automfrow <- TRUE
+            plotspict.priors.inp(inp, automfrow = automfrow, do.plot=nopriors)
+        }
+    })
 
 
     ## FIT SPICT  #############################################################################################
@@ -518,11 +563,14 @@ shinyServer(function(input, output, session) {
         }else{
             update.inp()
             inp <- rv$inp
-            withProgress(message = "Running SPiCT", value = 0, {
-                set.seed(input$seed)
-                fit <- fit.spict(inp)
-                fit <- calc.osa.resid(fit)
-            })
+            inp$optimiser <- input$optimiser
+            inp$optim.method <- input$optimMethod
+            inp$optimiser.control <- list(iter.max = input$itermax, eval.max = input$evalmax)
+            set.seed(input$seed)
+            showModal(modalDialog("Please wait while fitting SPiCT.", footer=NULL))
+            fit <- fit.spict(inp)
+            fit <- calc.osa.resid(fit)
+            removeModal()
             rv$fit <- fit
         }
     }
@@ -568,7 +616,7 @@ shinyServer(function(input, output, session) {
 
 
 
-    ## FIT DIAGNOSTICS  ##################################################################################
+    ## MODEL DIAGNOSTICS  ################################################################################
 
     observeEvent(input$tabset, {
         if(!is.null(rv$fit)){
@@ -590,6 +638,26 @@ shinyServer(function(input, output, session) {
         rv$doRETRO <- FALSE
     })
 
+    observeEvent(input$tabset, {
+        if(!is.null(rv$fit)){
+            shinyjs::enable("runsensi")
+            shinyjs::enable("resetsensi")
+        }else{
+            shinyjs::disable("runsensi")
+            shinyjs::disable("resetsensi")
+        }
+    })
+
+    ## only run if action button used
+    observeEvent(input$runretro, {
+        rv$doSENSI <- input$runretro
+    })
+
+    ## reset button
+    observeEvent(input$resetsensi, {
+        rv$doSENSI <- FALSE
+    })
+
     ## create nretroyear slider
     output$nretroyear <- renderUI({
         numericInput(
@@ -598,14 +666,25 @@ shinyServer(function(input, output, session) {
             value = 5,
             min = 1,
             max = diff(rv$timerange) - 5,  ## give spict at least 5 years
-            step=1
+            step=1, width="20%"
+        )
+    })
+
+    ## create ntrials for check.ini
+    output$nsensi <- renderUI({
+        numericInput(
+            inputId = "nsensi",
+            label = "Number of trials for sensitivity analysis",
+            value = 10,
+            min = 1,
+            step=1, width="20%"
         )
     })
 
     spict.retro <- function(){
         if(is.null(rv$fit)){
             showNotification(
-                paste("The retrospecitve analysis requires an fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
+                paste("The retrospective analysis requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
                 type = "error",
                 duration = NULL,
                 closeButton = TRUE,
@@ -613,19 +692,39 @@ shinyServer(function(input, output, session) {
             )
         }else{
             fit <- rv$fit
+            showModal(modalDialog("Please wait while running the retrospective analysis.", footer=NULL))
             retro <- retro(fit, nretroyear = input$nretroyear)
+            removeModal()
             rv$retro <- retro
         }
     }
 
-    output$retro <- renderPrint({
-        if(rv$doRETRO == FALSE){
+    spict.sensi <- function(){
+        if(is.null(rv$fit)){
+            showNotification(
+                paste("The sensitivity analysis requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
+                type = "error",
+                duration = NULL,
+                closeButton = TRUE,
+                action = a(href = "javascript:location.reload();", "Reload page")
+            )
+        }else{
+            fit <- rv$fit
+            showModal(modalDialog("Please wait while running the sensitivity analysis.", footer=NULL))
+            sensi <- check.ini(fit, ntrials = input$nsensi)
+            removeModal()
+            rv$sensi <- sensi
+        }
+    }
+
+    output$sensi <- renderPrint({
+        if(rv$doSENSI == FALSE){
             return()
         }else{
             isolate({
-                spict.retro()
+                spict.sensi()
             })
-            (rv$retro)
+            sumspict.ini(rv$sensi)
         }
     })
 
@@ -641,6 +740,9 @@ shinyServer(function(input, output, session) {
         if(rv$doRETRO == FALSE){
             return()
         }else{
+            isolate({
+                spict.retro()
+            })
             plotspict.retro(rv$retro)
         }
     })
@@ -718,10 +820,12 @@ shinyServer(function(input, output, session) {
             )
         }else{
             fit <- rv$fit
+            showModal(modalDialog("Please wait while running the management scenarios.", footer=NULL))
             mana <- manage(fit, scenarios = input$scenarios,
                            maninterval = input$maninterval2,
                            maneval = input$maneval,
                            intermediaterPeriodCatch = input$ipc)
+            removeModal()
             rv$mana <- mana
         }
     }

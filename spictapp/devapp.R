@@ -2,6 +2,12 @@
 require(spict)
 
 inp <- check.inp(pol$albacore)
+inp$priors$BmsyB0 <- c(0.5,2,1)
+
+
+get.no.active.priors(inp)
+
+plotspict.priors.inp(inp)
 
 fit <- fit.spict(inp)
 fit <- calc.osa.resid(fit)
