@@ -5,7 +5,7 @@
 ## Load packages
 ##-----------------------------------------------------------------------------------
 library(shiny)
-options(shiny.trace=TRUE)
+## options(shiny.trace=TRUE)
 library(shinyjs)
 library(shinythemes)
 library(shinydashboard)
