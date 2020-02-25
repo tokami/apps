@@ -877,6 +877,14 @@ box(title = "Tobias K. Mildenberger",
     fluidRow(column(width = 4, align = "center", imageOutput("tobm")),
              column(width = 8, align = "left", h5("Creator, Author, Maintainer"),  HTML("DTU AQUA<br/>National Institute of Aquatic Resources<br/>Technical University of Denmark<br/>Kemitorvet<br/>2800 Kgs. Lyngby<br/>Denmark"))
              )),
+box(title = "Alexandros Kokkalis",
+    status = "primary",
+    solidHeader = TRUE,
+    collapsible = FALSE,
+    width = 3,
+    height = 1,
+    fluidRow(column(width = 4, align = "center", imageOutput("alko")),
+             column(width = 8, align = "left", h5("Author"), HTML("DTU AQUA<br/>National Institute of Aquatic Resources<br/>Technical University of Denmark<br/>Kemitorvet<br/>2800 Kgs. Lyngby<br/>Denmark"))
 br()
 
 )),
