@@ -64,11 +64,11 @@ shinyUI(
                    tabPanel("Home", id = "home",
                             tagList(
                                 HTML('<h1 style="text-align:center;float:center;line-height:50px;">spictapp</h1>
-<h3 style="text-align:center;float:center;line-height:50px;"> - Apply the Stochastic surplus Production model in Continuous Time (SPiCT) without any R knowledge - </h3>
+<h3 style="text-align:center;float:center;line-height:50px;"> - The Shiny app for the Stochastic surplus Production model in Continuous Time (SPiCT) - </h3>
 <hr style="clear:both;"/>'), br(),
 div(img(src="spictManageDemo.png"), style="text-align: center;"),
 br(),
-##tags$hr(),
+tags$hr(),
 br(),
 br(),
 br()
@@ -76,18 +76,20 @@ br()
 
 tabPanel("Load data", id = "loaddat",
          ##-----------------------------------------------------------
-         headerPanel(title = "Load your data"),
+         headerPanel(title = "Load input data"),
          br(),
 
          tags$style(
-                  HTML("hr{border-top: 2px solid #3891BA;}")),
+                  HTML("hr{border-top: 2px solid #d35400;}")),
 
          ## Sidebar panel for inputs
          sidebarPanel(
-
              div(style="display:inline-block;width:95%;text-align:center;",
+
+                 h3("Upload data file"),
+                 tags$hr(),
                  ## Input: Select a file
-                 fileInput("file1", "Choose your csv/txt file",
+                 fileInput("file1", "Choose a csv/txt file",
                            multiple = FALSE,
                            accept = c("text/csv",
                                       "text/x-csv",
@@ -95,20 +97,18 @@ tabPanel("Load data", id = "loaddat",
                                       "text/comma-separated-values",
                                       "text/x-comma-separated-values",
                                       "text/plain")),
-                 actionButton("reset", label = "Clear")),
-
+                 actionButton("reset", label = "Clear")
+                 ),
              br(),
              br(),
-
-             "Please make sure that the headers of your data are called: 'timeC', 'obsC', 'timeI1', and 'obsI1', where the first two indicate the start of the catch interval (e.g. 1990, or 1990.25) and observations (e.g. 10333) of the commercial fleet(s), respectively, and the latter two indicate timing (e.g. 1990.5) and observations of the scientific fleet, respectively. If several fleets are available the the column names 'timeS2' and 'obsS2' (and 'timeS3' and 'obsS3' and so on) can be used.",
-
+             "Your file must contain at least 3 columns: One vector with the times corresponding to the observations, one with the commercial catch observations, and one with either index observations or effort observations.",
              br(),
              br(),
-
+             h3("File properties"),
+             tags$hr(),
              wellPanel(
-                 ## Input: Checkbox if file has header
-                 checkboxInput("header", "Header", TRUE),
                  fluidRow(
+
                      ## Input: Select separator
                      column(4, radioButtons("sep", "Separator",
                                             choices = c(Comma = ",",
@@ -126,11 +126,73 @@ tabPanel("Load data", id = "loaddat",
                      column(4, radioButtons("disp", "Display",
                                             choices = c(Head = "head",
                                                         All = "all"),
-                                            selected = "head")))),
+                                            selected = "head"))),
+                 ## Input: Checkbox if file has header
+                 checkboxInput("header", "Header", TRUE)
+                 ),
+             br(),
+             br(),
+             br(),
+             h3("Assign variables"),
+             tags$hr(),
+             "If the columns in your data set have different names than the defaults, please enter the column names of the available observations.",
+             br(),
+             br(),
+             "Commercial catch:",
+             wellPanel(
+                 fluidRow(
+                     column(6,
+                            ## Time catches
+                            uiOutput("timeC_lab")
+                            ),
+                     column(6,
+                            ## Catch observations
+                            uiOutput("obsC_lab")
+                            )
+                 )
+             ),
+             br(),
+             "Indices from scientific surveys:",
+             wellPanel(
+                 fluidRow(
+                     column(6,
+                            uiOutput("timeI_lab")
+                            ),
+                     column(6,
+                            uiOutput("obsI_lab")
+                            )
+                 ),
+                 "If several indices are available (for example from different surveys), please enter the column names of all index timings and index observations separated by a comma."
+             ),
+             br(),
+             "Effort information (optional):",
+             wellPanel(
+                 fluidRow(
+                     column(6,
+                            ## Time effort
+                            uiOutput("timeE_lab")
+                            ),
+                     column(6,
+                            ## Effort observations
+                            uiOutput("obsE_lab")
+                            )
+                 ),
+                 "Effort observations are optional if indices are available and required otherwise."
+             ),
+             br(),
+             "Scaling of uncertainty of observations (optional):",
+             wellPanel(
+                 fluidRow(
+                     uiOutput("stdevfacC_lab"),
+                     uiOutput("stdevfacI_lab"),
+                     uiOutput("stdevfacE_lab")
 
-             ## tags$div(
-             ##          HTML("<font size='4'>Example data</font>")),
-             h3("Example data"),
+                 ),
+                 "If available information about the uncertainty of the observations can be provided."
+             ),
+             br(),
+             br(),
+             h3("Use example data"),
              tags$hr(),
              checkboxInput(inputId = "useExDat",
                            label = "Use example data set?",
@@ -139,93 +201,167 @@ tabPanel("Load data", id = "loaddat",
              conditionalPanel(
                  condition = "input.useExDat",
                  ## Input: Select example data set
-                 selectInput(inputId = "exdat",
-                             "Example data sets",
-                             choices = c("albacore",
-                                         "hake",
-                                         "lobster"),
-                             width='35%'),
-                 ## Download example data
-                 conditionalPanel("input.exdat",
-                                  downloadLink('downloadExData', 'Download')))
-         ),
-
+                          selectInput(inputId = "exdat",
+                                      "Example data sets",
+                                      choices = c("albacore",
+                                                  "hake",
+                                                  "lobster"),
+                                      width='35%'),
+                          ## Download example data
+                          conditionalPanel("input.exdat",
+                                           downloadLink('downloadExData', 'Download')))
+                      ),
 
          ## Main panel for displaying outputs
          mainPanel(
              br(),
 
-             ## Output: Data file
-             tableOutput("contents")
-
+             fluidRow(
+                 column(6,
+                        h3("Uploaded file in raw format:"),
+                        tags$hr()
+                        ),
+                 column(6,
+                        ),
+                 br(),
+                 br(),
+                 column(2,
+                        ),
+                 column(8,
+                        tableOutput("fileContentRaw"),
+                        ),
+                 column(2,
+                        ),
+                 column(6,
+                        h3("Data with assigned columns:"),
+                        tags$hr()
+                        ),
+                 column(6,
+                        ),
+                 br(),
+                 br(),
+                 column(2,
+                        ),
+                 column(8,
+                        tableOutput("fileContent"),
+                        )
+             )
          )
          ),
 
-tabPanel("Explore data", id = "explodat",
-         ##-----------------------------------------------------------
-         headerPanel(title = "Explore your data"),
-         br(),
-         sidebarLayout(
-             sidebarPanel(id="sidebar",
-                          br(),
-                          ## tags$div(
-                          ##          HTML("<font size='3'><b>LFQ restructuring</b></font>")),
-                          h3("General settings"),
-                          tags$hr(),
+tabPanel(
+    "Explore & modify data", id = "explodat",
+    ##-----------------------------------------------------------
+    headerPanel(title = "Explore & modify input data"),
+    br(),
+    sidebarLayout(
+        sidebarPanel(
+            id="sidebar",
+            br(),
+            ## tags$div(
+            ##          HTML("<font size='3'><b>LFQ restructuring</b></font>")),
+            h3("General settings"),
+            tags$hr(),
+            ## Catch unit
+            textInput("cunit",
+                      "Catch unit",
+                      "",
+                      width = "30%"),
+            br(),
+            ## Number of seasons
+            selectInput("nseasons",
+                        "Number of seasons",
+                        c(1,2,4),
+                        selected = 1,
+                        width = "20%"),
+            br(),
+            ## Index timings
+            selectizeInput("timeIshift",
+                           "Adjust the timing of the index (e.g. 0.25 for April)",
+                           choices = NULL,
+                           multiple = TRUE,
+                           options = list(create = TRUE),
+                           width = "30%"
+                           ),
+            br(),
+            ## choose dteuler
+            selectInput(inputId = "dteuler",
+                        label = "dteuler",
+                        choices = c("1/64"=1/64,"1/32"=1/32,
+                                    "1/16"=1/16,"1/8"=1/8,"1/4"=1/4,
+                                    "1/2"=1/2,"1"=1),
+                        selected = 1/16,
+                        width = '20%'
+                        ),
+            br(),
+            ## choose time range of observations
+            uiOutput("timerange"),
+            br(),
+            checkboxInput(
+                "robflagc",
+                "Should the robust estimation for catches be used?",
+                value = FALSE
+            ),
+            br(),
+            uiOutput("robflagi"),
+            br(),
+            checkboxInput(
+                "robflage",
+                "Should the robust estimation for effort be used?",
+                value = FALSE
+            ),
+            br(),
+            ## Number of seasons
+            selectInput("splineorder",
+                        "Splineorder",
+                        c(2,3),
+                        selected = 2,
+                        width = "20%"),
+            br(),
+            br(),
+            h3("Management settings"),
+            tags$hr(),
 
-                          ## choose dteuler
-                          selectInput(inputId = "dteuler",
-                                      label = "Euler discretisation time step",
-                                      choices = c("1/64"=1/64,"1/32"=1/32,
-                                                  "1/16"=1/16,"1/8"=1/8,"1/4"=1/4,
-                                                  "1/2"=1/2,"1"=1),
-                                      selected = 1/16,
-                                      width = '50%'),
+            ## management interval
+            uiOutput("maninterval"),
+                 br(),
+                 ## management evaluation time
+                 uiOutput("maneval"),
+                 br(),
 
-                          ## choose time range of observations
-                          uiOutput("timerange"),
+                 h3("Priors"),
+                 tags$hr(),
 
-                          br(),
-                          br(),
-
-                          h3("Management settings"),
-                          tags$hr(),
-
-                          ## management interval
-                          uiOutput("maninterval"),
-
-                          br(),
-                          br(),
-
-                          h3("Priors"),
-                          tags$hr(),
-
-                          br(),
-                          br(),
+                 br(),
+                 br(),
 
 
                           h3("Display options"),
-                          tags$hr()
+                          tags$hr(),
+                          checkboxInput(inputId = "dataplotAdv",
+                                        label = "Plot the advanced data plot?",
+                                        value = FALSE),
                           ),
 
              # Show a plot of the generated distribution
              mainPanel(
-
-                 ### element styles
+                 h3("SPiCT timeline"),
+                 tags$hr(),
+                 div(style="display:inline-block;width:100%;text-align:left;",
+                     verbatimTextOutput(outputId = "mantimeline")),
+                 ## column(2,
+                 ##        ),
+                 ## column(8,
+                 ##        verbatimTextOutput(outputId = "mantimeline")
+                 ##        ),
+                 ## column(2,
+                 ##        ),
                  br(),
-
-                 tags$div(
-                          HTML("<font size='4'>Plot of input data:</font>")),
-
-                 ## data plot
+                 br(),
+                 h3("Data plot"),
+                 tags$hr(),
                  plotOutput(outputId = "dataplot",
-                            width = "100%", height = "700px"),
-
-                 br(),
-
-
-                 verbatimTextOutput(outputId = "mantimeline"),
-
+                            width = "100%", height = "800px"),
                  br()
              )
          )
@@ -275,10 +411,6 @@ tabPanel("Fit SPiCT", id = "fitspict",
                  verbatimTextOutput("fit"),
                  br(),
                  br(),
-                 tags$h5("Diagnostics"),
-                 plotOutput("plotDiag",height="900px"),
-                 br(),
-                 br(),
                  tags$h5("Priors"),
                  plotOutput("plotPrior",height="350px"),
                  br(),
@@ -292,10 +424,10 @@ tabPanel("Fit SPiCT", id = "fitspict",
 
 
 
-tabPanel("Retrospective analysis", id = "retro",
+tabPanel("Diagnostics", id = "diag",
          ##-----------------------------------------------------------
          br(),
-         headerPanel(title = "Analyse retrospective patterns"),
+         headerPanel(title = "Model fit diagnostics"),
          br(),
          sidebarLayout(
              sidebarPanel(id="sidebar",
@@ -311,16 +443,25 @@ tabPanel("Retrospective analysis", id = "retro",
                                            label = "Clear")),
                           br(),
                           br(),
+                          ## Number of retro years
+                          uiOutput("nretroyear"),
                           br(),
                           br()
                           ),
              ## Show a plot of the generated distribution
              mainPanel(
-                 tags$h4("Plot"),
+                 tags$h4("Diagnostics"),
                  br(),
-                 plotOutput(outputId = "LCCC_plot",
-                            width = "100%"),
+                 tags$h5("SPiCT diagnostics plot"),
+                 plotOutput("plotDiag",height="900px"),
                  br(),
+                 br(),
+                 tags$h5("Retrospective patterns"),
+                 plotOutput("plotRetro",height="900px"),
+                 br(),
+                 br(),
+                 tags$h5("Retro summary"),
+                 verbatimTextOutput("retro"),
                  br()
              ))
          ),
@@ -349,17 +490,52 @@ tabPanel("Management scenarios", id = "management",
                           tags$hr(),
                           br(),
                           br(),
+                          ## scenarios
+                          selectInput(inputId = "scenarios",
+                                      label = "Management scenarios",
+                                      choices = c("currentCatch" = 1,
+                                                  "currentF" = 2,
+                                                  "Fmsy" = 3,
+                                                  "noF" = 4,
+                                                  "reduceF25" = 5,
+                                                  "increaseF25" = 6,
+                                                  "msyHockeyStick" = 7,
+                                                  "ices" = 8),
+                                      selected = c(1,3),
+                                      width = '50%'),
+                          br(),
+                          br(),
                           ## management interval
-                          uiOutput("maninterval"),
+                          uiOutput("maninterval2"),
+                          br(),
+                          br(),
+                          ## management evaluation time
+                          uiOutput("maneval2"),
+                          br(),
+                          br(),
+                          ## Intermediate period catch
+                          numericInput(
+                              inputId = "ipc",
+                              label = "Catch during intermediate period",
+                              value = NULL,
+                              min = 0),
                           br(),
                           br()
                           ),
              ##
              mainPanel(
-                 tags$h4("Management interval"),
+                 tags$h4("Management"),
                  tags$hr(style = "border-top: dashed 2px #3891BA;"),
                  br(),
-                 verbatimTextOutput(outputId = "mantimeline"),
+                 tags$h5("Management interval"),
+                 verbatimTextOutput(outputId = "mantimeline2"),
+                 br(),
+                 tags$h5("Management plot"),
+                 plotOutput("plotMana",height="900px"),
+                 br(),
+                 br(),
+                 tags$h5("Management summary"),
+                 verbatimTextOutput("mana"),
                  br()
              ))
          ),

@@ -1,0 +1,70 @@
+---
+title: "Tutorial for spictapp: The click-based app for SPiCT"
+author: "Tobias K. Mildenberger"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  rmarkdown::html_vignette:
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    number_sections: false
+    toc: false
+    keep_tex: false
+bibliography: bibliography.bib
+vignette: >
+  %\VignetteIndexEntry{spictapp tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "  ", fig.align = 'center', cache=FALSE)
+```
+
+This toturial guides you through a SPiCT assessment using the click-based Shiny
+app "spictapp".
+
+
+# Installation
+
+The spictapp requires the SPiCT R package to be installed on your computer. This
+package can be downnloaded and installed from GitHub using the `devtools`
+package:
+
+```{r, eval=FALSE}
+if (!require("devtools"))
+  install.packages("devtools")
+devtools::install_github("DTUAqua/spict/spict")
+```
+
+The spictapp is also hosted on GitHub and can thus be downaloaded and installed by:
+
+```{r, eval=FALSE}
+if (!require("devtools"))
+  install.packages("devtools")
+devtools::install_github("tokami/apps/spictapp")
+```
+
+Alternatively, the package can also be installed by the specific exectuable for
+your operating system, available [here](https://github.com/tokami/apps).
+
+
+# Start the App
+
+
+# Input data
+
+
+# Explore data
+
+
+# SPiCT assessment
+
+
+# Diagnostics
+
+
+# Management with SPiCT
+
+
+# References

@@ -33,6 +33,31 @@ shinyServer(function(input, output, session) {
                          doRETRO = FALSE,
                          doMANA = FALSE)
 
+    ## Defaults
+    rv.defaults <- function(){
+        rv$doDatLoad <- FALSE
+        rv$doSPICT <- FALSE
+        rv$doRETRO <- FALSE
+        rv$doMANA <- FALSE
+        rv$datORI <- NULL
+        rv$colNames <- NULL
+        rv$dat <- NULL
+        rv$inp <- NULL
+        rv$inpORI <- NULL
+        rv$fit <- NULL
+        rv$retro <- NULL
+        rv$mana <- NULL
+        rv$filename <- "No Data"
+        rv$dteuler <- 1/16
+        rv$timerange <- c(0,100)
+        rv$lastCatchObs <- 100
+        rv$maninterval <- c(100,101)
+        ## reset example data
+        rv$useExDat <- FALSE
+        rv$exdat <- NULL
+    }
+    rv.defaults()
+
     ## only run if action button used
     # observeEvent(input$file1, {
     #     if(!is.null(input$exdat) && input$useExDat){
@@ -44,12 +69,24 @@ shinyServer(function(input, output, session) {
     #     }
     # })
 
+    ## DATA LOAD #############################################################################################
+
+    ## observe({
+    ##     input$useExDat
+    ##     input$file1
+    ##     if(input$useExDat){
+    ##         rv$doDatLoad <- TRUE
+    ##     }else if(!is.null(input$file1)){
+    ##         rv$doDatLoad <- TRUE
+    ##     }else{
+    ##         rv$doDatLoad <- FALSE
+    ##     }
+    ## })
+
     observe({
         input$useExDat
         input$file1
-        if(input$useExDat){
-            rv$doDatLoad <- TRUE
-        }else if(!is.null(input$file1)){
+        if(input$useExDat || !is.null(input$file1)){
             rv$doDatLoad <- TRUE
         }else{
             rv$doDatLoad <- FALSE
@@ -57,9 +94,7 @@ shinyServer(function(input, output, session) {
     })
 
     observeEvent(input$exdat, {
-        if(input$useExDat){
-            rv$doDatLoad <- TRUE
-        }else if(!is.null(input$file1)){
+        if(input$useExDat || !is.null(input$file1)){
             rv$doDatLoad <- TRUE
         }else{
             rv$doDatLoad <- FALSE
@@ -70,21 +105,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$reset, {
         ## reset file upload
         reset("file1")
-        rv$doDatLoad <- FALSE
-        rv$doSPICT <- FALSE
-        rv$doRETRO <- FALSE
-        rv$doMANA <- FALSE
-        rv$dat <- NULL
-        rv$inp <- NULL
-        rv$inpORI <- NULL
-        rv$filename <- ""
-        rv$dteuler <- 1/16
-        rv$timerange <- c(0,100)
-        rv$lastCatchObs <- 100
-        rv$maninterval <- c(100,101)
-        ## reset example data
-        rv$useExDat <- FALSE
-        rv$exdat <- NULL
+        rv.defaults()
         updateCheckboxInput(session = session,
                             inputId = "useExDat",
                             value = FALSE)
@@ -93,18 +114,140 @@ shinyServer(function(input, output, session) {
                           selected = NULL)
     })
 
+    ## Catches
+    output$timeC_lab <- renderUI({
+        ind <- which("timeC" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("timeC_lab",
+                    "Times of catch observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected)
+    })
+    output$obsC_lab <- renderUI({
+        ind <- which("obsC" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("obsC_lab",
+                    "Catch observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected)
+    })
 
-    ## DATA LOAD #############################################################################################
+    ## Indices
+    output$timeI_lab <- renderUI({
+        ind <- which("timeI" == rv$colNames | "timeI1" == rv$colNames)
+        if(length(ind) > 0){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("timeI_lab",
+                    "Times of index observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    multiple = TRUE,
+                    selected = selected)
+    })
+    output$obsI_lab <- renderUI({
+        ind <- which("obsI" == rv$colNames | "obsI1" == rv$colNames)
+        if(length(ind) > 0){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("obsI_lab",
+                    "Index observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    multiple = TRUE,
+                    selected = selected)
+    })
+
+    ## Effort
+    output$timeE_lab <- renderUI({
+        ind <- which("timeE" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("timeE_lab",
+                    "Times of effort observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected)
+    })
+    output$obsE_lab <- renderUI({
+        ind <- which("obsE" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("obsE_lab",
+                    "Effort observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected)
+    })
+
+
+    ## scaling catch uncertainty
+    output$stdevfacC_lab <- renderUI({
+        ind <- which("stdevfacC" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("stdevfacC_lab",
+                    "Scaling of uncertainty of catch observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected)
+    })
+    output$stdevfacI_lab <- renderUI({
+        ind <- which("stdevfacI" == rv$colNames | "stdevfacI1" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("stdevfacI_lab",
+                    "Scaling of uncertainty of index observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected,
+                    multiple = TRUE)
+    })
+    ## scaling catch uncertainty
+    output$stdevfacE_lab <- renderUI({
+        ind <- which("stdevfacE" == rv$colNames)
+        if(length(ind) == 1){
+            selected <- rv$colNames[ind]
+        }else{
+            selected <- NULL
+        }
+        selectInput("stdevfacE_lab",
+                    "Scaling of uncertainty of effort observations",
+                    choices = c("Choose one"="",rv$colNames),
+                    selected = selected)
+    })
 
     datLoad <- function(){
         infile <- input$file1
         exdat <- as.character(input$exdat)
+        topa <- "Data: "
         if(input$useExDat){
+            rv$filename <- paste0(topa,as.character(exdat))
             data(list="pol", package="spict")
             inpall <- get("pol")
             inp <- inpall[[which(names(inpall) == exdat)]]
             dat <- inp2dat(inp)
+            rv$datORI <- dat
             rv$dat <- dat
+            rv$colNames <- colnames(dat)
             rv$inpORI <- inp
             rv$inp <- inp <- check.inp(inp)
             rv$dteuler <- inp$dteuler
@@ -116,38 +259,45 @@ shinyServer(function(input, output, session) {
                             header = input$header,
                             sep = input$sep,
                             quote = input$quote)
-            rv$dat <- dat
-        }else{
-            rv$dat <- NULL
-        }
-    }
-
-
-    datPars <- function(){
-        infile <- input$file1
-        exdat <- as.character(input$exdat)
-        topa <- "Data: "
-        if(input$useExDat){
-            rv$filename <- paste0(topa,as.character(exdat))
-        }else if(!is.null(infile)){
-            dat <- rv$dat
-            rv$inpORI <- inp <- dat2inp(dat)
-            rv$inp <- inp <- check.inp(inp)
-            rv$dat <- dat
-            rv$dteuler <- inp$dteuler
-            rv$timerange <- inp$timerange
-            rv$lastCatchObs <- inp$lastCatchObs
-            rv$maninterval <- inp$maninterval
+            rv$datORI <- dat
+            rv$colNames <- colnames(dat)
             ## filename
             tmp <- strsplit(infile[,1], ".csv")[[1]]
             tmp <- strsplit(tmp, ".txt")[[1]]
             filename <- paste0(topa,as.character(tmp))
             rv$filename <- filename
         }else{
-            rv$inpORI <- NULL
-            rv$inp <- NULL
+            rv$datORI <- NULL
             rv$dat <- NULL
-            rv$filename <- ""
+            rv$colNames <- NULL
+        }
+    }
+
+    update.dat <- function(){
+        datORI <- rv$datORI
+        if(!input$useExDat){
+            datORI <- rv$datORI
+            colNames = list("timeC" = input$timeC_lab,
+                            "obsC" = input$obsC_lab,
+                            "timeI" = input$timeI_lab,
+                            "obsI" = input$obsI_lab,
+                            "timeE" = input$timeE_lab,
+                            "obsE" = input$obsE_lab,
+                            "stdevfacC" = input$stdevfacC_lab,
+                            "stdevfacI" = input$stdevfacI_lab,
+                            "stdevfacE" = input$stdevfacE_lab)
+            if(length(colNames$timeC) < 1 || colNames$timeC == "") stop("No times of the catch observations provided! Choose corresponding column names.")
+            if(length(colNames$obsC) < 1 || colNames$obsC == "") stop("No catch observations provided! Choose corresponding column names")
+            if((length(colNames$timeI) < 1 || colNames$timeI == "") && (length(colNames$timeE) < 1 || colNames$timeE == "")) stop("Neither times for the index nor effort observations provided! Choose corresponding column names.")
+            if((length(colNames$obsI) < 1 || colNames$obsI == "") && (length(colNames$obsE) < 1 || colNames$obsE == "")) stop("Neither index nor effort observations provided! Choose corresponding column names")
+            rv$dat <- checkDat(datORI, colNames)
+            dat <- rv$dat
+            rv$inpORI <- inp <- dat2inp(dat)
+            rv$inp <- inp <- check.inp(inp)
+            rv$dteuler <- inp$dteuler
+            rv$timerange <- inp$timerange
+            rv$lastCatchObs <- inp$lastCatchObs
+            rv$maninterval <- inp$maninterval
         }
     }
 
@@ -163,55 +313,48 @@ shinyServer(function(input, output, session) {
         }
     )
 
-    output$contents <- renderTable({
+    output$fileContentRaw <- renderTable({
         if(rv$doDatLoad == FALSE){
             return()
         }else{
             datLoad()
-            if(ncol(rv$dat) < 2){
-                stop("Something went wrong when uploading the data! Please try another separator or just try again!")
-                return()
-            }
-            if(!input$useExDat && !any(colnames(rv$dat) == "timeC")){
-                stop("Something went wrong when uploading the data! Please make sure that you have a column with the catch times in your file! This column must be called 'timeC'.")
-                return()
-            }
-            if(!input$useExDat && !any(colnames(rv$dat) == "obsC")){
-                stop("Something went wrong when uploading the data! Please make sure that you have a column with the catch observations in your file! This column must be called 'obsC'.")
-                return()
-            }
-            if(!input$useExDat && !any(colnames(rv$dat) == "timeI1") && !any(colnames(rv$dat) == "timeE")){
-                stop("Something went wrong when uploading the data! Please make sure that you have a column with either index or effort times in your file! This column must be called either 'timeI1' or 'timeE' for the index and effort, respectively.")
-                return()
-            }
-            if(!input$useExDat && !any(colnames(rv$dat) == "obsI1") && !any(colnames(rv$dat) == "obsE")){
-                stop("Something went wrong when uploading the data! Please make sure that you have a column with either index or effort observations in your file! This column must be called either 'obsI1' or 'obsE' for the index and effort, respectively.")
-                return()
-            }
-            datPars()
-            dat <- rv$dat
+            datORI <- rv$datORI
             if(input$disp == "head"){
-                return(head(dat))
+                return(head(datORI))
             }else{
-                return(dat)
+                return(datORI)
             }
         }
     })
 
-    output$filename <- renderText({
+    output$fileContent <- renderTable({
         if(rv$doDatLoad == FALSE){
             return()
         }else{
-            return(rv$filename)
+            infile <- input$file1
+            if(!input$useExDat && !is.null(infile)){
+                update.dat()
+            }
+            dat <- rv$dat
+            if(is.null(dat)){
+                return()
+            }else{
+                if(input$disp == "head"){
+                    return(head(dat))
+                }else{
+                    return(dat)
+                }
+            }
         }
+    })
+
+
+    output$filename <- renderText({
+        return(rv$filename)
     })
 
 
     ## EXPLORE DATA  #############################################################################################
-
-    ## VARS:
-    ## priors
-
 
     ## create timerange slider
     output$timerange <- renderUI({
@@ -241,6 +384,30 @@ shinyServer(function(input, output, session) {
         )
     })
 
+    ## create maneval
+    output$maneval <- renderUI({
+        sliderInput(
+            inputId = "maneval",
+            label = "Management evaluation time",
+            value = rv$maninterval[2],
+            min = rv$lastCatchObs,
+            max = rv$lastCatchObs + 10,
+            sep="",
+            step=0.1
+        )
+    })
+
+    ## create robflagi (dependent on number of indices)
+    output$robflagi <- renderUI({
+        selectizeInput("robflagi",
+                       "Should the robust estimation for indices be used?",
+                       choices = NULL,
+                       multiple = TRUE,
+                       options = list(create = TRUE),
+                       width = "30%"
+                       )
+    })
+
     update.inp <- reactive({
         req(input$dteuler)
         req(input$timerange)
@@ -258,8 +425,31 @@ shinyServer(function(input, output, session) {
             ## update inp
             inp <- rv$inpORI
             inp$dteuler <- as.numeric(input$dteuler)
+            if(!is.null(input$timeIshift)){
+                if(length(input$timeIshift) == length(inp$timeI)){
+                    if(inherits(inp$timeI, "list")){
+                        for(i in 1:length(inp$timeI)){
+                            inp$timeI[[i]] <- inp$timeI[[i]] + as.numeric(input$timeIshift)[i]
+                        }
+                    }else{
+                        inp$timeI <- inp$timeI + as.numeric(input$timeIshift)
+                    }
+                }else{
+                    stop(paste0("Please provide one timing per index!"))
+                }
+            }
             inp <- shorten.inp(inp, mintime = input$timerange[1], maxtime = input$timerange[2])
             inp$maninterval <- input$maninterval
+            inp$nseasons <- as.numeric(input$nseasons)
+            inp$catchunit <- input$cunit
+            inp$robflagc <- ifelse(input$robflagc == TRUE, 1, 0)
+            robflagi <- input$robflagi
+            if(is.null(robflagi) || length(robflagi) == length(inp$timeI)){
+                robflagi <- rep(0, length(inp$timeI))
+            }
+            inp$robflagi <- robflagi
+            inp$robflage <- ifelse(input$robflage == TRUE, 1, 0)
+            inp$splineorder <- as.numeric(input$splineorder)
             inp <- check.man.time(inp)
             inp <- check.inp(inp)
             rv$inp <- inp
@@ -274,10 +464,13 @@ shinyServer(function(input, output, session) {
         }else{
             update.inp()
             inp <- rv$inp
-            plotspict.data(inp)
+            if(input$dataplotAdv){
+                plotspict.ci(inp)
+            }else{
+                plotspict.data(inp)
+            }
         }
     })
-
 
     output$mantimeline <- renderPrint({
         req(rv$inp)
@@ -373,6 +566,69 @@ shinyServer(function(input, output, session) {
         }
     })
 
+
+
+    ## FIT DIAGNOSTICS  ##################################################################################
+
+    observeEvent(input$tabset, {
+        if(!is.null(rv$fit)){
+            shinyjs::enable("runretro")
+            shinyjs::enable("resetretro")
+        }else{
+            shinyjs::disable("runretro")
+            shinyjs::disable("resetretro")
+        }
+    })
+
+    ## only run if action button used
+    observeEvent(input$runretro, {
+        rv$doRETRO <- input$runretro
+    })
+
+    ## reset button
+    observeEvent(input$resetretro, {
+        rv$doRETRO <- FALSE
+    })
+
+    ## create nretroyear slider
+    output$nretroyear <- renderUI({
+        numericInput(
+            inputId = "nretroyear",
+            label = "Number of years to remove in retrospective analysis",
+            value = 5,
+            min = 1,
+            max = diff(rv$timerange) - 5,  ## give spict at least 5 years
+            step=1
+        )
+    })
+
+    spict.retro <- function(){
+        if(is.null(rv$fit)){
+            showNotification(
+                paste("The retrospecitve analysis requires an fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
+                type = "error",
+                duration = NULL,
+                closeButton = TRUE,
+                action = a(href = "javascript:location.reload();", "Reload page")
+            )
+        }else{
+            fit <- rv$fit
+            retro <- retro(fit, nretroyear = input$nretroyear)
+            rv$retro <- retro
+        }
+    }
+
+    output$retro <- renderPrint({
+        if(rv$doRETRO == FALSE){
+            return()
+        }else{
+            isolate({
+                spict.retro()
+            })
+            (rv$retro)
+        }
+    })
+
     output$plotDiag <- renderPlot({
         if(rv$doSPICT == FALSE){
             return()
@@ -380,6 +636,127 @@ shinyServer(function(input, output, session) {
             plotspict.diagnostic(rv$fit)
         }
     })
+
+    output$plotRetro <- renderPlot({
+        if(rv$doRETRO == FALSE){
+            return()
+        }else{
+            plotspict.retro(rv$retro)
+        }
+    })
+
+    ## MANAGEMENT  ##################################################################################
+
+    observeEvent(input$tabset, {
+        if(!is.null(rv$fit)){
+            shinyjs::enable("runmana")
+            shinyjs::enable("resetmana")
+        }else{
+            shinyjs::disable("runmana")
+            shinyjs::disable("resetmana")
+        }
+    })
+
+    ## only run if action button used
+    observeEvent(input$runmana, {
+        rv$doMANA <- input$runmana
+    })
+
+    ## reset button
+    observeEvent(input$resetmana, {
+        rv$doMANA <- FALSE
+    })
+
+
+    ## create maninterval slider
+    output$maninterval2 <- renderUI({
+        sliderInput(
+            inputId = "maninterval2",
+            label = "Management interval",
+            dragRange = TRUE,
+            value = rv$maninterval,
+            min = rv$lastCatchObs,
+            max = rv$lastCatchObs + 10,
+            sep="",
+            step=0.1
+        )
+    })
+
+    ## create maneval
+    output$maneval2 <- renderUI({
+        sliderInput(
+            inputId = "maneval",
+            label = "Management evaluation time",
+            value = rv$maninterval[2],
+            min = rv$lastCatchObs,
+            max = rv$lastCatchObs + 10,
+            sep="",
+            step=0.1
+        )
+    })
+
+    ## deactive ipc if no intermediate period
+    observeEvent(input$maninterval2,{
+        manstart <- input$maninterval2[1]
+        lastobs <- rv$lastCatchObs
+        if(manstart - lastobs > 0){
+            shinyjs::enable("ipc")
+        }else{
+            shinyjs::disable("ipc")
+        }
+    })
+
+    ## manage function
+    spict.mana <- function(){
+        if(is.null(rv$fit)){
+            showNotification(
+                paste("The management functionality requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
+                type = "error",
+                duration = NULL,
+                closeButton = TRUE,
+                action = a(href = "javascript:location.reload();", "Reload page")
+            )
+        }else{
+            fit <- rv$fit
+            mana <- manage(fit, scenarios = input$scenarios,
+                           maninterval = input$maninterval2,
+                           maneval = input$maneval,
+                           intermediaterPeriodCatch = input$ipc)
+            rv$mana <- mana
+        }
+    }
+
+    output$mana <- renderPrint({
+        if(rv$doMANA == FALSE){
+            return()
+        }else{
+            isolate({
+                spict.mana()
+            })
+            sumspict.manage(rv$mana)
+        }
+    })
+
+    output$mantimeline2 <- renderPrint({
+        req(rv$fit)
+        if(rv$doSPICT == FALSE){
+            return()
+        }else if(!is.null(rv$mana)){
+            man.timeline(rv$mana)
+        }else{
+            man.timeline(rv$fit)
+        }
+    })
+
+    output$plotMana <- renderPlot({
+        if(rv$doMANA == FALSE){
+            return()
+        }else{
+            plot2(rv$mana)
+        }
+    })
+
+    ## OVERVIEW  ##################################################################################
 
 
 })

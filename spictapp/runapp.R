@@ -20,13 +20,10 @@
 ##-----------------------------------------------------------------------------------
 
 library(shiny)
-library(spict)
-library(shinythemes)
 
-
-data(pol)
-polalb <- check.inp(pol$albacore)
-anms <- names(polalb)
+## data(pol)
+## polalb <- check.inp(pol$albacore)
+## anms <- names(polalb)
 
 
 ## Run the application
