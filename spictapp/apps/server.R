@@ -860,7 +860,34 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    ## OVERVIEW  ##################################################################################
+    ## SUMMARY  ##################################################################################
+    observe({
+        if (input$tabset == "stop")
+            stopApp()
+    })
 
+    ## ABOUT
+    ##-----------------------------------------------------------
+    output$tobm <- renderImage({
+        return(list(
+            src = "www/tobm.JPG",
+            contentType = "image/jpeg",
+            width = "100%",
+            alt = "Tobias K. Mildenberger",
+            caption = "Tobias K. Mildenberger"
+        ))
+    }, deleteFile = FALSE)
+
+    output$alko <- renderImage({
+        return(list(
+            src = "www/alko.JPG",
+            contentType = "image/jpeg",
+            width = "100%",
+            alt = "Alexandros Kokkalis",
+            caption = "Alexandros Kokkalis"
+        ))
+    }, deleteFile = FALSE)
+
+    ##-----------------------------------------------------------
 
 })

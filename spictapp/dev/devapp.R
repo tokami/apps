@@ -1,3 +1,5 @@
+                     div(style="display:inline-block;width:95%;text-align: center;",
+                         actionButton("stop", "Quit shiny", class = "btn-danger", onclick = "setTimeout(function(){window.close();}, 100);")),
 
 require(spict)
 
