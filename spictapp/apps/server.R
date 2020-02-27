@@ -19,7 +19,7 @@ library(spict)
 
 ## Load scripts
 ##-----------------------------------------------------------------------------------
-source("../functions/spictappFuncs.R")
+source("../funcs/serverFuncs.R")
 
 
 ## Server script
@@ -29,6 +29,7 @@ shinyServer(function(input, output, session) {
     ## GENERAL ##################################################################################################
     ## reactive buttons (when tabs changed or undo pressed)
     rv <- reactiveValues(doDatLoad = FALSE,
+                         doDatUp = TRUE,
                          doSPICT = FALSE,
                          doRETRO = FALSE,
                          doSENSI = FALSE,
@@ -37,11 +38,13 @@ shinyServer(function(input, output, session) {
     ## Defaults
     rv.defaults <- function(){
         rv$doDatLoad <- FALSE
+        rv$doDatUp <- TRUE
         rv$doSPICT <- FALSE
         rv$doRETRO <- FALSE
         rv$doSENSI <- FALSE
         rv$doMANA <- FALSE
         rv$datORI <- NULL
+        rv$colNamesORI <- NULL
         rv$colNames <- NULL
         rv$dat <- NULL
         rv$inp <- NULL
@@ -49,11 +52,12 @@ shinyServer(function(input, output, session) {
         rv$fit <- NULL
         rv$retro <- NULL
         rv$mana <- NULL
-        rv$filename <- "No Data"
+        rv$filename <- "Data: -"
         rv$dteuler <- 1/16
         rv$timerange <- c(0,100)
         rv$lastCatchObs <- 100
         rv$maninterval <- c(100,101)
+        rv$nseasons <- 1
         ## reset example data
         rv$useExDat <- FALSE
         rv$exdat <- NULL
@@ -73,21 +77,7 @@ shinyServer(function(input, output, session) {
 
     ## DATA LOAD #############################################################################################
 
-    ## observe({
-    ##     input$useExDat
-    ##     input$file1
-    ##     if(input$useExDat){
-    ##         rv$doDatLoad <- TRUE
-    ##     }else if(!is.null(input$file1)){
-    ##         rv$doDatLoad <- TRUE
-    ##     }else{
-    ##         rv$doDatLoad <- FALSE
-    ##     }
-    ## })
-
     observe({
-        input$useExDat
-        input$file1
         if(input$useExDat || !is.null(input$file1)){
             rv$doDatLoad <- TRUE
         }else{
@@ -118,122 +108,122 @@ shinyServer(function(input, output, session) {
 
     ## Catches
     output$timeC_lab <- renderUI({
-        ind <- which("timeC" == rv$colNames)
+        ind <- which("timeC" == rv$colNamesORI)
         if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("timeC_lab",
                     "Times of catch observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
     output$obsC_lab <- renderUI({
-        ind <- which("obsC" == rv$colNames)
+        ind <- which("obsC" == rv$colNamesORI)
         if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("obsC_lab",
                     "Catch observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
 
     ## Indices
     output$timeI_lab <- renderUI({
-        ind <- which("timeI" == rv$colNames | "timeI1" == rv$colNames)
+        ind <- which(rv$colNamesORI %in% c("timeI","timeI1","timeI2","timeI3"))
         if(length(ind) > 0){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("timeI_lab",
                     "Times of index observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     multiple = TRUE,
                     selected = selected)
     })
     output$obsI_lab <- renderUI({
-        ind <- which("obsI" == rv$colNames | "obsI1" == rv$colNames)
+        ind <- which(rv$colNamesORI %in% c("obsI","obsI1","obsI2","obsI3"))
         if(length(ind) > 0){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("obsI_lab",
                     "Index observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     multiple = TRUE,
                     selected = selected)
     })
 
     ## Effort
     output$timeE_lab <- renderUI({
-        ind <- which("timeE" == rv$colNames)
+        ind <- which("timeE" == rv$colNamesORI)
         if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("timeE_lab",
                     "Times of effort observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
     output$obsE_lab <- renderUI({
-        ind <- which("obsE" == rv$colNames)
+        ind <- which("obsE" == rv$colNamesORI)
         if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("obsE_lab",
                     "Effort observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
 
 
     ## scaling catch uncertainty
     output$stdevfacC_lab <- renderUI({
-        ind <- which("stdevfacC" == rv$colNames)
+        ind <- which("stdevfacC" == rv$colNamesORI)
         if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("stdevfacC_lab",
                     "Scaling of uncertainty of catch observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
     output$stdevfacI_lab <- renderUI({
-        ind <- which("stdevfacI" == rv$colNames | "stdevfacI1" == rv$colNames)
-        if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+        ind <- which(rv$colNamesORI %in% c("stdevfacI","stdevfacI1","stdevfacI2","stdevfacI3"))
+        if(length(ind) > 1){
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("stdevfacI_lab",
                     "Scaling of uncertainty of index observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected,
                     multiple = TRUE)
     })
     ## scaling catch uncertainty
     output$stdevfacE_lab <- renderUI({
-        ind <- which("stdevfacE" == rv$colNames)
+        ind <- which("stdevfacE" == rv$colNamesORI)
         if(length(ind) == 1){
-            selected <- rv$colNames[ind]
+            selected <- rv$colNamesORI[ind]
         }else{
             selected <- NULL
         }
         selectInput("stdevfacE_lab",
                     "Scaling of uncertainty of effort observations",
-                    choices = c("Choose one"="",rv$colNames),
+                    choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
 
@@ -249,6 +239,7 @@ shinyServer(function(input, output, session) {
             dat <- inp2dat(inp)
             rv$datORI <- dat
             rv$dat <- dat
+            rv$colNamesORI <- colnames(dat)
             rv$colNames <- colnames(dat)
             rv$inpORI <- inp
             rv$inp <- inp <- check.inp(inp)
@@ -256,13 +247,16 @@ shinyServer(function(input, output, session) {
             rv$timerange <- inp$timerange
             rv$lastCatchObs <- inp$lastCatchObs
             rv$maninterval <- inp$maninterval
+            rv$nseasons <- inp$nseasons
         }else if(!is.null(infile)){
             dat <- read.csv(input$file1$datapath,
                             header = input$header,
                             sep = input$sep,
                             quote = input$quote)
             rv$datORI <- dat
-            rv$colNames <- colnames(dat)
+            rv$dat <- NULL
+            rv$colNamesORI <- colnames(dat)
+            rv$colNames <- NULL
             ## filename
             tmp <- strsplit(infile[,1], ".csv")[[1]]
             tmp <- strsplit(tmp, ".txt")[[1]]
@@ -271,12 +265,11 @@ shinyServer(function(input, output, session) {
         }else{
             rv$datORI <- NULL
             rv$dat <- NULL
-            rv$colNames <- NULL
+            rv$colNamesORI <- NULL
         }
     }
 
-    update.dat <- function(){
-        datORI <- rv$datORI
+    match.cols <- function(){
         if(!input$useExDat){
             datORI <- rv$datORI
             colNames = list("timeC" = input$timeC_lab,
@@ -288,10 +281,14 @@ shinyServer(function(input, output, session) {
                             "stdevfacC" = input$stdevfacC_lab,
                             "stdevfacI" = input$stdevfacI_lab,
                             "stdevfacE" = input$stdevfacE_lab)
-            if(length(colNames$timeC) < 1 || colNames$timeC == "") stop("No times of the catch observations provided! Choose corresponding column names.")
-            if(length(colNames$obsC) < 1 || colNames$obsC == "") stop("No catch observations provided! Choose corresponding column names")
-            if((length(colNames$timeI) < 1 || colNames$timeI == "") && (length(colNames$timeE) < 1 || colNames$timeE == "")) stop("Neither times for the index nor effort observations provided! Choose corresponding column names.")
-            if((length(colNames$obsI) < 1 || colNames$obsI == "") && (length(colNames$obsE) < 1 || colNames$obsE == "")) stop("Neither index nor effort observations provided! Choose corresponding column names")
+            rv$colNames <- colNames
+        }
+    }
+
+    update.dat <- function(){
+        datORI <- rv$datORI
+        colNames <- rv$colNames
+        if(!input$useExDat && !is.null(colNames)){
             rv$dat <- checkDat(datORI, colNames)
             dat <- rv$dat
             rv$inpORI <- inp <- dat2inp(dat)
@@ -300,8 +297,35 @@ shinyServer(function(input, output, session) {
             rv$timerange <- inp$timerange
             rv$lastCatchObs <- inp$lastCatchObs
             rv$maninterval <- inp$maninterval
+            rv$nseasons <- inp$nseasons
         }
     }
+
+
+    observe({
+        if(rv$doDatLoad){
+            datLoad()
+        }
+    })
+
+    observe({
+        if(!is.null(rv$datORI)){
+            match.cols()
+        }
+    })
+
+    observe({
+        if(!is.null(rv$datORI)){
+            shinyjs::enable("datUpdate")
+        }else{
+            shinyjs::disable("datUpdate")
+        }
+    })
+
+    ## only run if action button used
+    observeEvent(input$datUpdate, {
+        update.dat()
+    })
 
     output$downloadExData <- downloadHandler(
         filename = function() {
@@ -309,8 +333,6 @@ shinyServer(function(input, output, session) {
         },
         content = function(con) {
             dat <- rv$dat
-            # Wide to long
-            ##           res <- setNames(res, c('length', 'dates', 'frequency'))
             write.csv(dat, con, row.names = FALSE)
         }
     )
@@ -319,7 +341,6 @@ shinyServer(function(input, output, session) {
         if(rv$doDatLoad == FALSE){
             return()
         }else{
-            datLoad()
             datORI <- rv$datORI
             if(input$disp == "head"){
                 return(head(datORI))
@@ -330,29 +351,32 @@ shinyServer(function(input, output, session) {
     })
 
     output$fileContent <- renderTable({
-        if(rv$doDatLoad == FALSE){
+        dat <- rv$dat
+        if(rv$doDatLoad == FALSE || is.null(dat)){
             return()
         }else{
-            infile <- input$file1
-            if(!input$useExDat && !is.null(infile)){
-                update.dat()
-            }
-            dat <- rv$dat
-            if(is.null(dat)){
-                return()
+            if(input$disp == "head"){
+                return(head(dat))
             }else{
-                if(input$disp == "head"){
-                    return(head(dat))
-                }else{
-                    return(dat)
-                }
+                return(dat)
             }
         }
     })
 
-
     output$filename <- renderText({
         return(rv$filename)
+    })
+
+    observe({
+        if(!is.null(rv$dat)){
+            colNames <- colnames(rv$dat)
+            if(any(colNames == "timeC") && any(colNames == "obsC") &&
+               ((any(colNames == "timeI1") && any(colNames == "obsI1")) ||
+                (any(colNames == "timeE") && any(colNames == "obsE")))){
+                showNotification("The data meets the data requirements for SPiCT. You can move on to the next tab.",
+                                 duration = 10)
+            }
+        }
     })
 
 
@@ -410,8 +434,21 @@ shinyServer(function(input, output, session) {
                        )
     })
 
+
+    ## create nseasons (dependent in inp$dtc)
+    output$nseasons <- renderUI({
+        selectInput("nseasons",
+                    "Number of seasons",
+                    c(1,2,4),
+                    selected = rv$nseasons,
+                    width = "100%")
+    })
+
+
+
+
     update.inp <- reactive({
-        if(is.null(rv$inp)){
+        if(is.null(rv$dat)){
             showNotification(
                 paste("No data has been choosen. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                              type = "error",
@@ -422,6 +459,12 @@ shinyServer(function(input, output, session) {
         }else{
             ## update rv elements (only if GUI depend on them/each other)
             ## update inp
+            rv$inp <- inp <- check.inp(rv$inpORI)
+            rv$dteuler <- inp$dteuler
+            rv$timerange <- inp$timerange
+            rv$lastCatchObs <- inp$lastCatchObs
+            rv$maninterval <- inp$maninterval
+            rv$nseasons <- inp$nseasons
             inp <- rv$inpORI
             ## dteuler
             inp$dteuler <- as.numeric(input$dteuler)
@@ -488,7 +531,6 @@ shinyServer(function(input, output, session) {
         if(rv$doDatLoad == FALSE){
             return()
         }else{
-            update.inp()
             inp <- rv$inp
             if(input$dataplotAdv){
                 plotspict.ci(inp)
@@ -501,7 +543,7 @@ shinyServer(function(input, output, session) {
     output$mantimeline <- renderPrint({
         req(rv$inp)
         if(rv$doDatLoad == FALSE){
-            return()
+            writeLines("No data loaded. Upload your data or use example data.")
         }else{
             inp <- rv$inp
             man.timeline(inp)
@@ -567,22 +609,48 @@ shinyServer(function(input, output, session) {
             inp$optim.method <- input$optimMethod
             inp$optimiser.control <- list(iter.max = input$itermax, eval.max = input$evalmax)
             set.seed(input$seed)
-            showModal(modalDialog("Please wait while fitting SPiCT.", footer=NULL))
+
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Fitting SPiCT.",
+                         detail = "This may take a while. This window will disappear
+                     automatically when done.", value = 1)
+
             fit <- fit.spict(inp)
             fit <- calc.osa.resid(fit)
-            removeModal()
             rv$fit <- fit
         }
     }
 
     output$fit <- renderPrint({
         if(rv$doSPICT == FALSE){
-            return()
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             isolate({
                 spict.res()
             })
             summary(rv$fit)
+        }
+    })
+
+    output$convergence <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            if(rv$fit$op$convergence == 0){
+                writeLines("Model converged.")
+            }else{
+                writeLines("Model did not converge!")
+            }
+        }
+    })
+
+    output$sumPriors <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            sumspict.priors(rv$fit)
         }
     })
 
@@ -594,7 +662,7 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    output$plotPrior <- renderPlot({
+    output$plotPriors <- renderPlot({
         if(rv$doSPICT == FALSE){
             return()
         }else{
@@ -662,11 +730,11 @@ shinyServer(function(input, output, session) {
     output$nretroyear <- renderUI({
         numericInput(
             inputId = "nretroyear",
-            label = "Number of years to remove in retrospective analysis",
+            label = "# years",
             value = 5,
             min = 1,
             max = diff(rv$timerange) - 5,  ## give spict at least 5 years
-            step=1, width="20%"
+            step=1, width="15%"
         )
     })
 
@@ -674,10 +742,10 @@ shinyServer(function(input, output, session) {
     output$nsensi <- renderUI({
         numericInput(
             inputId = "nsensi",
-            label = "Number of trials for sensitivity analysis",
+            label = "# trials",
             value = 10,
             min = 1,
-            step=1, width="20%"
+            step=1, width="15%"
         )
     })
 
@@ -692,9 +760,13 @@ shinyServer(function(input, output, session) {
             )
         }else{
             fit <- rv$fit
-            showModal(modalDialog("Please wait while running the retrospective analysis.", footer=NULL))
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Running the retrospective analysis.",
+                         detail = "This may take a while. This window will disappear
+                     automatically when done.", value = 1)
             retro <- retro(fit, nretroyear = input$nretroyear)
-            removeModal()
             rv$retro <- retro
         }
     }
@@ -710,16 +782,20 @@ shinyServer(function(input, output, session) {
             )
         }else{
             fit <- rv$fit
-            showModal(modalDialog("Please wait while running the sensitivity analysis.", footer=NULL))
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Running the sensitivity analysis.",
+                         detail = "This may take a while. This window will disappear
+                     automatically when done.", value = 1)
             sensi <- check.ini(fit, ntrials = input$nsensi)
-            removeModal()
             rv$sensi <- sensi
         }
     }
 
     output$sensi <- renderPrint({
         if(rv$doSENSI == FALSE){
-            return()
+            writeLines("No results of the sensitivity analysis. Run 'Run check.ini'.")
         }else{
             isolate({
                 spict.sensi()
@@ -730,7 +806,7 @@ shinyServer(function(input, output, session) {
 
     output$plotDiag <- renderPlot({
         if(rv$doSPICT == FALSE){
-            return()
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             plotspict.diagnostic(rv$fit)
         }
@@ -738,7 +814,7 @@ shinyServer(function(input, output, session) {
 
     output$plotRetro <- renderPlot({
         if(rv$doRETRO == FALSE){
-            return()
+            writeLines("No results of the retrospective analysis. Run 'Run retro'.")
         }else{
             isolate({
                 spict.retro()
@@ -820,19 +896,23 @@ shinyServer(function(input, output, session) {
             )
         }else{
             fit <- rv$fit
-            showModal(modalDialog("Please wait while running the management scenarios.", footer=NULL))
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Evaluating the management scenarios.",
+                         detail = "This may take a while. This window will disappear
+                     automatically when done.", value = 1)
             mana <- manage(fit, scenarios = input$scenarios,
                            maninterval = input$maninterval2,
                            maneval = input$maneval,
                            intermediaterPeriodCatch = input$ipc)
-            removeModal()
             rv$mana <- mana
         }
     }
 
     output$mana <- renderPrint({
         if(rv$doMANA == FALSE){
-            return()
+            writeLines("No management scenarios. Run 'Run manage'.")
         }else{
             isolate({
                 spict.mana()
@@ -844,7 +924,7 @@ shinyServer(function(input, output, session) {
     output$mantimeline2 <- renderPrint({
         req(rv$fit)
         if(rv$doSPICT == FALSE){
-            return()
+            writeLines("No management scenarios. Run 'Run manage'.")
         }else if(!is.null(rv$mana)){
             man.timeline(rv$mana)
         }else{
@@ -860,14 +940,302 @@ shinyServer(function(input, output, session) {
         }
     })
 
+
     ## SUMMARY  ##################################################################################
-    observe({
-        if (input$tabset == "stop")
-            stopApp()
+
+    output$sumParest <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            sumspict.parest(rv$fit)
+        }
     })
 
-    ## ABOUT
-    ##-----------------------------------------------------------
+    output$sumSrefpoints <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            round(sumspict.srefpoints(rv$fit),3)
+        }
+    })
+
+    output$sumDrefpoints <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            round(sumspict.drefpoints(rv$fit),3)
+        }
+    })
+
+    output$sumStates <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            round(sumspict.states(rv$fit),3)
+        }
+    })
+
+    output$sumPredictions <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            round(sumspict.predictions(rv$fit),3)
+        }
+    })
+
+    output$sumDiag <- renderPrint({
+        if(rv$doSPICT == FALSE){
+            writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            round(sumspict.diagnostics(rv$fit),3)
+        }
+    })
+
+    output$sumIni <- renderPrint({
+        if(rv$doSENSI == FALSE){
+            writeLines("No results from the sensitivity analysis. Run 'Run check.ini'.")
+        }else{
+            round(sumspict.ini(rv$fit),3)
+        }
+    })
+
+    output$plotAll <- renderPlot({
+        if(rv$doSPICT == FALSE){
+            return()
+        }else{
+            plot(rv$fit)
+        }
+    })
+
+    output$plotMana2 <- renderPlot({
+        if(rv$doMANA == FALSE){
+            return()
+        }else{
+            plot(rv$mana)
+        }
+    })
+
+
+    ## RDATA
+    output$allData <- downloadHandler(
+        filename = function(){
+            filename = strsplit(rv$filename,"Data: ")[[1]][2]
+            paste0("spictapp_RData_",filename,"_",Sys.Date(),".RData")
+        },
+        content = function(con){
+            save(rv, file = con)
+        }
+    )
+
+    ## CSV
+    output$allTables <- downloadHandler(
+        filename = function(){
+            filename = strsplit(rv$filename,"Data: ")[[1]][2]
+            paste0("spictapp_tables_",filename,"_",Sys.Date(),".zip")
+        },
+        content = function(con){
+            tables <- c("parest","states","predictions")
+            fs <- c()
+            tmpdir <- tempdir()
+            ## parest
+            i = 1
+            if(!is.null(rv$fit)){
+                path <- paste0(tables[i], ".csv")
+                fs <- c(fs, path)
+                tab <- round(sumspict.parest(rv$fit),3)
+                write.csv(tab, path)
+            }
+            ## states
+            i = 2
+            if(!is.null(rv$fit)){
+                path <- paste0(tables[i], ".csv")
+                fs <- c(fs, path)
+                tab <- round(sumspict.states(rv$fit),3)
+                write.csv(tab, path)
+            }
+            ## predictions
+            i = 3
+            if(!is.null(rv$fit)){
+                path <- paste0(tables[i], ".csv")
+                fs <- c(fs, path)
+                tab <- round(sumspict.predictions(rv$fit),3)
+                write.csv(tab, path)
+            }
+            ##
+            zip(zipfile=con, files=fs)
+        },
+        contentType = "application/zip"
+    )
+
+
+    ## GRAPHS
+
+    output$allGraphs <- downloadHandler(
+        filename = function(){
+            filename = strsplit(rv$filename,"Data: ")[[1]][2]
+            paste0("spictapp_graphs_",filename,"_",Sys.Date(),".zip")
+        },
+        content = function(con){
+            graphs <- c("data", "priors","plot2","retro","manage","plotAll","plotAll_manage")
+            fs <- c()
+            tmpdir <- tempdir()
+            ##                setwd(tempdir())
+            ## data plot
+            i = 1
+            if(!is.null(rv$inp)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plotspict.data(rv$inp)
+                dev.off()
+            }
+            ## priors
+            i = 2
+            if(!is.null(rv$fit)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plotspict.priors(rv$fit)
+                dev.off()
+            }else if(!is.null(rv$inp)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plotspict.priors.inp(rv$inp)
+                dev.off()
+            }
+            ## plot2
+            i = 3
+            if(!is.null(rv$fit)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plot2(rv$fit)
+                dev.off()
+            }
+            ## retro
+            i = 4
+            if(!is.null(rv$retro)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plotspict.retro(rv$retro)
+                dev.off()
+            }
+            ## manage
+            i = 5
+            if(!is.null(rv$mana)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plot2(rv$mana)
+                dev.off()
+            }
+            ## plot all
+            i = 6
+            if(!is.null(rv$fit)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plot(rv$fit)
+                dev.off()
+            }
+            ## plot all manage
+            i = 7
+            if(!is.null(rv$mana)){
+                path <- paste0(graphs[i], ".pdf")
+                fs <- c(fs, path)
+                pdf(path)
+                plot(rv$mana)
+                dev.off()
+            }
+            ##
+            zip(zipfile=con, files=fs)
+        },
+        contentType = "application/zip"
+    )
+
+
+    ## REPORT
+
+    report <- reactiveValues(filepath = NULL) #This creates a short-term storage location for a filepath
+
+    observeEvent(input$generateReport, {
+
+        progress <- shiny::Progress$new()
+
+        ## Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Building report.",
+                     detail = "This may take a while. This window will disappear
+                     when the report is ready.", value = 1)
+
+        if(is.null(rv$inp))
+            showNotification(paste("The minimum requirements for the report is input data. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
+                             type = "error",
+                             duration = NULL,
+                             closeButton = TRUE,
+                             action = a(href = "javascript:location.reload();", "Reload page")
+                             )
+
+            params <- list(rv = rv)
+
+            td <- tempdir()
+            tmp_file <- tempfile(fileext = ".pdf")
+            tmp_file2 <- tempfile(fileext = ".Rmd")
+
+            file.copy("report/spictapp.bib", td,
+                      overwrite = TRUE)
+            file.copy("report/assessmentReport.Rmd", tmp_file2, overwrite = TRUE)
+
+            rmarkdown::render(tmp_file2,
+                              output_format = "pdf_document",
+                              output_file = tmp_file,
+                              output_dir = td,
+                              intermediates_dir = td,
+                              knit_root_dir = td,
+                              clean = TRUE,
+                              params = params,
+                              envir = new.env())
+
+            report$filepath <- tmp_file #Assigning in the temp file where the .pdf is located to the reactive file created above
+
+    })
+
+    ## Hide download button until report is generated
+    output$reportbuilt <- reactive({
+        return(!is.null(report$filepath))
+    })
+    outputOptions(output, 'reportbuilt', suspendWhenHidden= FALSE)
+
+    ## Download report
+    output$downloadReport <- downloadHandler(
+
+        ## This function returns a string which tells the client
+        ## browser what name to use when saving the file.
+        filename = function() {
+            paste0("spictapp_report_", Sys.Date(), ".pdf")
+            ##     filename = strsplit(rv$filename,"Data: ")[[1]][2]
+            ##     paste0("STF_report_",filename,"_",Sys.Date(),".pdf")
+        },
+
+        ## This function should write data to a file given to it by
+        ## the argument 'file'.
+        content = function(con){
+            file.copy(report$filepath, con)
+        }
+    )
+
+
+    ## OTHER  ##################################################################################
+
+    observe({
+        if (input$tabset == "stop"){
+            js$closeWindow();
+            stopApp(message("App stopped"))
+        }
+    })
+
     output$tobm <- renderImage({
         return(list(
             src = "www/tobm.JPG",
@@ -887,7 +1255,5 @@ shinyServer(function(input, output, session) {
             caption = "Alexandros Kokkalis"
         ))
     }, deleteFile = FALSE)
-
-    ##-----------------------------------------------------------
 
 })

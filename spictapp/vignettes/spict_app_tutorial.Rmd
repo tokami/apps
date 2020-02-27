@@ -1,20 +1,13 @@
 ---
-title: "Tutorial for spictapp: The click-based app for SPiCT"
+title: "Tutorial for spictapp: The Shiny app for the Stochastic Production model in Continuous Time (SPiCT)"
 author: "Tobias K. Mildenberger"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  rmarkdown::html_vignette:
-    number_sections: yes
-    toc: yes
   pdf_document:
     number_sections: false
     toc: false
     keep_tex: false
 bibliography: bibliography.bib
-vignette: >
-  %\VignetteIndexEntry{spictapp tutorial}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
 ---
 
 ```{r, echo = FALSE}

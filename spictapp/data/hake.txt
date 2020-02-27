@@ -1,4 +1,4 @@
-"timeC","obsC","timeI1","obsI1"
+"Time","Catch commercial fleet","Survey time","Catch survey fleet"
 "1",1965,93.51,1965,1.78
 "2",1966,212.444,1966,1.31
 "3",1967,195.032,1967,0.91

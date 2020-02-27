@@ -10,6 +10,12 @@
 ## getwd()
 ## write.csv
 
+
+## Javascript to close browser window (doesn't work on firefox > 46.0)
+## ------------------------------------------------------------------
+jscode <- "shinyjs.closeWindow = function() { window.close(); }"
+
+
 ## function to check consistency and find matching column names
 ## ------------------------------------------------------------------
 checkDat <- function(dat, colNames){
