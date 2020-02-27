@@ -220,8 +220,7 @@ dat2inp <- function(dat){
     if(!any(colnames(dat) == "timeI1") && !any(colnames(dat) == "timeE")) stop("Your data is missing a column with the timing of the index or effort data labelled 'timeI1' or 'timeE'!")
     if(!any(colnames(dat) == "obsI1")  && !any(colnames(dat) == "obsE")) stop("Your data is missing a column with the index or effort observations labelled 'obsI1' or 'obsE'!")
 
-    ncols <- ncol(dat)
-    nsurv <- (ncols - 2) / 2
+    colna <- colnames(dat)
     nmax <- nrow(dat)
 
     ## spict input list
@@ -230,10 +229,11 @@ dat2inp <- function(dat){
     inp$obsC <- dat$obsC
 
     if(any(colnames(dat) == "timeI1")){
+        nsurv <- length(which(sapply(strsplit(colna,"timeI"),function(x) length(x) > 1)))
         if(nsurv > 1){
             inp$timeI <- list()
             for(i in 1:nsurv){
-                inp$timeI[[i]] <- dat[,which(colnames(dat) == paste0("timeI",i))]
+                inp$timeI[[i]] <- as.numeric(na.omit(dat[,which(colnames(dat) == paste0("timeI",i))]))
             }
         }else{
             inp$timeI <- dat$timeI1
@@ -241,10 +241,11 @@ dat2inp <- function(dat){
     }
 
     if(any(colnames(dat) == "obsI1")){
+        nsurv <- length(which(sapply(strsplit(colna,"obsI"),function(x) length(x) > 1)))
         if(nsurv > 1){
             inp$obsI <- list()
             for(i in 1:nsurv){
-                inp$obsI[[i]] <- dat[,which(colnames(dat) == paste0("obsI",i))]
+                inp$obsI[[i]] <- as.numeric(na.omit(dat[,which(colnames(dat) == paste0("obsI",i))]))
             }
         }else{
             inp$obsI <- dat$obsI1
@@ -263,10 +264,11 @@ dat2inp <- function(dat){
         inp$stdevfacC <- dat$stdevfacC
     }
     if(any(colnames(dat) == "stdevfacI1")){
-        if(length(dat$stdevfacI1) > 1){
+        nsurv <- length(which(sapply(strsplit(colna,"stdevfacI"),function(x) length(x) > 1)))
+        if(nsurv > 1){
             inp$stdevfacI <- list()
-            for(i in 1:length(dat$stdevfacI1)){
-                inp$stdevfacI[[i]] <- dat[,which(colnames(dat) == paste0("stdevfacI",i))]
+            for(i in 1:nsurv){
+                inp$stdevfacI[[i]] <- as.numeric(na.omit(dat[,which(colnames(dat) == paste0("stdevfacI",i))]))
             }
         }else{
             inp$stdevfacI <- dat$stdevfacI1
@@ -276,10 +278,10 @@ dat2inp <- function(dat){
         inp$stdevfacE <- dat$stdevfacE
     }
 
-    inp <- try(check.inp(inp))  ## CHECK: not check here, because some arguments want to be set with GUI before check.inp?
-    if(inherits(inp,"try-error")) browser()
+##    inpORI <- inp
 
-    inp
+    inp <- try(check.inp(inp))  ## CHECK: not check here, because some arguments want to be set with GUI before check.inp?
+    if(inherits(inp,"try-error")) browser() ## REMOVE:
 
     return(inp)
 }

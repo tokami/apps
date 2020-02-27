@@ -60,16 +60,15 @@ shinyUI(
             tabPanel(
                 "Home", id = "home",
                 tagList(
-                    HTML('<h1 style="text-align:center;float:center;line-height:50px;">spictapp</h1>
-<h3 style="text-align:center;float:center;line-height:50px;"> - The Shiny app for the Stochastic surplus Production model in Continuous Time (SPiCT) - </h3>
-<hr style="clear:both;"/>'), br(),
-div(img(src="spictManageDemo.png"), style="text-align: center;"),
-br(),
-tags$hr(),
-br(),
-br(),
-br()
-)),
+                    HTML('<h1 style="text-align:center;float:center;line-height:50px;">spictapp</h1><h3 style="text-align:center;float:center;line-height:50px;"> - The Shiny app for the Stochastic surplus Production model in Continuous Time (SPiCT) - </h3><hr style="clear:both;"/>'), br(),
+                    div(img(src="spictManageDemo.png"), style="text-align: center;"),
+                    br(),
+                    tags$hr(),
+                    br(),
+                    br(),
+                    br()
+                )
+            ),
 
             tabPanel(
                 "Load data", id = "loaddat",
@@ -78,206 +77,208 @@ br()
                 br(),
 
                 tags$style(
-                         HTML("hr{border-top: 2px solid #d35400;}")),
+                         HTML("hr{border-top: 2px solid #d35400;}")
+                     ),
 
-                ## Sidebar panel for inputs
-                sidebarPanel(
-                    div(style="display:inline-block;width:95%;text-align:center;",
+                tags$style("
+             .btn-file {
+             background-color:#d35400;
+             border-color: #d35400;
+             }
 
-                        h3("Upload data file"),
-                        tags$hr(),
-                        ## Input: Select a file
-                        fileInput("file1", "Choose a csv/txt file",
-                                  multiple = FALSE,
-                                  accept = c("text/csv",
-                                             "text/x-csv",
-                                             "text/tab-separated-values",
-                                             "text/comma-separated-values",
-                                             "text/x-comma-separated-values",
-                                             "text/plain")),
-                        actionButton("reset", label = " Reset",
-                                     style="color: #fff; background-color: #d35400; border-color: #d35400",
-                                     icon = icon("refresh", "fa-1.5x")
-                                     )
-                        ),
-                    br(),
-                    br(),
-                    "Your file must contain at least 3 columns: One vector with the times corresponding to the observations, one with the commercial catch observations, and one with either index observations or effort observations. The app tries to intrepret the column names of your data automatically, but might not be successfull in assigning all columns. If the 'Data with assigned columns' is empty or did not assign the columns correctly, please refer to the 'Assign columns' section below and press 'Update data' when done.",
-                    br(),
-                    br(),
-                    h3("File properties"),
-                    tags$hr(),
-                    wellPanel(
-                        fluidRow(
+             .progress-bar {
+             background-color: #d35400;
+             }
 
-                            ## Input: Select separator
-                            column(4, radioButtons("sep", "Separator",
-                                                   choices = c(Comma = ",",
-                                                               Semicolon = ";",
-                                                               Tab = "\t",
-                                                               "White space"  = ""),
-                                                   selected = ",")),
-                            ## Input: Select quotes
-                            column(4, radioButtons("quote", "Quote",
-                                                   choices = c(None = "",
-                                                               "Double Quote" = '"',
-                                                               "Single Quote" = "'"),
-                                                   selected = '"')),
-                            ## Input: Select number of rows to display
-                            column(4, radioButtons("disp", "Display",
-                                                   choices = c(Head = "head",
-                                                               All = "all"),
-                                                   selected = "head"))),
-                        ## Input: Checkbox if file has header
-                        checkboxInput("header", "Header", TRUE)
-                    ),
-                    h3("Assign columns"),
-                    tags$hr(),
-                    "Please assign the columns of your data to the required SPiCT input data. SPiCT requires a vector with catch observations and their times, as well as either index observations and their times or effort observations and their times. Press 'Update data' when all columns assigned.",
-                    br(),
-                    br(),
-                    "Commercial catch:",
-                    wellPanel(
-                        fluidRow(
-                            column(6,
-                                   ## Time catches
-                                   uiOutput("timeC_lab")
-                                   ),
-                            column(6,
-                                   ## Catch observations
-                                   uiOutput("obsC_lab")
-                                   )
-                        )
-                    ),
-                    br(),
-                    "Indices from scientific surveys:",
-                    wellPanel(
-                        fluidRow(
-                            column(6,
-                                   uiOutput("timeI_lab")
-                                   ),
-                            column(6,
-                                   uiOutput("obsI_lab")
-                                   )
-                        ),
-                        "It is possible to select multiple columns representing different index observations (e.g. differen survey fleets) and their times. "
-                    ),
-                    br(),
-                    "Effort information (optional):",
-                    wellPanel(
-                        fluidRow(
-                            column(6,
-                                   ## Time effort
-                                   uiOutput("timeE_lab")
-                                   ),
-                            column(6,
-                                   ## Effort observations
-                                   uiOutput("obsE_lab")
-                                   )
-                        ),
-                        "Effort observations are optional if indices are available and required otherwise."
-                    ),
-                    div(
-                        style="display:inline-block;width:95%;text-align:center;",
-                        actionButton(
-                            "datUpdate",
-                            label = " Update data",
-                            style="color: #fff; background-color: #d35400; border-color: #d35400",
-                            icon = icon("refresh", "fa-1.5x"))
-                    ),
-                    br(),
-                    br(),
-                    br(),
-                    "Scaling of uncertainty of observations (optional):",
-                    wellPanel(
-                        fluidRow(
-                            uiOutput("stdevfacC_lab"),
-                            uiOutput("stdevfacI_lab"),
-                            uiOutput("stdevfacE_lab")
+             "),
 
-                        ),
-                        "If available information about the uncertainty of the observations can be provided."
-                    ),
-                    br(),
-                    h3("Use example data"),
-                    tags$hr(),
-                    checkboxInput(inputId = "useExDat",
-                                  label = "Use example data set?",
-                                  value = FALSE),
-                    br(),
-                    conditionalPanel(
-                        condition = "input.useExDat",
-                        ## Input: Select example data set
-                        selectInput(inputId = "exdat",
-                                    "Example data sets",
-                                    choices = c("albacore",
-                                                "hake",
-                                                "lobster"),
-                                    width='35%'),
-                        ## Download example data
-                        conditionalPanel("input.exdat",
-                                         downloadLink('downloadExData', 'Download')))
-                ),
+             ## Sidebar panel for inputs
+             sidebarPanel(div(
+                 style="display:inline-block;width:95%;text-align:center;",
+                 h3("Upload data file"),
+                 tags$hr(),
+                 ## Input: Select a file
+                 fileInput("file1", "Choose a csv/txt file",
+                           multiple = FALSE,
+                           ##                                  style="color: #fff; background-color: #d35400; border-color: #d35400",
+                           accept = c("text/csv",
+                                      "text/x-csv",
+                                      "text/tab-separated-values",
+                                      "text/comma-separated-values",
+                                      "text/x-comma-separated-values",
+                                      "text/plain")
+                           ),
+                 "Please use reset before uploading a new data set:",
+                 br(),
+                 br(),
+                 actionButton("reset", label = " Reset",
+                              style="color: #fff; background-color: #d35400; border-color: #d35400",
+                              icon = icon("refresh", "fa-1.5x")
+                              )
+             ), br(), br(),
+             "Your file must contain at least 3 columns: One vector with the times corresponding to the observations, one with the commercial catch observations, and one with either index or effort observations. The app tries to intrepret the column names of your data automatically, but might not be successfull in assigning all columns. If the 'Data with assigned columns' is empty or did not assign the columns correctly, please refer to the 'Assign columns' section below and press 'Update data' when done.",
+             br(), br(),
+             h3("File properties"),
+             tags$hr(),
+             wellPanel(
+                 fluidRow(
 
-                ## Main panel for displaying outputs
-                mainPanel(
-                    br(),
-
-                    fluidRow(
-                        column(6,
-                               h3("Uploaded file in raw format:"),
-                               tags$hr()
-                               ),
-                        column(6,
-                               h3("Data with assigned columns:"),
-                               tags$hr()
-                               ),
-                        br(),
-                        br(),
-                        br(),
-                        column(6,
-                               tableOutput("fileContentRaw")
-                               ),
-                        column(6,
-                               tableOutput("fileContent")
-                               )
-                    ),
-
-                    br(),
-                    br()
+                     ## Input: Select separator
+                     column(4, radioButtons("sep", "Separator",
+                                            choices = c(Comma = ",",
+                                                        Semicolon = ";",
+                                                        Tab = "\t",
+                                                        "White space"  = ""),
+                                            selected = ",")),
+                     ## Input: Select quotes
+                     column(4, radioButtons("quote", "Quote",
+                                            choices = c(None = "",
+                                                        "Double Quote" = '"',
+                                                        "Single Quote" = "'"),
+                                            selected = '"')),
+                     ## Input: Select number of rows to display
+                     column(4, radioButtons("disp", "Display",
+                                            choices = c(Head = "head",
+                                                        All = "all"),
+                                            selected = "head")
+                            )
+                 ),
+                 ## Input: Checkbox if file has header
+                 checkboxInput("header", "Header", TRUE)
+             ),
 
 
-                    ## fluidRow(
-                    ##     column(6,
-                    ##            h3("Uploaded file in raw format:"),
-                    ##            tags$hr()
-                    ##            ),
-                    ##     column(6,
-                    ##            ),
-                    ##     br(),
-                    ##     br(),
-                    ##     column(2,
-                    ##            ),
-                    ##     column(8,
-                    ##            tableOutput("fileContentRaw"),
-                    ##            ),
-                    ##     column(2,
-                    ##            ),
-                    ##     column(6,
-                    ##            h3("Data with assigned columns:"),
-                    ##            tags$hr()
-                    ##            ),
-                    ##     column(6,
-                    ##            ),
-                    ##     br(),
-                    ##     br(),
-                    ##     column(2,
-                    ##            ),
-                    ##     column(8,
-                    ##            tableOutput("fileContent"),
-                    ##            )
-                    ##                    )
-                )
+             h3("Assign columns"),
+             tags$hr(),
+             "Please assign the columns of your data to the required SPiCT input data. SPiCT requires a vector with catch observations and their times, as well as either index observations and their times or effort observations and their times. Press 'Update data' when all columns are assigned.",
+             br(),
+             br(),
+             "Commercial catch:",
+
+             wellPanel(
+                 fluidRow(
+                     column(6,
+                            ## Time catches
+                            uiOutput("timeC_lab")
+                            ),
+                     column(6,
+                            ## Catch observations
+                            uiOutput("obsC_lab")
+                            )
+                 )
+             ),
+             "Indices from scientific surveys:",
+             wellPanel(
+                 fluidRow(
+                     column(6,
+                            uiOutput("timeI_lab")
+                            ),
+                     column(6,
+                            uiOutput("obsI_lab")
+                            )
+                 ),
+                 "It is possible to select multiple columns representing different index observations (e.g. differen survey fleets) and their times."
+             ),
+             "Effort information (optional):",
+             wellPanel(
+                 fluidRow(
+                     column(6,
+                            ## Time effort
+                            uiOutput("timeE_lab")
+                            ),
+                     column(6,
+                            ## Effort observations
+                            uiOutput("obsE_lab")
+                            )
+                 ),
+                 "Effort observations are optional if indices are available and required otherwise."
+             ),
+
+             div(
+                 style="display:inline-block;width:95%;text-align:center;",
+                 actionButton(
+                     "datUpdate",
+                     label = " Update data",
+                     style="color: #fff; background-color: #d35400; border-color: #d35400",
+                     icon = icon("refresh", "fa-1.5x")
+                 )
+             ),
+             br(),
+             br(),
+             br(),
+
+             "If information about the uncertainty of the observations is available, it can be provided as a",
+             tags$b("factor scaling the uncertainty of the observations."), "This variables is called", tags$b("stdevfac"),
+             "for the different observations in SPiCT, e.g. stdevfacC for catches.",
+             "Several columns can be selected if several indices are available.",
+
+             wellPanel(
+                 fluidRow(
+                     uiOutput("stdevfacC_lab"),
+                     uiOutput("stdevfacI_lab"),
+                     uiOutput("stdevfacE_lab")
+                 )
+             ),
+             br(),
+             h3("Use example data"),
+             tags$hr(),
+             checkboxInput(inputId = "useExDat",
+                           label = "Use example data set?",
+                           value = FALSE),
+             br(),
+             conditionalPanel(
+                 condition = "input.useExDat",
+                 ## Input: Select example data set
+                 selectInput(inputId = "exdat",
+                             "Example data sets",
+                             choices = c("albacore",
+                                         "hake",
+                                         "lobster"),
+                             width='35%'),
+                 ## Download example data
+                 conditionalPanel("input.exdat",
+                                  downloadLink('downloadExData', 'Download')
+                                  )
+             )
+             ),
+
+
+             ## Main panel for displaying outputs
+             mainPanel(
+                 br(),
+                 h3("Uploaded file in raw format:"),
+                 tags$hr(),
+                 dataTableOutput("fileContentRaw"),
+                 br(),
+                 br(),
+                 h3("Data with assigned columns:"),
+                 tags$hr(),
+                 dataTableOutput("fileContent"),
+                 br()
+                 ## fluidRow(
+                 ##     column(
+                 ##         6,
+                 ##         h3("Uploaded file in raw format:"),
+                 ##         tags$hr()
+                 ##     ),
+                 ##     column(
+                 ##         6,
+                 ##         h3("Data with assigned columns:"),
+                 ##         tags$hr()
+                 ##     ),
+                 ##     br(),
+                 ##     br(),
+                 ##     br(),
+                 ##     column(
+                 ##         6,
+                 ##         dataTableOutput("fileContentRaw")
+                 ##     ),
+                 ##     column(
+                 ##         6,
+                 ##         dataTableOutput("fileContent")
+                 ##     )
+                 ## )
+             )
             ),
 
             tabPanel(
@@ -287,7 +288,8 @@ br()
                 br(),
 
                 tags$style(
-                         HTML("hr{border-top: 2px solid #d35400;}")),
+                         HTML("hr{border-top: 2px solid #d35400;}")
+                     ),
 
                 sidebarLayout(
                     sidebarPanel(
@@ -296,10 +298,6 @@ br()
                         h3("General settings"),
                         tags$hr(),
                         fluidRow(
-                            ## Number of seasons
-                            column(6,
-                                   uiOutput("nseasons")
-                                   ),
                             ## choose dteuler
                             column(6,
                                    selectInput(inputId = "dteuler",
@@ -310,7 +308,11 @@ br()
                                                selected = 1/16,
                                                width = '100%'
                                                )
-                                   )
+                                   ),
+                            column(
+                                6,
+                                "Euler discretisation time step, i.e. how many time steps per year should be used."
+                            )
                         ),
                         br(),
                         fluidRow(
@@ -331,9 +333,11 @@ br()
                                        "cunit",
                                        "Catch unit",
                                        "",
-                                       width = "100%")
+                                       width = "100%"),
+                                   "Set the unit of the catches (to be displayed in the graphs), e.g. '000 t."
                                    )
                         ),
+                        br(),
                         br(),
                         ## choose time range of observations
                         uiOutput("timerange"),
@@ -351,17 +355,40 @@ br()
                             value = FALSE
                         ),
                         br(),
-                        ## Number of seasons
-                        selectInput("splineorder",
-                                    "Splineorder",
-                                    c(2,3),
-                                    selected = 2,
-                                    width = "20%"),
+                        "Settings concerning the process used to model the fishing mortalit process. With nseasons = 1 and seasontype = 0, the annual F process is used. Seasontype = 1 uses splines to fit the seasonal F model, seasontype = 2 uses coupled SDEs, and seaosntype = 3 uses splines together with a auto-correlated process. The splineorder is only used if a spline-based process is used.",
                         br(),
                         br(),
-                        h3("Forecast settings"),
+                        br(),
+                        fluidRow(
+                            ## Number of seasons
+                            column(
+                                4,
+                                uiOutput("nseasons"),
+                                ""
+                            ),
+                            ## seasontype
+                            column(
+                                4,
+                                uiOutput("seasontype")
+                            ),
+                            ## Spline order
+                            column(
+                                4,
+                                selectInput("splineorder",
+                                            "Splineorder",
+                                            c(2,3),
+                                            selected = 2,
+                                            width = "100%")
+                            )
+                        ),
+                        br(),
+                        br(),
+                        h3("Management settings"),
                         tags$hr(),
-
+                        "By default, SPiCT projects the model states one year into the future starting after the last observation. Any forecast/management interval can be defined. The F factor multiplies the fishing mortality at the beginning of the management interval.",
+                        br(),
+                        br(),
+                        br(),
                         ## management interval
                         div(
                             style="display:inline-block;width:70%;text-align:center;font-weight:bold;",
@@ -372,7 +399,26 @@ br()
                         ## management evaluation time
                         uiOutput("maneval"),
                         br(),
-
+                        fluidRow(
+                            column(
+                                6,
+                                numericInput(
+                                    "ffac",
+                                    "F multiplication factor",
+                                    value = 1,
+                                    min = 0,
+                                    width = "100%"
+                                )),
+                            column(
+                                6,
+                                numericInput(
+                                    "fcon",
+                                    "Absolute F",
+                                    value = 0,
+                                    min = 0,
+                                    width = "100%"
+                                ))),
+                        br(),
                         h3("Priors"),
                         tags$hr(),
                         "Default priors",
@@ -474,7 +520,6 @@ br()
                                         "sd",
                                         2)
                                 )
-
                             )
                         ),
                         br(),
@@ -494,10 +539,15 @@ br()
                             verbatimTextOutput(outputId = "mantimeline")),
                         br(),
                         br(),
-                        h3("Input data"),
+                        h3("Plot of input data"),
                         tags$hr(),
                         plotOutput(outputId = "dataplot",
                                    width = "100%", height = "800px"),
+                        br(),
+                        br(),
+                        h3("Input data"),
+                        tags$hr(),
+                        verbatimTextOutput(outputId = "inpsum"),
                         br(),
                         br(),
                         h3("Priors"),
@@ -777,8 +827,6 @@ br()
                     ))
             ),
 
-
-
             tabPanel(
                 "Summary", id = "summary",
                 ##-----------------------------------------------------------
@@ -892,7 +940,6 @@ br()
                     )
                 )
             ),
-
 
             tabPanel(
                 "References",

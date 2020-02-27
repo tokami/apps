@@ -77,20 +77,13 @@ shinyServer(function(input, output, session) {
 
     ## DATA LOAD #############################################################################################
 
-    observe({
-        if(input$useExDat || !is.null(input$file1)){
-            rv$doDatLoad <- TRUE
-        }else{
-            rv$doDatLoad <- FALSE
-        }
+
+    observeEvent(input$useExDat, {
+        rv$doDatLoad <- TRUE
     })
 
-    observeEvent(input$exdat, {
-        if(input$useExDat || !is.null(input$file1)){
-            rv$doDatLoad <- TRUE
-        }else{
-            rv$doDatLoad <- FALSE
-        }
+    observeEvent(input$file1, {
+        rv$doDatLoad <- TRUE
     })
 
     ## reset button
@@ -196,7 +189,7 @@ shinyServer(function(input, output, session) {
             selected <- NULL
         }
         selectInput("stdevfacC_lab",
-                    "Scaling of uncertainty of catch observations",
+                    "Catch observations",
                     choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
@@ -208,7 +201,7 @@ shinyServer(function(input, output, session) {
             selected <- NULL
         }
         selectInput("stdevfacI_lab",
-                    "Scaling of uncertainty of index observations",
+                    "Index observations",
                     choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected,
                     multiple = TRUE)
@@ -222,7 +215,7 @@ shinyServer(function(input, output, session) {
             selected <- NULL
         }
         selectInput("stdevfacE_lab",
-                    "Scaling of uncertainty of effort observations",
+                    "Effort observations",
                     choices = c("Choose one"="",rv$colNamesORI),
                     selected = selected)
     })
@@ -254,9 +247,11 @@ shinyServer(function(input, output, session) {
                             sep = input$sep,
                             quote = input$quote)
             rv$datORI <- dat
-            rv$dat <- NULL
             rv$colNamesORI <- colnames(dat)
+            rv$dat <- NULL
             rv$colNames <- NULL
+            rv$inpORI <- NULL
+            rv$inp <- NULL
             ## filename
             tmp <- strsplit(infile[,1], ".csv")[[1]]
             tmp <- strsplit(tmp, ".txt")[[1]]
@@ -311,6 +306,12 @@ shinyServer(function(input, output, session) {
     observe({
         if(!is.null(rv$datORI)){
             match.cols()
+            colNames <- unlist(rv$colNames)
+            if(any(colNames == "timeC") && any(colNames == "obsC") &&
+               ((any(colNames == "timeI1") && any(colNames == "obsI1")) ||
+                (any(colNames == "timeE") && any(colNames == "obsE")))){
+                update.dat()
+            }
         }
     })
 
@@ -337,7 +338,7 @@ shinyServer(function(input, output, session) {
         }
     )
 
-    output$fileContentRaw <- renderTable({
+    output$fileContentRaw <- renderDataTable({
         if(rv$doDatLoad == FALSE){
             return()
         }else{
@@ -350,11 +351,14 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    output$fileContent <- renderTable({
-        dat <- rv$dat
-        if(rv$doDatLoad == FALSE || is.null(dat)){
+    output$fileContent <- renderDataTable({
+        if(rv$doDatLoad == FALSE){
             return()
         }else{
+            isolate({
+                update.dat()
+            })
+            dat <- rv$dat
             if(input$disp == "head"){
                 return(head(dat))
             }else{
@@ -426,7 +430,7 @@ shinyServer(function(input, output, session) {
     ## create robflagi (dependent on number of indices)
     output$robflagi <- renderUI({
         selectizeInput("robflagi",
-                       "Should the robust estimation for indices be used?",
+                       "Should the robust estimation for indices be used? (logical for each index)",
                        choices = NULL,
                        multiple = TRUE,
                        options = list(create = TRUE),
@@ -445,6 +449,15 @@ shinyServer(function(input, output, session) {
     })
 
 
+
+    ## create seasointype (dependent in nseasons)
+    output$seasontype <- renderUI({
+        selectInput("seasontype",
+                    "Season type",
+                    c(0,1,2,3),
+                    selected = ifelse(rv$nseasons == 1, 0, 1),
+                    width = "100%")
+    })
 
 
     update.inp <- reactive({
@@ -486,6 +499,8 @@ shinyServer(function(input, output, session) {
             ## forecast times
             inp$maninterval <- input$maninterval
             inp$maneval <- input$maneval
+            inp$ffac <- input$ffac
+            inp$fcon <- input$fcon
             ## nseasons
             inp$nseasons <- as.numeric(input$nseasons)
             ## catchunit
@@ -537,6 +552,15 @@ shinyServer(function(input, output, session) {
             }else{
                 plotspict.data(inp)
             }
+        }
+    })
+
+    output$inpsum <- renderPrint({
+        req(rv$inp)
+        if(rv$doDatLoad == FALSE){
+            writeLines("No data loaded. Upload your data or use example data.")
+        }else{
+            rv$inp
         }
     })
 
