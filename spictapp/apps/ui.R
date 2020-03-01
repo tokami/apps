@@ -94,7 +94,7 @@ shinyUI(
 
              ## Sidebar panel for inputs
              sidebarPanel(div(
-                 style="display:inline-block;width:95%;text-align:center;",
+                 style="display:inline-block;width:95%;text-align:center;align:center;",
                  h3("Upload data file"),
                  tags$hr(),
                  ## Input: Select a file
@@ -248,12 +248,12 @@ shinyUI(
                  br(),
                  h3("Uploaded file in raw format:"),
                  tags$hr(),
-                 dataTableOutput("fileContentRaw"),
+                 tableOutput("fileContentRaw"),
                  br(),
                  br(),
                  h3("Data with assigned columns:"),
                  tags$hr(),
-                 dataTableOutput("fileContent"),
+                 tableOutput("fileContent"),
                  br()
                  ## fluidRow(
                  ##     column(
@@ -520,6 +520,259 @@ shinyUI(
                                         "sd",
                                         2)
                                 )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logbkfracPrior",
+                                        "log(B/K)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logbkfracMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logbkfracSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logngammaPrior",
+                                        "log(ngamma)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logngammaMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logngammaSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logKPrior",
+                                        "log(K)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logKMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logKSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logrPrior",
+                                        "log(r)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logrMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logrSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logmPrior",
+                                        "log(m)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logmMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logmSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logqfPrior",
+                                        "log(qf)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logqfMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logqfSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logsdbPrior",
+                                        "log(sdb)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logsdbMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logsdbSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logsdiPrior",
+                                        "log(sdi)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logsdiMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logsdiSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logsdfPrior",
+                                        "log(sdf)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logsdfMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logsdfSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logsdePrior",
+                                        "log(sde)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logsdeMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logsdeSd",
+                                        "sd",
+                                        2)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    checkboxInput(
+                                        "logsdcPrior",
+                                        "log(sdc)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    4,
+                                    numericInput(
+                                        "logsdcMu",
+                                        "mu",
+                                        0.5)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logsdcSd",
+                                        "sd",
+                                        2)
+                                )
                             )
                         ),
                         br(),
@@ -571,8 +824,12 @@ shinyUI(
                 br(),
                 sidebarLayout(
                     sidebarPanel(
-                        "Find more information about the assumptions of the model in the ",
-                        a("SPiCT handbook",href="https://github.com/tokami/spict/blob/manage4.0/spict/inst/doc/spict_handbook.pdf"),
+                        "For more information about SPiCT, please refer to the SPiCT handbook",
+                        a("(link),",target="_blank",href="spict_handbook.pdf"), "the SPiCT guidelines",
+                       a("(link)",target="_blank",href="spict_guidelines.pdf"),
+                        "or the peer-reviewed SPiCT publications:",
+                        a("(link)",target="_blank",href="spict.pdf"), "and",
+                       a("(link).",target="_blank",href="spict_tvp.pdf"),
                         br(),
                         br(),
                         br(),
@@ -593,12 +850,20 @@ shinyUI(
                         tags$hr(),
                         br(),
                         ## seed
+                        fluidRow(
+                            column(
+                                6,
                         numericInput(inputId = "seed",
                                      label = "Seed value",
                                      min = 1,
                                      max = Inf,
                                      value = 1234,
-                                     width = '20%'),
+                                     width = '100%')
+                        ),
+                        column(
+                            6,"Set a seed value for reproducible results."
+                        )
+                        ),
                         br(),
                         fluidRow(
                             column(6,
@@ -680,6 +945,7 @@ shinyUI(
                 sidebarLayout(
                     sidebarPanel(
                         id="sidebar",
+                        "Checking the model diagnostics is one of the most important steps in fish stock assessment. Violated model assumptions can invalidate model results and conclusions.",
                         h3("Retrospective analysis"),
                         tags$hr(),
                         div(style="display:inline-block;width:95%;text-align: center;",
@@ -700,7 +966,7 @@ shinyUI(
                         "Number of years to remove in the retrospective analysis. Make sure that enough years remain for the model fitting.",
                         br(),
                         br(),
-                        h3("Sensitivity analysis"),
+                        h3("Sensitivity analysis to inital values"),
                         tags$hr(),
                         div(style="display:inline-block;width:95%;text-align: center;",
                             actionButton("runsensi",
@@ -722,7 +988,12 @@ shinyUI(
                     ),
                     ## Show a plot of the generated distribution
                     mainPanel(
-                        h3("SPiCT diagnostics plot"),
+                        h3("Diagnostics"),
+                        tags$hr(),
+                        verbatimTextOutput("diag"),
+                        br(),
+                        br(),
+                        h3("Diagnostics plot"),
                         tags$hr(),
                         plotOutput("plotDiag",height="900px"),
                         br(),
@@ -750,15 +1021,15 @@ shinyUI(
                 sidebarLayout(
                     sidebarPanel(
                         id="sidebar",
-
-                        br(),
+                        "Comparing the implications of alternative management strategies is crucial for sustainable fisheries management. SPiCT includes 8 pre-defined harvest control rules which can be selected below. Find more guidance on fisheries management in the SPiCT guidelines",
+                       a("(link).",target="_blank",href="spict_guidelines.pdf"),
                         div(
                             style="display:inline-block;width:95%;text-align: center;",
-                            actionButton("runmanage",
+                            actionButton("runmana",
                                          label = " Run Manage",
                                          style="color: #fff; background-color: #d35400; border-color: #d35400",
                                          icon = icon("chart-line", "fa-1.5x")),
-                            actionButton("resetmanage",
+                            actionButton("resetmana",
                                          label = " Reset",
                                          style="color: #fff; background-color: #d35400; border-color: #d35400",
                                          icon = icon("refresh", "fa-1.5x")
@@ -799,13 +1070,27 @@ shinyUI(
                         ## management evaluation time
                         uiOutput("maneval2"),
                         br(),
-                        br(),
+                       br(),
+                       fluidRow(
+                           column(
+                               6,
                         ## Intermediate period catch
                         numericInput(
                             inputId = "ipc",
                             label = "Catch during intermediate period",
                             value = NULL,
-                            min = 0),
+                            min = 0)
+                        ),
+                           column(
+                               6,
+                        ## fractile catch for TAC
+                        numericInput(
+                            inputId = "fractileCatch",
+                            label = "Fractile of predicted catch distribution",
+                            value = 0.5,
+                            min = 0,
+                            max = 1)
+                        )),
                         br(),
                         br()
                     ),
@@ -823,6 +1108,11 @@ shinyUI(
                         h3("Management summary"),
                         tags$hr(),
                         verbatimTextOutput("mana"),
+                        br(),
+                        br(),
+                        h3("Total allowable catch (TAC)"),
+                        tags$hr(),
+                        verbatimTextOutput("tacs"),
                         br()
                     ))
             ),
@@ -892,51 +1182,53 @@ shinyUI(
                                  br()
                                  ),
                     mainPanel(
-                        br(),
-                        h3("Parameter estimates"),
-                        tags$hr(),
-                        verbatimTextOutput("sumParest"),
-                        br(),
-                        h3("Stochastic reference points"),
-                        tags$hr(),
-                        verbatimTextOutput("sumSrefpoints"),
-                        br(),
-                        h3("Deterministic reference points"),
-                        tags$hr(),
-                        verbatimTextOutput("sumDrefpoints"),
-                        br(),
-                        h3("States"),
-                        tags$hr(),
-                        verbatimTextOutput("sumStates"),
-                        br(),
-                        h3("Predictions"),
-                        tags$hr(),
-                        verbatimTextOutput("sumPredictions"),
-                        br(),
-                        h3("Diagnostics"),
-                        tags$hr(),
-                        verbatimTextOutput("sumDiag"),
-                        br(),
-                        h3("Sensitivity analysis to initial values"),
-                        tags$hr(),
-                        verbatimTextOutput("sumIni"),
-                        br(),
-                        h3("Retrospective analysis"),
-                        tags$hr(),
-                        plotOutput("plotRetroSum",height="900px"),
-                        br(),
-                        h3("Management"),
-                        tags$hr(),
-                        verbatimTextOutput("sumMana"),
-                        br(),
-                        h3("Full SPiCT plot"),
-                        tags$hr(),
-                        plotOutput("plotAll",height="900px"),
-                        br(),
-                        h3("Full SPiCT management plot"),
-                        tags$hr(),
-                        plotOutput("plotMana2",height="900px"),
-                        br()
+                        div(style="display:inline-block;width:100%;text-align:center;",
+                            column(8, offset=2,
+                                   h3("Parameter estimates"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumParest"),
+                                   br(),
+                                   h3("Stochastic reference points"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumSrefpoints"),
+                                   br(),
+                                   h3("Deterministic reference points"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumDrefpoints"),
+                                   br(),
+                                   h3("States"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumStates"),
+                                   br(),
+                                   h3("Predictions"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumPredictions"),
+                                   br(),
+                                   h3("Diagnostics"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumDiag"),
+                                   br(),
+                                   h3("Sensitivity analysis to initial values"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumIni"),
+                                   br(),
+                                   h3("Retrospective analysis"),
+                                   tags$hr(),
+                                   plotOutput("plotRetroSum",height="900px"),
+                                   br(),
+                                   h3("Management"),
+                                   tags$hr(),
+                                   verbatimTextOutput("sumMana"),
+                                   br(),
+                                   h3("Full SPiCT plot"),
+                                   tags$hr(),
+                                   plotOutput("plotAll",height="900px"),
+                                   br(),
+                                   h3("Full SPiCT management plot"),
+                                   tags$hr(),
+                                   plotOutput("plotMana2",height="900px"),
+                                   br())
+                            )
                     )
                 )
             ),

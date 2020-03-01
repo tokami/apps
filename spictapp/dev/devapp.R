@@ -1,3 +1,415 @@
+## remotes::install_github("DTUAqua/spict/spict")
+require(spict)
+
+nt <- 50
+inp <- list(nseasons = 4, splineorder = 3)
+inp$timeC <- seq(0, nt - 1 / inp$nseasons, by = 1 / inp$nseasons)
+inp$timeI <- seq(0.1, nt - 1 / inp$nseasons, by = 0.5)
+inp$ini <- list(logK = log(1000), logm=log(800), logq = log(1), logn = log(2),
+                logbkfrac = log(0.9), logsdf = log(0.3), logF0 = log(0.8),
+                logphi = log(c(0.3, 0.5, 1.8)))
+inpsim <- sim.spict(inp)
+
+
+
+### spictapp data set - problematic
+### too overfished?
+
+set.seed(14453)
+nt <- 30
+inp <- list(nseasons = 4, splineorder = 3)
+inp$timeC <- seq(0, nt - 1 / inp$nseasons, by = 1 / inp$nseasons)
+inp$nindex <- 2
+inp$nobsI <- c(24,16)
+inp$timeI <- list()
+inp$timeI[[1]] <- seq(0.12, inp$nobsI[1] + 0.12, 1)
+inp$timeI[[2]] <- seq(2.65, inp$nobsI[2] + 0.65, 1)
+inp$ini <- list(logK = log(1000), logm=log(900), logq = c(log(1),log(0.04)), logn = log(2),
+                logbkfrac = log(0.9), logsdf = log(0.3), logF0 = log(0.5),
+                logphi = log(c(0.4, 0.5, 1.2)))
+inpsim <- sim.spict(inp)
+plotspict.data(inpsim)
+
+
+set.seed(13)
+nt <- 30
+inp <- list(nseasons = 4, splineorder = 3)
+inp$timeC <- seq(0, nt - 1 / inp$nseasons, by = 1 / inp$nseasons)
+inp$nindex <- 2
+inp$nobsI <- c(24,16)
+inp$timeI <- list()
+inp$timeI[[1]] <- seq(0.12, inp$nobsI[1] + 0.12, 1)
+inp$timeI[[2]] <- seq(2.65, inp$nobsI[2] + 0.65, 1)
+inp$ini <- list(logK = log(1000), logm=log(900), logq = c(log(1),log(0.04)), logn = log(2),
+                logbkfrac = log(0.9), logsdf = log(0.3), logF0 = log(1.5),
+                logphi = log(c(0.4, 0.5, 1.2)))
+inpsim <- sim.spict(inp)
+plotspict.data(inpsim)
+
+require(spict)
+
+set.seed(1309)
+nt <- 30
+inp <- list(nseasons = 4, splineorder = 3)
+inp$timeC <- seq(0, nt - 1 / inp$nseasons, by = 1 / inp$nseasons)
+inp$nindex <- 2
+inp$nobsI <- c(24,16)
+inp$timeI <- list()
+inp$timeI[[1]] <- seq(0.12, inp$nobsI[1] + 0.12, 1)
+inp$timeI[[2]] <- seq(2.65, inp$nobsI[2] + 0.65, 1)
+inp$ini <- list(logK = log(1000), logm=log(900), logq = c(log(1),log(0.04)), logn = log(2),
+                logbkfrac = log(0.9), logsdf = log(0.3), logF0 = log(1),
+                logphi = log(c(0.4, 0.5, 1.7)))
+inpsim <- sim.spict(inp)
+plotspict.data(inpsim)
+inp <- check.inp(inpsim)
+
+inp2 <- inp
+inp2$fconvec <- rep(0,length(inp$fconvec))
+
+
+fit <- fit.spict(inp)
+plot(fit)
+
+plotspict.catch(man)
+ a
+
+## TODO: add connection line of last b/f to first b/f from man scenario
+
+
+fit$inp$maninterval
+
+man <- manage(fit,c(1,2))##,maninterval = c(31,32))
+plot2(man)
+
+man$man[[1]]$inp$timeC
+
+options(error=NULL)
+
+fit2 <- retape.spict(fit,inp,mancheck = FALSE)
+
+for(i in 1:length(inp)){
+    if(inherits(inp[[i]], "numeric") || inherits(inp[[i]],"matrix")){
+        print(i)
+        print(fit$inp[[i]] == inp[[i]])
+        }
+}
+
+inp$robflagi
+
+fit$opt
+
+inp$ini
+
+
+inp2$maninterval
+
+fit$inp$maninterval
+
+inp2 <- shorten.inp(inp,maxtime=30.25)
+
+
+man <- manage(fit,c(1,2), maninterval=c(30,30.25),maneval = 30.25)
+
+man$man[[2]]$Cp
+man$man[[2]]$inp$maninterval
+man$man[[1]]$inp$obsC
+man$man[[1]]$inp$timeC
+man$man[[1]]$inp$maninterval
+
+fit2 <- man$man[[1]]
+
+fit2$inp$obsC
+fit2$inp$timeCpred
+
+fit$inp$timeC
+
+inpsim$timeC
+
+man <- manage(fit,c(1,2),maninterval = c(30,32))
+plot2(man)
+
+
+## high F
+set.seed(1309)
+nt <- 30
+inp <- list(nseasons = 1)
+inp$timeC <- seq(0, nt - 1 / inp$nseasons, by = 1 / inp$nseasons)
+inp$nindex <- 2
+inp$nobsI <- c(24,16)
+inp$timeI <- list()
+inp$timeI[[1]] <- seq(0.12, inp$nobsI[1] + 0.12, 1)
+inp$timeI[[2]] <- seq(2.65, inp$nobsI[2] + 0.65, 1)
+inp$ini <- list(logK = log(1000), logm=log(900), logq = c(log(1),log(0.04)), logn = log(2),
+                logbkfrac = log(0.9), logsdf = log(0.3), logF0 = log(0.8))
+inpsim <- sim.spict(inp)
+plotspict.data(inpsim)
+
+
+set.seed(9321)
+nt <- 30
+inp <- list(nseasons = 1)
+inp$timeC <- seq(0, nt - 1 / inp$nseasons, by = 1 / inp$nseasons)
+inp$nindex <- 2
+inp$nobsI <- c(24,16)
+inp$timeI <- list()
+inp$timeI[[1]] <- seq(0.12, inp$nobsI[1] + 0.12, 1)
+inp$timeI[[2]] <- seq(2.65, inp$nobsI[2] + 0.65, 1)
+inp$ini <- list(logK = log(1000), logm=log(900), logq = c(log(1),log(0.04)), logn = log(2),
+                logbkfrac = log(0.9), logsdf = log(0.3), logF0 = log(3))
+inpsim <- sim.spict(inp)
+plotspict.data(inpsim)
+
+fit <- fit.spict(inpsim)
+plot(fit)
+
+
+man <- manage(fit,c(1,2))
+plot(man)
+
+plotspict.biomass(man)
+
+
+add.manlines <- function(rep, par, par2=NULL, index.shift=0, plot.legend=TRUE, verbose = TRUE, ...){
+    browser()
+    scenarios <- 1:length(rep$man)
+    nman <- length(scenarios)
+    errflag <- rep(FALSE,nman)
+    for (i in 1:nman){
+        rp <- rep$man[[scenarios[i]]]
+        ip <- rp$inp
+        manint <- ip$maninterval
+        mandiff <- diff(manint)
+        est <- get.par(par, rp, exp=TRUE)[,2]
+        dtcp <- ip$dtcp
+        if(par == 'logCpred'){
+            time <- rp$inp$timeCpred
+            lastobs <- ip$lastCatchObs
+            indlastobs <- which(time == lastobs)
+        }else{
+            time <- rp$inp$time
+            lastobs <- ip$timerangeObs[2]
+            indlastobs <- which(time == lastobs)
+        }
+        indmanstart <- which(time >= manint[1])
+        ## manperiod
+        maninds <- (indmanstart[1] - index.shift):tail(indmanstart,1)
+        if (is.null(par2)){
+            x <- time[maninds]
+        } else {
+            x <- get.par(par2, rp, exp=TRUE)[maninds, 2]
+        }
+        y <- est[maninds]
+        browser()
+        lines(time, est, col="red")
+    }
+    ## legend
+    nouse <- capture.output(nms <- rownames(sumspict.manage(rep, include.unc=FALSE, verbose=FALSE)))
+    if (plot.legend){
+        legend('topleft', legend=nms, lty=1, col=man.cols()[1:nman], bg='white', cex=0.8)
+    }
+    ## Note
+    if(errflag && verbose) cat(paste0("The management period of scenario(s): ",
+                                          paste0(names(rep$man)[errflag],collapse=", "),
+                                          " is shorter than 1 year. Thus, the catch cannot be displayed correctly in the annual catch plot.\n"))
+}
+
+
+
+####
+
+
+require(spict)
+
+getwd()
+
+dat <- read.csv("data/seasonalCatches.csv")
+
+inp <- dat2inp(dat)
+
+inp <- pol$albacore
+
+fit <- fit.spict(inpin)
+
+
+inpin <- check.inp(inp,FALSE,FALSE)
+
+
+dbg <- 0
+repin <- fit
+
+
+    plt <- inpin$parlist
+    datint <- make.datin(inpin, dbg=dbg)
+    objt <- make.obj(datint, plt, inpin, phase=1)
+    objt$retape()
+    ## Get updated sd report
+    objt$fn(repin$opt$par)
+    ## get updated sd report
+    verflag <- as.numeric(gsub('[.]', '', as.character(packageVersion('TMB')))) >= 171
+
+        repout <- try(TMB::sdreport(objt,
+                                    getJointPrecision=repin$inp$getJointPrecision,
+                                    bias.correct=repin$inp$bias.correct,
+                                    bias.correct.control=repin$inp$bias.correct.control,
+                                    getReportCovariance=repin$inp$getReportCovariance),silent=TRUE)
+
+        repout$inp <- inpin
+        repout$obj <- objt
+        repout$opt <- repin$opt
+        repout$opt$gr <- repout$obj$gr(repin$opt$par)
+        repout$pl <- repout$obj$env$parList(repin$opt$par)
+        repout$obj$fn()
+        repout$Cp <- repout$obj$report()$Cp
+        repout$report <- repout$obj$report()
+        if(inpin$reportall && !inpin$osar.method == 'none'){
+            reposar <- try(calc.osa.resid(repout), silent=TRUE)
+            if (class(reposar) != 'try-error') repout <- reposar
+        }
+        repout$computing.time <- repin$computing.time
+        if("man" %in% names(repin)) repout$man <- repin$man
+         class(repout) <- "spictcls"
+
+
+inp <- inpsim
+
+inpin$timeC <- c(inpin$timeC,30)
+inpin$obsC <- c(inpin$obsC,inpin$obsC[30])
+
+fit2 <- spict::retape.spict(fit,inp)
+
+fit$man <- list()
+fit$man[[1]] <- repout
+names(fit$man) <- "lastCatch"
+
+plot2(fit)
+
+
+inpTest <- list()
+inpTest$timeC <- inpsim$timeC
+inpTest$obsC <- inpsim$obsC
+inpTest$timeI <- inpsim$timeI
+inpTest$obsI <- inpsim$obsI
+
+save(inpTest, file="inpTest.RData")
+
+
+require(spict)
+load("inpTest.RData")
+
+inpsim <- inpTest
+
+inpsim <- check.inp(inpsim)
+inpsim$timepredc
+inpsim$dtpredc <- 1
+fit <- fit.spict(inpsim)
+man <- manage(fit,c(1,2))
+plot(man)
+
+
+par(mfrow=c(3,1))
+fit2 <- man$man[[1]]
+##
+a <- get.par("logFFmsynotS",fit,exp=T)[,2]
+b <- get.par("logFFmsynotS",fit2,exp=T)[,2]
+##
+plot(fit$inp$time,a,ty='l',ylab="Catch",xlab="Time",lwd=1.5)
+lines(fit2$inp$time,b,col=4,lty=2,lwd=2)
+legend("topleft",c("fit","manage with current catch"),
+       col=c(1,4),lty=c(1,2),bty="n",lwd=2)
+abline(v=fit$inp$timerange[2],col="grey")
+abline(h=1,col="grey")
+title("FFmsy")
+##
+a <- get.par("logBBmsy",fit,exp=T)[,2]
+b <- get.par("logBBmsy",fit2,exp=T)[,2]
+##
+plot(fit$inp$time,a,ty='l',ylab="Catch",xlab="Time",lwd=1.5)
+lines(fit2$inp$time,b,col=4,lty=2,lwd=2)
+abline(v=fit$inp$timerange[2],col="grey")
+abline(h=1,col="grey")
+title("BBmsy")
+##
+a <- get.par("logCpred",fit,exp=T)[,2]
+b <- get.par("logCpred",fit2,exp=T)[,2]
+##
+plot(fit$inp$timeCpred,a,ty='l',ylab="Catch",xlab="Time",lwd=1.5,ylim=c(0,max(a)+300))
+lines(fit2$inp$timeCpred,b,col=4,lty=2,lwd=2)
+points(fit$inp$timeC,fit$inp$obsC)
+points(max(fit2$inp$timeC),tail(fit2$inp$obsC,1),col=2,pch=16,cex=1.3)
+legend("topleft",c("Fit","Fit retaped with last catch","obs","assumed last catch"),
+       col=c(1,4,1,2),lty=c(1,2,NA,NA),bty="n",pch=c(NA,NA,1,16))
+abline(v=29,col="grey")
+title("Catch")
+
+## dev.print(pdf,"retapingSpict.pdf")
+
+plot2(man)
+
+
+ap <- get.par("logCp",fit,exp=T)[,2]
+bp <- get.par("logCp",fit2,exp=T)[,2]
+
+
+fit2$inp$obsC
+
+
+fit$inp$obsC
+repout$inp$obsC
+
+
+inp2 <- fit$inp
+inp2$timeC <- c(inp2$timeC,30)
+inp2$obsC <- c(inp2$obsC,tail(inp2$obsC,1))
+inp2$stdevfacC <- c(inp2$stdevfacC,1)
+inp2$dtc <- c(inp2$dtc,1)
+
+fit2 <- retape.spict(fit, inp2)
+
+fit$man <- list()
+fit$man[[1]] <- fit2
+names(fit$man) <- "lastCatch"
+
+plot2(fit)
+
+fit2 <- man$man[[1]]
+
+
+dev.print(pdf,"Incorrect_retaping.pdf")
+
+plotspict.ffmsy(man)
+
+dev.print(pdf,"constantCatchDemo_highF_notSeasonal.pdf")
+getwd()
+
+plotspict.biomass(man)
+
+plotspict.catch(man)
+
+plot(man$inp$timeC,man$inp$obsC, ty='b',xlim=range(man$inp$timeC)+c(0,2),lwd=2)
+lines(man$man[[1]]$inp$timeC,man$man[[1]]$inp$obsC, col=4,ty='b',lwd=2,lty=2)
+
+
+tail(cbind(man$inp$timeC,man$inp$obsC),4)
+tail(cbind(man$man[[1]]$inp$timeC,man$man[[1]]$inp$obsC),8)
+
+cbind(man$inp$timeCpred,get.par("logCpred",man,exp=T)[,2])
+cbind(man$man[[1]]$inp$timeCpred,get.par("logCpred",man$man[[1]],exp=T)[,2])
+
+
+man$man[[1]]$inp$dtpredc
+
+test <- man.select(man,1)
+
+plot2(test)
+
+test2 <- test$man[[1]]
+test2 <- man.select(test,1, spictcls = TRUE)
+
+plot2(test2)
+test2$inp$timeC
+man$man[[1]]$inp$obsC
+
 
 
             if(length(colNames$timeC) < 1 || colNames$timeC == "") stop("No times of the catch observations provided! Choose corresponding column names.")

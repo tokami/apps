@@ -8,56 +8,218 @@ output:
     toc: false
     keep_tex: false
 bibliography: bibliography.bib
+header-includes: \usepackage{color}
 ---
 
-```{r, echo = FALSE}
+```{r settings, echo = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "  ", fig.align = 'center', cache=FALSE)
+library(png)
+library(grid)
 ```
+\vspace*{2cm}
 
 This toturial guides you through a SPiCT assessment using the click-based Shiny
 app "spictapp".
 
-
-# Installation
-
-The spictapp requires the SPiCT R package to be installed on your computer. This
-package can be downnloaded and installed from GitHub using the `devtools`
-package:
-
-```{r, eval=FALSE}
-if (!require("devtools"))
-  install.packages("devtools")
-devtools::install_github("DTUAqua/spict/spict")
+```{r home, fig.width=6, echo=FALSE, fig.cap="Home screen of spictapp."}
+img <- readPNG("figs/home.png")
+ grid.raster(img)
 ```
 
-The spictapp is also hosted on GitHub and can thus be downaloaded and installed by:
+\vspace*{1cm}
 
-```{r, eval=FALSE}
-if (!require("devtools"))
-  install.packages("devtools")
-devtools::install_github("tokami/apps/spictapp")
-```
+# Download
 
-Alternatively, the package can also be installed by the specific exectuable for
-your operating system, available [here](https://github.com/tokami/apps).
+The spictapp is hosted on [\underline{GitHub}](https://github.com/tokami/apps/)
+and can be downloaded as a [\underline{zip
+archive}](https://github.com/tokami/apps/archive/master.zip). Unpack the archive
+to the destination of your choice.
 
+\vspace*{1cm}
 
 # Start the App
 
+Before the start of the app, **spictapp** checks if all required R packages are
+required and installs any missing packages. To assure windows compatibility
+without requiring Rtools (large software package), the binary version of the
+spict R package is included in the zip archive and installed upon start of the
+app.
 
-# Input data
+The app can be started by double-clicking the respective exectuable in the
+spictapp directory, i.e. 'spictapp' for linux and mac and 'spictapp_win' for
+windows operating systems (the file endings are '.sh' and '.bat', respectively).
 
+Alternatively the script `runapp.R` in the spictapp directory can be executed
+from within R or with `Rscript runapp.R` from the terminal or command line.
 
-# Explore data
+\vspace*{1cm}
 
+# Home
+
+On start, the app shows the home screen of spictapp (Fig. 1), which shows four
+important plots of a simulated spict assessment (find more information to the
+plots below). At the top of the screen is the orange navigation bar of the app,
+which guides the user through the indivdual steps of a spict assessment (Fig.
+2). The active tab is highlighted in darker tone (tab called 'Load data' in Fig.
+2). The tab 'Quit' closes the app and browser window (in any browser other than
+firefox >= 46.0.1). This tutorial is structured following the steps of a common
+spict assessment and thus the tabs in the navigation bar.
+
+```{r navbar1 , fig.width=8, echo=FALSE, fig.cap="Tabs with assessment steps in the navigation bar."}
+img <- readPNG("figs/navbar1.png")
+grid.raster(img)
+```
+
+At the far right of the navigation bar, the name of the uploaded data set is
+displayed (Fig. 3). In this example, the albcaore example data set was selected.
+The data name is shown independent on the active tab and helps avoid confusion
+when dealing with different data sets.
+
+```{r navbar2, fig.width=0.9, echo=FALSE, fig.cap="Data label in the navigation bar."}
+img <- readPNG("figs/navbar2.png")
+grid.raster(img)
+```
+
+\vspace*{1cm}
+
+# Load data
+
+Any assessment requires input data. SPiCT requires information about the catches
+from the commercial fleet with corresponding time intervals and an abundance
+index or effort data, alternatively. While the catches and effort refer to an
+interval and the times of the start of these intervals have to be provided, the
+abdundance indices (multiple indices possible) correspond to a specific point
+in time, which can be specified as 2015.37 for mid May for example. Find more
+information about the data requirements of **SPiCT** in the two vignettes
+[\underline{SPiCT Guidelines}](../apps/www/spict_guidelines.pdf)
+and [\underline{SPiCT Handbook}](../apps/www/spict_handbook.pdf).
+
+The button 'Browse...' in the 'Load Data' tab allows you to browse through your
+directories and upload any data set to **spictapp** (Fig. 4). The only
+requirement for the data file is that it has either the '.txt' or '.csv' file
+extension. Both file types can be created from Excel or R. The specific
+properties of the file can be changed within the app with the options given for
+seperators, quotes, and header. After uploading, the apps displays the data in
+its raw format and will try to automatically match the column names with the
+names expected by **SPiCT**. If successful in matching expected column names,
+the data set will also be displayed under 'Data with assigned columns'.
+
+```{r loadData1, fig.width=6, echo=FALSE, fig.cap="Upload data to spictapp."}
+img <- readPNG("figs/loadData1.png")
+grid.raster(img)
+```
+
+If not all columns expected by **SPiCT** could be matched, the user can select
+the columns corresponding to the commercial catch observations ('obsC'), with
+corresponding times ('timeC') and index ('obsI') or effort ('obsE') observations
+with corresponding times ('timeI') or ('timeE'), respectively, where the names
+in brackets reflect the correspinding  standard **SPiCT** variable names (Fig.
+5). Note, that the app allows to input several columns for the index
+observations and times, but only one column for the catch and effort
+observations and times.
+
+```{r loadData2, fig.height=8, echo=FALSE, fig.cap="Assign columns."}
+img <- readPNG("figs/loadData2.png")
+grid.raster(img)
+```
+
+With pressing 'Update data', the columns are assigned to
+the corresponding **SPiCT** variables and the resulting data is displyed under
+'Data with assigned columns' (Fig. 6).
+
+```{r loadData3, fig.width=6, echo=FALSE, fig.cap="Assign columns."}
+img <- readPNG("figs/loadData3.png")
+grid.raster(img)
+```
+
+**SPiCT** also allows you to specify the uncertainty around input data as a
+factor to multiply estimated observation noise with. For example, the
+uncertainty of the catch observations might have changed over time due to an
+improved data monitoring system. The three input fields below the 'Update data'
+button, let you assign corresponding columns in your data to these variables
+(called 'stdevfacC', 'stdevfacI', and 'stdevfacE' in **SPiCT**, respectively).
+
+One of the three originalexample data sets included in the spict pacakge can be
+choosen by pressing 'Use example data set?' at the bottom of the page (Fig. 5).
+Note that many more example data sets are included in the data directory of the
+spictapp zip archive.
+
+\vspace*{1cm}
+
+# Explore & modify data
+
+Blabla sPiCT timeline and data plot
+
+```{r exploData1, fig.width=6, echo=FALSE, fig.cap="Assign columns."}
+img <- readPNG("figs/loadData3.png")
+grid.raster(img)
+```
+changing dteuler, timing of index catch unit
+
+change time range of all data, robust estimation for catches (several for
+indices possible / required if several indices)
+
+seaosnal spict if seaosnal catches, number of seasons, by default dependent on
+input data 4 for quarterly catches and 1 for annual catches, season type and
+splieorder for season type 1 and 3
+
+mangement interval, management evaluation time, ffac or fcon
+
+default priors
+
+additional priors
+
+display options (advance data plot)
+
+\vspace*{1cm}
 
 # SPiCT assessment
 
+fit spict by click on button,
+
+convergence message
+
+set seed value for reproducible results and assessments
+
+optimiser (expert see handbook)
+
+\vspace*{1cm}
 
 # Diagnostics
 
+run retrospecitve analysis
+
+run sesnitivity analysis to intital values
+
+\vspace*{1cm}
 
 # Management with SPiCT
 
+run different management scenarios, intermediate period, catch during
+intermediate period, fratile of catch dist
+
+\vspace*{1cm}
+
+# Summary
+
+all results summarised and options to download (assessment report), all tables
+as zip archive, all figures as zip archive or all data as RData (includes a R
+list object called 'rv') which includes all used data and estimations allowing
+to reproduce the whole functionality of the app in R. The description of all
+individual elements of that list would exceed the scope of this vignette. see
+the names of all elements with `names(rv)`.
+
+\vspace*{1cm}
+
+# Other
+
+## References
+
+references relevant for this app.
+
+## About
+
+more information about the app, version, developers. question/issues links to
+user forum on RG
 
 # References

@@ -26,6 +26,7 @@ source("../funcs/serverFuncs.R")
 ##-----------------------------------------------------------------------------------
 shinyServer(function(input, output, session) {
 
+
     ## GENERAL ##################################################################################################
     ## reactive buttons (when tabs changed or undo pressed)
     rv <- reactiveValues(doDatLoad = FALSE,
@@ -283,7 +284,7 @@ shinyServer(function(input, output, session) {
     update.dat <- function(){
         datORI <- rv$datORI
         colNames <- rv$colNames
-        if(!input$useExDat && !is.null(colNames)){
+        if(!input$useExDat && !is.null(colNames) && !is.null(datORI)){
             rv$dat <- checkDat(datORI, colNames)
             dat <- rv$dat
             rv$inpORI <- inp <- dat2inp(dat)
@@ -338,7 +339,7 @@ shinyServer(function(input, output, session) {
         }
     )
 
-    output$fileContentRaw <- renderDataTable({
+    output$fileContentRaw <- renderTable({
         if(rv$doDatLoad == FALSE){
             return()
         }else{
@@ -351,7 +352,7 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    output$fileContent <- renderDataTable({
+    output$fileContent <- renderTable({
         if(rv$doDatLoad == FALSE){
             return()
         }else{
@@ -531,10 +532,42 @@ shinyServer(function(input, output, session) {
                 inp$priors$logbeta <- c(input$logBetaPriorMu,input$logBetaPriorSd,1)
             else
                 inp$priors$logbeta <- c(input$logBetaPriorMu,input$logBetaPriorSd,0)
-            if(input$BmsyB0Prior)
-                inp$priors$BmsyB0 <- c(input$BmsyB0PriorMu,input$BmsyB0PriorSd,1)
-            else
-                inp$priors$BmsyB0 <- c(input$BmsyB0PriorMu,input$BmsyB0PriorSd,0)
+            tmp <- ifelse(input$BmsyB0Prior,1,0)
+            inp$priors$BmsyB0 <- c(input$BmsyB0PriorMu,input$BmsyB0PriorSd,tmp)
+
+            tmp <- ifelse(input$logbkfracPrior,1,0)
+            inp$priors$logbkfrac <- c(input$logbkfracPriorMu,input$logbkfracPriorSd,tmp)
+
+            tmp <- ifelse(input$logngammaPrior,1,0)
+            inp$priors$logngamma <- c(input$logngammaPriorMu,input$logngammaPriorSd,tmp)
+
+            tmp <- ifelse(input$logKPrior,1,0)
+            inp$priors$logK <- c(input$logKMu,input$logKSd,tmp)
+
+            tmp <- ifelse(input$logmPrior,1,0)
+            inp$priors$logm <- c(input$logmMu,input$logmSd,tmp)
+
+            tmp <- ifelse(input$logrPrior,1,0)
+            inp$priors$logr <- c(input$logrMu,input$logrSd,tmp)
+
+            tmp <- ifelse(input$logqfPrior,1,0)
+            inp$priors$logqf <- c(input$logqfMu,input$logqfSd,tmp)
+
+            tmp <- ifelse(input$logsdbPrior,1,0)
+            inp$priors$logsdb <- c(input$logsdbMu,input$logsdbSd,tmp)
+
+            tmp <- ifelse(input$logsdiPrior,1,0)
+            inp$priors$logsdi <- c(input$logsdiMu,input$logsdiSd,tmp)
+
+            tmp <- ifelse(input$logsdfPrior,1,0)
+            inp$priors$logsdf <- c(input$logsdfMu,input$logsdfSd,tmp)
+
+            tmp <- ifelse(input$logsdePrior,1,0)
+            inp$priors$logsde <- c(input$logsdeMu,input$logsdeSd,tmp)
+
+            tmp <- ifelse(input$logsdcPrior,1,0)
+            inp$priors$logsdc <- c(input$logsdcMu,input$logsdcSd,tmp)
+
             ## save
             rv$inp <- inp
         }
@@ -741,8 +774,8 @@ shinyServer(function(input, output, session) {
     })
 
     ## only run if action button used
-    observeEvent(input$runretro, {
-        rv$doSENSI <- input$runretro
+    observeEvent(input$runsensi, {
+        rv$doSENSI <- input$runsensi
     })
 
     ## reset button
@@ -774,7 +807,7 @@ shinyServer(function(input, output, session) {
     })
 
     spict.retro <- function(){
-        if(is.null(rv$fit)){
+        if(is.null(rv$fit) ){
             showNotification(
                 paste("The retrospective analysis requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
                 type = "error",
@@ -828,9 +861,17 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    output$plotDiag <- renderPlot({
+    output$diag <- renderPrint({
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
+        }else{
+            sumspict.diagnostics(rv$fit)
+        }
+    })
+
+    output$plotDiag <- renderPlot({
+        if(rv$doSPICT == FALSE){
+            return()
         }else{
             plotspict.diagnostic(rv$fit)
         }
@@ -838,7 +879,7 @@ shinyServer(function(input, output, session) {
 
     output$plotRetro <- renderPlot({
         if(rv$doRETRO == FALSE){
-            writeLines("No results of the retrospective analysis. Run 'Run retro'.")
+            return()
         }else{
             isolate({
                 spict.retro()
@@ -926,10 +967,10 @@ shinyServer(function(input, output, session) {
             progress$set(message = "Evaluating the management scenarios.",
                          detail = "This may take a while. This window will disappear
                      automatically when done.", value = 1)
-            mana <- manage(fit, scenarios = input$scenarios,
+            mana <- manage(fit, scenarios = as.numeric(input$scenarios),
                            maninterval = input$maninterval2,
-                           maneval = input$maneval,
-                           intermediaterPeriodCatch = input$ipc)
+                           maneval = input$maneval2,
+                           intermediatePeriodCatch = input$ipc)
             rv$mana <- mana
         }
     }
@@ -945,6 +986,15 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    output$tacs <- renderPrint({
+        req(rv$mana)
+        if(rv$doMANA){
+            lapply(man.tac(rv$mana, input$fractileCatch),round,3)
+        }else{
+            writeLines("No management scenarios. Run 'Run manage'.")
+        }
+    })
+
     output$mantimeline2 <- renderPrint({
         req(rv$fit)
         if(rv$doSPICT == FALSE){
@@ -957,10 +1007,11 @@ shinyServer(function(input, output, session) {
     })
 
     output$plotMana <- renderPlot({
-        if(rv$doMANA == FALSE){
-            return()
-        }else{
+        req(rv$mana)
+        if(rv$doMANA){
             plot2(rv$mana)
+        }else{
+            return()
         }
     })
 
@@ -968,14 +1019,16 @@ shinyServer(function(input, output, session) {
     ## SUMMARY  ##################################################################################
 
     output$sumParest <- renderPrint({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
-            sumspict.parest(rv$fit)
+            round(sumspict.parest(rv$fit),3)
         }
     })
 
     output$sumSrefpoints <- renderPrint({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
@@ -984,6 +1037,7 @@ shinyServer(function(input, output, session) {
     })
 
     output$sumDrefpoints <- renderPrint({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
@@ -992,6 +1046,7 @@ shinyServer(function(input, output, session) {
     })
 
     output$sumStates <- renderPrint({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
@@ -1000,6 +1055,7 @@ shinyServer(function(input, output, session) {
     })
 
     output$sumPredictions <- renderPrint({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
@@ -1008,22 +1064,43 @@ shinyServer(function(input, output, session) {
     })
 
     output$sumDiag <- renderPrint({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
-            round(sumspict.diagnostics(rv$fit),3)
+            sumspict.diagnostics(rv$fit)
         }
     })
 
     output$sumIni <- renderPrint({
+        req(rv$sensi)
         if(rv$doSENSI == FALSE){
             writeLines("No results from the sensitivity analysis. Run 'Run check.ini'.")
         }else{
-            round(sumspict.ini(rv$fit),3)
+            round(sumspict.ini(rv$sensi),3)
+        }
+    })
+
+    output$sumMana <- renderPrint({
+        req(rv$mana)
+        if(rv$doMANA == FALSE){
+            writeLines("No management scenarios. Run 'Run manage'.")
+        }else{
+            sumspict.manage(rv$mana)
+        }
+    })
+
+    output$sumTACs <- renderPrint({
+        req(rv$mana)
+        if(rv$doMANA){
+            lapply(man.tac(rv$mana, input$fractileCatch),round,3)
+        }else{
+            writeLines("No management scenarios. Run 'Run manage'.")
         }
     })
 
     output$plotAll <- renderPlot({
+        req(rv$fit)
         if(rv$doSPICT == FALSE){
             return()
         }else{
@@ -1032,10 +1109,20 @@ shinyServer(function(input, output, session) {
     })
 
     output$plotMana2 <- renderPlot({
+        req(rv$mana)
         if(rv$doMANA == FALSE){
             return()
         }else{
             plot(rv$mana)
+        }
+    })
+
+    output$plotRetroSum <- renderPlot({
+        req(rv$retro)
+        if(rv$doRETRO == FALSE){
+            return()
+        }else{
+            plotspict.retro(rv$retro)
         }
     })
 
