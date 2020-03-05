@@ -42,8 +42,8 @@ to the destination of your choice.
 Before the start of the app, **spictapp** checks if all required R packages are
 required and installs any missing packages. To assure windows compatibility
 without requiring Rtools (large software package), the binary version of the
-spict R package is included in the zip archive and installed upon start of the
-app.
+spict R package (version 1.3.0) is included in the zip archive and installed
+upon start of the app.
 
 The app can be started by double-clicking the respective exectuable in the
 spictapp directory, i.e. 'spictapp' for linux and mac and 'spictapp_win' for

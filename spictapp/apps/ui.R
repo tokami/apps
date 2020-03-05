@@ -426,72 +426,99 @@ shinyUI(
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "lognPrior",
                                         "log(n)",
                                         TRUE)
                                 ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
-                                        "lognPriorMu",
+                                        "lognMu",
                                         "mu",
                                         log(2))
                                 ),
                                 column(
                                     3,
                                     numericInput(
-                                        "lognPriorSd",
+                                        "lognSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "lognLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             ## logalpha
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logAlphaPrior",
                                         "log(alpha)",
                                         TRUE)
                                 ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
-                                        "logAlphaPriorMu",
+                                        "logAlphaMu",
                                         "mu",
                                         1)
                                 ),
                                 column(
                                     3,
                                     numericInput(
-                                        "logAlphaPriorSd",
+                                        "logAlphaSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logAlphaLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             ##logbeta
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logBetaPrior",
                                         "log(beta)",
                                         TRUE)
                                 ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
-                                        "logBetaPriorMu",
+                                        "logBetaMu",
                                         "mu",
                                         1)
                                 ),
                                 column(
                                     3,
                                     numericInput(
-                                        "logBetaPriorSd",
+                                        "logBetaSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logBetaLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             )
                         ),
@@ -501,22 +528,23 @@ shinyUI(
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "BmsyB0Prior",
                                         "Bmsy/B0",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
-                                        "BmsyB0PriorMu",
+                                        "BmsyB0Mu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
                                     numericInput(
-                                        "BmsyB0PriorSd",
+                                        "BmsyB0Sd",
                                         "sd",
                                         2)
                                 )
@@ -524,17 +552,18 @@ shinyUI(
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logbkfracPrior",
                                         "log(B/K)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logbkfracMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -542,22 +571,31 @@ shinyUI(
                                         "logbkfracSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logbkfracLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logngammaPrior",
                                         "log(ngamma)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logngammaMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -565,22 +603,31 @@ shinyUI(
                                         "logngammaSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logngammaLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logKPrior",
                                         "log(K)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logKMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -588,22 +635,31 @@ shinyUI(
                                         "logKSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logKLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logrPrior",
                                         "log(r)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logrMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -611,22 +667,31 @@ shinyUI(
                                         "logrSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logrLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logmPrior",
                                         "log(m)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logmMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -634,22 +699,31 @@ shinyUI(
                                         "logmSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logmLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logqfPrior",
                                         "log(qf)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logqfMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -657,22 +731,31 @@ shinyUI(
                                         "logqfSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logqfLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logsdbPrior",
                                         "log(sdb)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logsdbMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -680,22 +763,31 @@ shinyUI(
                                         "logsdbSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logsdbLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logsdiPrior",
                                         "log(sdi)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logsdiMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -703,22 +795,31 @@ shinyUI(
                                         "logsdiSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logsdiLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logsdfPrior",
                                         "log(sdf)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logsdfMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -726,22 +827,31 @@ shinyUI(
                                         "logsdfSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logsdfLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logsdePrior",
                                         "log(sde)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logsdeMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -749,22 +859,31 @@ shinyUI(
                                         "logsdeSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logsdeLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             ),
                             fluidRow(
                                 column(
                                     3,
+                                    br(),
                                     checkboxInput(
                                         "logsdcPrior",
                                         "log(sdc)",
                                         FALSE),
                                     ),
                                 column(
-                                    4,
+                                    3,
                                     numericInput(
                                         "logsdcMu",
                                         "mu",
-                                        0.5)
+                                        1)
                                 ),
                                 column(
                                     3,
@@ -772,6 +891,14 @@ shinyUI(
                                         "logsdcSd",
                                         "sd",
                                         2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logsdcLog",
+                                        "log(mu)",
+                                        TRUE)
                                 )
                             )
                         ),
@@ -1276,7 +1403,7 @@ shinyUI(
                     HTML('<span style="color:#d35400;">spictapp </span>'),
                     ' is the click-based Shiny app for the SPiCT package. SPiCT is the Stochastic Production model in Continuous Time developed by Martin W. Pedersen and Casper W. Berg (2017). This app allows you to do a complete stock assessment of your own data with SPiCT including the estimation of reference levels, current and future stock status, sensitivity analysis to intial values, retrospective analysis, and the exploration of different management strategies. The software is licensed with the GPL-3.0 License',a("(link)",target="_blank",href="license.txt"),
                     'and the latest release has the version number ',
-                    HTML('<span style="color:#d35400;"> 1.0.0 </span>'),'.',
+                    HTML('<span style="color:#d35400;"> 0.9.1 </span>'),'.',
                     br(), br(), tags$h2("Download"), tags$hr(),
                     'To be able to use "spictapp", please download the app from GitHub ',
                     a("(link)",href="https://github.com/tokami/apps/spictapp"),

@@ -30,7 +30,6 @@ shinyServer(function(input, output, session) {
     ## GENERAL ##################################################################################################
     ## reactive buttons (when tabs changed or undo pressed)
     rv <- reactiveValues(doDatLoad = FALSE,
-                         doDatUp = TRUE,
                          doSPICT = FALSE,
                          doRETRO = FALSE,
                          doSENSI = FALSE,
@@ -39,7 +38,6 @@ shinyServer(function(input, output, session) {
     ## Defaults
     rv.defaults <- function(){
         rv$doDatLoad <- FALSE
-        rv$doDatUp <- TRUE
         rv$doSPICT <- FALSE
         rv$doRETRO <- FALSE
         rv$doSENSI <- FALSE
@@ -50,6 +48,7 @@ shinyServer(function(input, output, session) {
         rv$dat <- NULL
         rv$inp <- NULL
         rv$inpORI <- NULL
+        rv$seed <- NULL
         rv$fit <- NULL
         rv$retro <- NULL
         rv$mana <- NULL
@@ -520,53 +519,90 @@ shinyServer(function(input, output, session) {
             inp <- check.man.time(inp)
             inp <- check.inp(inp)
             ## priors
-            if(input$lognPrior)
-                inp$priors$logn <- c(input$lognPriorMu,input$lognPriorSd,1)
-            else
-                inp$priors$logn <- c(input$lognPriorMu,input$lognPriorSd,0)
-            if(input$logAlphaPrior)
-                inp$priors$logalpha <- c(input$logAlphaPriorMu,input$logAlphaPriorSd,1)
-            else
-                inp$priors$logalpha <- c(input$logAlphaPriorMu,input$logAlphaPriorSd,0)
-            if(input$logBetaPrior)
-                inp$priors$logbeta <- c(input$logBetaPriorMu,input$logBetaPriorSd,1)
-            else
-                inp$priors$logbeta <- c(input$logBetaPriorMu,input$logBetaPriorSd,0)
+            if(input$lognPrior){
+                mu <- input$lognMu
+                mu <- ifelse(input$lognLog,log(mu),mu)
+                inp$priors$logn <- c(mu,input$lognSd,1)
+            }else{
+                mu <- input$lognMu
+                mu <- ifelse(input$lognLog,log(mu),mu)
+                inp$priors$logn <- c(mu,input$lognSd,0)
+            }
+            if(input$logAlphaPrior){
+                mu <- input$logAlphaMu
+                mu <- ifelse(input$logAlphaLog,log(mu),mu)
+                inp$priors$logalpha <- c(mu,input$logAlphaSd,1)
+            }else{
+                mu <- input$logAlphaMu
+                mu <- ifelse(input$logAlphaLog,log(mu),mu)
+                inp$priors$logalpha <- c(input$logAlphaMu,input$logAlphaSd,0)
+            }
+            if(input$logBetaPrior){
+                mu <- input$logBetaMu
+                mu <- ifelse(input$logBetaLog,log(mu),mu)
+                inp$priors$logbeta <- c(input$logBetaMu,input$logBetaSd,1)
+            }else{
+                mu <- input$logBetaMu
+                mu <- ifelse(input$logBetaLog,log(mu),mu)
+                inp$priors$logbeta <- c(input$logBetaMu,input$logBetaSd,0)
+            }
             tmp <- ifelse(input$BmsyB0Prior,1,0)
-            inp$priors$BmsyB0 <- c(input$BmsyB0PriorMu,input$BmsyB0PriorSd,tmp)
+            inp$priors$BmsyB0 <- c(input$BmsyB0Mu,input$BmsyB0Sd,tmp)
 
             tmp <- ifelse(input$logbkfracPrior,1,0)
-            inp$priors$logbkfrac <- c(input$logbkfracPriorMu,input$logbkfracPriorSd,tmp)
+            mu <- input$logbkfracMu
+            mu <- ifelse(input$logbkfracLog,log(mu),mu)
+            inp$priors$logbkfrac <- c(mu,input$logbkfracSd,tmp)
 
             tmp <- ifelse(input$logngammaPrior,1,0)
-            inp$priors$logngamma <- c(input$logngammaPriorMu,input$logngammaPriorSd,tmp)
+            mu <- input$logngammaMu
+            mu <- ifelse(input$logngammaLog,log(mu),mu)
+            inp$priors$logngamma <- c(mu,input$logngammaSd,tmp)
 
             tmp <- ifelse(input$logKPrior,1,0)
-            inp$priors$logK <- c(input$logKMu,input$logKSd,tmp)
+            mu <- input$logKMu
+            mu <- ifelse(input$logKLog,log(mu),mu)
+            inp$priors$logK <- c(mu,input$logKSd,tmp)
 
             tmp <- ifelse(input$logmPrior,1,0)
-            inp$priors$logm <- c(input$logmMu,input$logmSd,tmp)
+            mu <- input$logmMu
+            mu <- ifelse(input$logmLog,log(mu),mu)
+            inp$priors$logm <- c(mu,input$logmSd,tmp)
 
             tmp <- ifelse(input$logrPrior,1,0)
-            inp$priors$logr <- c(input$logrMu,input$logrSd,tmp)
+            mu <- input$logrMu
+            mu <- ifelse(input$logrLog,log(mu),mu)
+            inp$priors$logr <- c(mu,input$logrSd,tmp)
 
             tmp <- ifelse(input$logqfPrior,1,0)
-            inp$priors$logqf <- c(input$logqfMu,input$logqfSd,tmp)
+            mu <- input$logqfMu
+            mu <- ifelse(input$logqfLog,log(mu),mu)
+            inp$priors$logqf <- c(mu,input$logqfSd,tmp)
 
             tmp <- ifelse(input$logsdbPrior,1,0)
-            inp$priors$logsdb <- c(input$logsdbMu,input$logsdbSd,tmp)
+            mu <- input$logsdbMu
+            mu <- ifelse(input$sdbLog,log(mu),mu)
+            inp$priors$logsdb <- c(mu,input$logsdbSd,tmp)
 
             tmp <- ifelse(input$logsdiPrior,1,0)
-            inp$priors$logsdi <- c(input$logsdiMu,input$logsdiSd,tmp)
+            mu <- input$logsdiMu
+            mu <- ifelse(input$logsdiLog,log(mu),mu)
+            inp$priors$logsdi <- c(mu,input$logsdiSd,tmp)
 
             tmp <- ifelse(input$logsdfPrior,1,0)
-            inp$priors$logsdf <- c(input$logsdfMu,input$logsdfSd,tmp)
+            mu <- input$logsdfMu
+            mu <- ifelse(input$logsdfLog,log(mu),mu)
+            inp$priors$logsdf <- c(mu,input$logsdfSd,tmp)
 
             tmp <- ifelse(input$logsdePrior,1,0)
-            inp$priors$logsde <- c(input$logsdeMu,input$logsdeSd,tmp)
+            mu <- input$logsdeMu
+            mu <- ifelse(input$logsdeLog,log(mu),mu)
+            inp$priors$logsde <- c(mu,input$logsdeSd,tmp)
 
             tmp <- ifelse(input$logsdcPrior,1,0)
-            inp$priors$logsdc <- c(input$logsdcMu,input$logsdcSd,tmp)
+            mu <- input$logsdcMu
+            mu <- ifelse(input$logsdcLog,log(mu),mu)
+            inp$priors$logsdc <- c(mu,input$logsdcSd,tmp)
 
             ## save
             rv$inp <- inp
@@ -666,6 +702,7 @@ shinyServer(function(input, output, session) {
             inp$optim.method <- input$optimMethod
             inp$optimiser.control <- list(iter.max = input$itermax, eval.max = input$evalmax)
             set.seed(input$seed)
+            rv$seed <- input$seed
 
             progress <- shiny::Progress$new()
             ## Make sure it closes when we exit this reactive, even if there's an error
@@ -724,8 +761,10 @@ shinyServer(function(input, output, session) {
             return()
         }else{
             nopriors <- get.no.active.priors(rv$fit$inp)
-            par(mfrow = c(1,nopriors))
-            plotspict.priors(rv$fit, automfrow = FALSE, do.plot=3)
+            if(is.numeric(nopriors) && nopriors > 0){
+                par(mfrow = c(1,nopriors))
+                plotspict.priors(rv$fit, automfrow = FALSE)
+            }
         }
     })
 
@@ -1020,7 +1059,7 @@ shinyServer(function(input, output, session) {
 
     output$sumParest <- renderPrint({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             round(sumspict.parest(rv$fit),3)
@@ -1029,7 +1068,7 @@ shinyServer(function(input, output, session) {
 
     output$sumSrefpoints <- renderPrint({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             round(sumspict.srefpoints(rv$fit),3)
@@ -1038,7 +1077,7 @@ shinyServer(function(input, output, session) {
 
     output$sumDrefpoints <- renderPrint({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             round(sumspict.drefpoints(rv$fit),3)
@@ -1047,7 +1086,7 @@ shinyServer(function(input, output, session) {
 
     output$sumStates <- renderPrint({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             round(sumspict.states(rv$fit),3)
@@ -1056,7 +1095,7 @@ shinyServer(function(input, output, session) {
 
     output$sumPredictions <- renderPrint({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             round(sumspict.predictions(rv$fit),3)
@@ -1065,7 +1104,7 @@ shinyServer(function(input, output, session) {
 
     output$sumDiag <- renderPrint({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             writeLines("No model fitted. Run 'Fit SPiCT'.")
         }else{
             sumspict.diagnostics(rv$fit)
@@ -1074,7 +1113,7 @@ shinyServer(function(input, output, session) {
 
     output$sumIni <- renderPrint({
         req(rv$sensi)
-        if(rv$doSENSI == FALSE){
+        if(rv$doSENSI == FALSE || rv$doDatLoad == FALSE){
             writeLines("No results from the sensitivity analysis. Run 'Run check.ini'.")
         }else{
             round(sumspict.ini(rv$sensi),3)
@@ -1083,7 +1122,7 @@ shinyServer(function(input, output, session) {
 
     output$sumMana <- renderPrint({
         req(rv$mana)
-        if(rv$doMANA == FALSE){
+        if(rv$doMANA == FALSE || rv$doDatLoad == FALSE){
             writeLines("No management scenarios. Run 'Run manage'.")
         }else{
             sumspict.manage(rv$mana)
@@ -1092,16 +1131,16 @@ shinyServer(function(input, output, session) {
 
     output$sumTACs <- renderPrint({
         req(rv$mana)
-        if(rv$doMANA){
-            lapply(man.tac(rv$mana, input$fractileCatch),round,3)
-        }else{
+        if(rv$doMANA == FALSE || rv$doDatLoad == FALSE){
             writeLines("No management scenarios. Run 'Run manage'.")
+        }else{
+            lapply(man.tac(rv$mana, input$fractileCatch),round,3)
         }
     })
 
     output$plotAll <- renderPlot({
         req(rv$fit)
-        if(rv$doSPICT == FALSE){
+        if(rv$doSPICT == FALSE || rv$doDatLoad == FALSE){
             return()
         }else{
             plot(rv$fit)
@@ -1110,7 +1149,7 @@ shinyServer(function(input, output, session) {
 
     output$plotMana2 <- renderPlot({
         req(rv$mana)
-        if(rv$doMANA == FALSE){
+        if(rv$doMANA == FALSE || rv$doDatLoad == FALSE){
             return()
         }else{
             plot(rv$mana)
@@ -1119,7 +1158,7 @@ shinyServer(function(input, output, session) {
 
     output$plotRetroSum <- renderPlot({
         req(rv$retro)
-        if(rv$doRETRO == FALSE){
+        if(rv$doRETRO == FALSE || rv$doDatLoad == FALSE){
             return()
         }else{
             plotspict.retro(rv$retro)
@@ -1145,13 +1184,13 @@ shinyServer(function(input, output, session) {
             paste0("spictapp_tables_",filename,"_",Sys.Date(),".zip")
         },
         content = function(con){
-            tables <- c("parest","states","predictions")
+            tables <- c("parest","states","predictions","drefpoints","srefpoints","manage")
             fs <- c()
             tmpdir <- tempdir()
             ## parest
             i = 1
             if(!is.null(rv$fit)){
-                path <- paste0(tables[i], ".csv")
+                path <- paste0(tmpdir,"/",tables[i], ".csv")
                 fs <- c(fs, path)
                 tab <- round(sumspict.parest(rv$fit),3)
                 write.csv(tab, path)
@@ -1159,7 +1198,7 @@ shinyServer(function(input, output, session) {
             ## states
             i = 2
             if(!is.null(rv$fit)){
-                path <- paste0(tables[i], ".csv")
+                path <- paste0(tmpdir,"/",tables[i], ".csv")
                 fs <- c(fs, path)
                 tab <- round(sumspict.states(rv$fit),3)
                 write.csv(tab, path)
@@ -1167,9 +1206,33 @@ shinyServer(function(input, output, session) {
             ## predictions
             i = 3
             if(!is.null(rv$fit)){
-                path <- paste0(tables[i], ".csv")
+                path <- paste0(tmpdir,"/",tables[i], ".csv")
                 fs <- c(fs, path)
                 tab <- round(sumspict.predictions(rv$fit),3)
+                write.csv(tab, path)
+            }
+            ## drefs
+            i = 4
+            if(!is.null(rv$fit)){
+                path <- paste0(tmpdir,"/",tables[i], ".csv")
+                fs <- c(fs, path)
+                tab <- round(sumspict.drefpoints(rv$fit),3)
+                write.csv(tab, path)
+            }
+            ## srefs
+            i = 5
+            if(!is.null(rv$fit)){
+                path <- paste0(tmpdir,"/",tables[i], ".csv")
+                fs <- c(fs, path)
+                tab <- round(sumspict.srefpoints(rv$fit),3)
+                write.csv(tab, path)
+            }
+            ## man
+            i = 6
+            if(!is.null(rv$mana)){
+                path <- paste0(tmpdir,"/",tables[i], ".csv")
+                fs <- c(fs, path)
+                tab <- round(sumspict.manage(rv$mana),3)
                 write.csv(tab, path)
             }
             ##
@@ -1190,11 +1253,10 @@ shinyServer(function(input, output, session) {
             graphs <- c("data", "priors","plot2","retro","manage","plotAll","plotAll_manage")
             fs <- c()
             tmpdir <- tempdir()
-            ##                setwd(tempdir())
             ## data plot
             i = 1
             if(!is.null(rv$inp)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plotspict.data(rv$inp)
@@ -1203,13 +1265,13 @@ shinyServer(function(input, output, session) {
             ## priors
             i = 2
             if(!is.null(rv$fit)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plotspict.priors(rv$fit)
                 dev.off()
             }else if(!is.null(rv$inp)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plotspict.priors.inp(rv$inp)
@@ -1218,7 +1280,7 @@ shinyServer(function(input, output, session) {
             ## plot2
             i = 3
             if(!is.null(rv$fit)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plot2(rv$fit)
@@ -1227,7 +1289,7 @@ shinyServer(function(input, output, session) {
             ## retro
             i = 4
             if(!is.null(rv$retro)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plotspict.retro(rv$retro)
@@ -1236,7 +1298,7 @@ shinyServer(function(input, output, session) {
             ## manage
             i = 5
             if(!is.null(rv$mana)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plot2(rv$mana)
@@ -1245,7 +1307,7 @@ shinyServer(function(input, output, session) {
             ## plot all
             i = 6
             if(!is.null(rv$fit)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plot(rv$fit)
@@ -1254,7 +1316,7 @@ shinyServer(function(input, output, session) {
             ## plot all manage
             i = 7
             if(!is.null(rv$mana)){
-                path <- paste0(graphs[i], ".pdf")
+                path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
                 pdf(path)
                 plot(rv$mana)
@@ -1292,7 +1354,7 @@ shinyServer(function(input, output, session) {
             params <- list(rv = rv)
 
             td <- tempdir()
-            tmp_file <- tempfile(fileext = ".pdf")
+            tmp_file <- tempfile(fileext = ".html")
             tmp_file2 <- tempfile(fileext = ".Rmd")
 
             file.copy("report/spictapp.bib", td,
@@ -1300,7 +1362,7 @@ shinyServer(function(input, output, session) {
             file.copy("report/assessmentReport.Rmd", tmp_file2, overwrite = TRUE)
 
             rmarkdown::render(tmp_file2,
-                              output_format = "pdf_document",
+                              output_format = "html_document",
                               output_file = tmp_file,
                               output_dir = td,
                               intermediates_dir = td,
@@ -1325,7 +1387,7 @@ shinyServer(function(input, output, session) {
         ## This function returns a string which tells the client
         ## browser what name to use when saving the file.
         filename = function() {
-            paste0("spictapp_report_", Sys.Date(), ".pdf")
+            paste0("spictapp_report_", Sys.Date(), ".html")
             ##     filename = strsplit(rv$filename,"Data: ")[[1]][2]
             ##     paste0("STF_report_",filename,"_",Sys.Date(),".pdf")
         },
