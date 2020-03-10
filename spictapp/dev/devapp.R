@@ -1,3 +1,28 @@
+## Removed from runapp
+
+
+## Install packages
+## -------------------------
+installed <- rownames(installed.packages())
+needed <- c("shiny","shinyjs","shinythemes","shinydashboard","rmarkdown","htmltools")
+install.packages(needed[! needed %in% installed], repos="https://cloud.r-project.org/")
+
+## Operating system
+## -------------------------
+os <- .Platform$OS.type
+if(os == "unix"){ ## linux + mac
+    ## remotes::install_github("tokami/spict/spict@FIDEA")
+    install.packages("pkg/spict_1.3.0.tar.gz",repos=NULL)  ## package needs to be in path!
+}else if(os == "windows"){ ## windows
+    install.packages("pkg/spict_1.3.0.zip",repos=NULL)  ## package needs to be in path!
+}else{
+    stop("Operating System not known!")
+}
+
+
+## older:
+
+
 ## remotes::install_github("DTUAqua/spict/spict")
 require(spict)
 

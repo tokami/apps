@@ -1,0 +1,88 @@
+---
+title: "Dynamic ShinyTropFish Assessment Report"
+author: "Tobias K. Mildenberger"
+date: "`r Sys.Date()`"
+output: pdf_document
+params:
+  rv: NA
+bibliography: TropFishR.bib  
+---
+
+```{r ReaddataLoadLibraries, message=FALSE, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      cache = FALSE,
+                      warning = FALSE,
+                      eval = TRUE,
+                      error = FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      include = TRUE,
+                      collapse = TRUE,
+                      comment = "#>",
+                      fig.show = "hold",
+                      fig.width=8, fig.height=7)
+```
+
+This report has been created automatically with the ShinyTropFish software. It provides some background to the different assessment methods and summaries the results of the length-based stock assessment based on the data set "`r print(strsplit(params$rv$filename,"Data: ")[[1]][2])`".
+According to @Sparre1998b, ... 
+
+Based on TropFishR version ... 
+
+
+##*Data*
+
+```{r}
+head(params$rv$dat)
+```
+
+
+##*Growth*
+
+
+```{r}
+print(params$rv$parsGrowth)
+```
+
+
+
+##*Mortality*
+
+
+```{r}
+print(params$rv$parsMort)
+```
+
+
+
+
+##*Reference levels*
+
+##*Yield per recruit model*
+
+
+
+```{r, echo = FALSE, eval = TRUE}
+print(params$rv$parsRef)
+```
+
+
+
+
+##*Length-based spawning potential ratio*
+
+
+
+
+##*Summary*
+For management purposes, fish stock assessments are mainly conducted for single species or stocks, which describe the manamgent units of a population. There is much to be gained from multi-species and ecosystem models, but data requirements and complexity make them often unsuitable for deriving management advice. For data-poor fisheries, a traditional fish stock assessment solely based on length-frequency (LFQ) data of one year (as presented here) is particularly useful. LFQ data comes with many advantages over long time series of catch and effort or catch-at-age data [@Mildenberger2016].
+In this exercise, the exploitation rate and results of the yield per recruit models indicate that the fiseries is close to sustainable exploitation. The exploration of stock status and fisheries characteristics can of course be extended, but go beyond the scope of this tutorial, which is thought to help getting started with the **`TropFishR`** package. Further details about functions and their arguments can be found in the help files of the functions (`help(...)` or `?..`, where the dots refer to any function of the package). Also the two publications by @Mildenberger2016 and by @Taylor2016 provide more details about the functionality and context of the package.
+
+
+
+
+##*Author's comment*
+If you have comments or questions please write an [email](mailto:t.k.mildenberger@gmail.com) or post an issue at [GitHub](https://github.com/tokami/TropFishR/issues). You can follow the development of **`TropFishR`** on [ResearchGate](https://www.researchgate.net/project/TropFishR?_esc=homefeed&_viewIds%5B0%5D=hVPmo2RDCok60qGq2z0JOroN&_viewIds%5B1%5D=zyj0j6jnUgNvrPXMrG9rouAP).
+
+
+##*References*
+

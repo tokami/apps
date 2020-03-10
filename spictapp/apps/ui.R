@@ -437,7 +437,7 @@ shinyUI(
                                     numericInput(
                                         "lognMu",
                                         "mu",
-                                        log(2))
+                                        2)
                                 ),
                                 column(
                                     3,
@@ -578,7 +578,7 @@ shinyUI(
                                     checkboxInput(
                                         "logbkfracLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -610,7 +610,7 @@ shinyUI(
                                     checkboxInput(
                                         "logngammaLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -642,7 +642,7 @@ shinyUI(
                                     checkboxInput(
                                         "logKLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -674,7 +674,7 @@ shinyUI(
                                     checkboxInput(
                                         "logrLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -706,9 +706,162 @@ shinyUI(
                                     checkboxInput(
                                         "logmLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    checkboxInput(
+                                        "logqPrior",
+                                        "log(q)",
+                                        FALSE),
+                                    ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logqMu",
+                                        "mu",
+                                        1)
+                                ),
+                                column(
+                                    3,
+                                    numericInput(
+                                        "logqSd",
+                                        "sd",
+                                        2)
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    checkboxInput(
+                                        "logqLog",
+                                        "log(mu)",
+                                        FALSE)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     checkboxInput(
+                                                         "logqPrior2",
+                                                         "log(q2)",
+                                                         FALSE)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     numericInput(
+                                                         "logqMu2",
+                                                         "mu",
+                                                         1)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     numericInput(
+                                                         "logqSd2",
+                                                         "sd",
+                                                         2)
+                                                     )
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     checkboxInput(
+                                                         "logqLog2",
+                                                         "log(mu)",
+                                                         FALSE)
+                                                     )
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     checkboxInput(
+                                                         "logqPrior3",
+                                                         "log(q3)",
+                                                         FALSE)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     numericInput(
+                                                         "logqMu3",
+                                                         "mu",
+                                                         1)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     numericInput(
+                                                         "logqSd3",
+                                                         "sd",
+                                                         2)
+                                                     )
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     checkboxInput(
+                                                         "logqLog3",
+                                                         "log(mu)",
+                                                         FALSE)
+                                                     )
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     checkboxInput(
+                                                         "logqPrior4",
+                                                         "log(q4)",
+                                                         FALSE)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     numericInput(
+                                                         "logqMu4",
+                                                         "mu",
+                                                         1)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     numericInput(
+                                                         "logqSd4",
+                                                         "sd",
+                                                         2)
+                                                     )
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     checkboxInput(
+                                                         "logqLog4",
+                                                         "log(mu)",
+                                                         FALSE)
+                                                     )
+                                )
+                            ),
+
                             fluidRow(
                                 column(
                                     3,
@@ -738,7 +891,7 @@ shinyUI(
                                     checkboxInput(
                                         "logqfLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -770,7 +923,7 @@ shinyUI(
                                     checkboxInput(
                                         "logsdbLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -802,7 +955,127 @@ shinyUI(
                                     checkboxInput(
                                         "logsdiLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     checkboxInput(
+                                                         "logsdiPrior2",
+                                                         "log(sdi2)",
+                                                         FALSE)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     numericInput(
+                                                         "logsdiMu2",
+                                                         "mu",
+                                                         1)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     numericInput(
+                                                         "logsdiSd2",
+                                                         "sd",
+                                                         2)
+                                                     )
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 2",
+                                                     checkboxInput(
+                                                         "logsdiLog2",
+                                                         "log(mu)",
+                                                         FALSE)
+                                                     )
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     checkboxInput(
+                                                         "logsdiPrior3",
+                                                         "log(sdi3)",
+                                                         FALSE)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     numericInput(
+                                                         "logsdiMu3",
+                                                         "mu",
+                                                         1)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     numericInput(
+                                                         "logsdiSd3",
+                                                         "sd",
+                                                         2)
+                                                     )
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 3",
+                                                     checkboxInput(
+                                                         "logsdiLog3",
+                                                         "log(mu)",
+                                                         FALSE)
+                                                     )
+                                )
+                            ),
+                            fluidRow(
+                                column(
+                                    3,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     checkboxInput(
+                                                         "logsdiPrior4",
+                                                         "log(sdi4)",
+                                                         FALSE)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     numericInput(
+                                                         "logsdiMu4",
+                                                         "mu",
+                                                         1)
+                                                     )
+                                ),
+                                column(
+                                    3,
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     numericInput(
+                                                         "logsdiSd4",
+                                                         "sd",
+                                                         2)
+                                                     )
+                                ),
+                                column(
+                                    2,
+                                    br(),
+                                    conditionalPanel("output.noSurv >= 4",
+                                                     checkboxInput(
+                                                         "logsdiLog4",
+                                                         "log(mu)",
+                                                         FALSE)
+                                                     )
                                 )
                             ),
                             fluidRow(
@@ -834,7 +1107,7 @@ shinyUI(
                                     checkboxInput(
                                         "logsdfLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -866,7 +1139,7 @@ shinyUI(
                                     checkboxInput(
                                         "logsdeLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             ),
                             fluidRow(
@@ -898,7 +1171,7 @@ shinyUI(
                                     checkboxInput(
                                         "logsdcLog",
                                         "log(mu)",
-                                        TRUE)
+                                        FALSE)
                                 )
                             )
                         ),
@@ -1040,7 +1313,7 @@ shinyUI(
                         br(),
                         h3("Main SPiCT plots"),
                         tags$hr(),
-                        plotOutput("plot2",height="750px"),
+                        plotOutput("plot2",height="800px"),
                         br(),
                         br(),
                         h3("Summary of model fit"),
@@ -1048,16 +1321,10 @@ shinyUI(
                         verbatimTextOutput("fit"),
                         br(),
                         br(),
-                        h3("Priors"),
+                        h3("Additional plots"),
                         tags$hr(),
-                        plotOutput("plotPriors",height="350px"),
-                        br(),
-                        verbatimTextOutput("sumPriors"),
-                        br(),
-                        br(),
-                        h3("Absolute trajectories"),
-                        tags$hr(),
-                        plotOutput("plotAbs",height="400px")
+                        plotOutput("plotAdd",height="800px")
+
                     ))
             ),
 
@@ -1115,14 +1382,19 @@ shinyUI(
                     ),
                     ## Show a plot of the generated distribution
                     mainPanel(
+                        h3("Priors"),
+                        tags$hr(),
+                        plotOutput("plotPriors",height="350px"),
+                        br(),
+                        verbatimTextOutput("sumPriors"),
+                        br(),
+                        br(),
                         h3("Diagnostics"),
                         tags$hr(),
+                        plotOutput("plotDiag",height="950px"),
+                        br(),
+                        br(),
                         verbatimTextOutput("diag"),
-                        br(),
-                        br(),
-                        h3("Diagnostics plot"),
-                        tags$hr(),
-                        plotOutput("plotDiag",height="900px"),
                         br(),
                         br(),
                         h3("Retrospective analysis"),
@@ -1149,7 +1421,8 @@ shinyUI(
                     sidebarPanel(
                         id="sidebar",
                         "Comparing the implications of alternative management strategies is crucial for sustainable fisheries management. SPiCT includes 8 pre-defined harvest control rules which can be selected below. Find more guidance on fisheries management in the SPiCT guidelines",
-                       a("(link).",target="_blank",href="spict_guidelines.pdf"),
+                        a("(link).",target="_blank",href="spict_guidelines.pdf"),
+                        br(),
                         div(
                             style="display:inline-block;width:95%;text-align: center;",
                             actionButton("runmana",

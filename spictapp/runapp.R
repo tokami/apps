@@ -3,28 +3,15 @@
 ## Tobias K. Mildenberger
 ## March 2020
 
-## Install packages
-## -------------------------
-installed <- rownames(installed.packages())
-needed <- c("shiny","shinyjs","shinythemes","shinydashboard","rmarkdown","htmltools")
-install.packages(needed[! needed %in% installed], repos="https://cloud.r-project.org/")
 
-## Operating system
-## -------------------------
-os <- .Platform$OS.type
-if(os == "unix"){ ## linux + mac
-    ## remotes::install_github("tokami/spict/spict@FIDEA")
-    install.packages("pkg/spict_1.3.0.tar.gz",repos=NULL)  ## package needs to be in path!
-}else if(os == "windows"){ ## windows
-    install.packages("pkg/spict_1.3.0.zip",repos=NULL)  ## package needs to be in path!
-}else{
-    stop("Operating System not known!")
-}
 
-## load shiny
+## Set working directory to script location (check for ubuntu)
 ## -------------------------
-library(shiny)
+tried <- try(setwd(getSrcDirectory()[1]), silent=TRUE)
+if(inherits(tried, "try-error"))
+    trie <- try(setwd(dirname(rstudioapi::getActiveDocumentContext()$path)), silent=TRUE)
+
 
 ## Run the application
 ## -------------------------
-runApp("apps/", launch.browser = TRUE)
+shiny::runApp("apps/", launch.browser = TRUE)

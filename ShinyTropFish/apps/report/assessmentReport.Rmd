@@ -1,0 +1,169 @@
+---
+title: "Dynamic Assessment Report created by ShinyTropFish"
+author: "Tobias K. Mildenberger"
+date: "`r Sys.Date()`"
+output:
+    html_document:
+        toc: true
+        toc_depth: 2
+        toc_float:
+            collapsed: false
+            smooth_scroll: false
+        theme: united
+        highlight: tango
+    pdf_document:
+        toc: true
+        toc_depth: 2
+        highlight: tango
+params:
+  rv: NA
+bibliography: "`r file.path(tempdir(), 'TropFishR.bib')`"
+header-includes:
+ \usepackage{booktabs}
+ \usepackage{longtable}
+ \usepackage{array}
+ \usepackage{multirow}
+ \usepackage[table]{xcolor}
+ \usepackage{wrapfig}
+ \usepackage{float}
+ \floatplacement{figure}{H}
+---
+
+```{r ReaddataLoadLibraries, message=FALSE, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      cache = FALSE,
+                      warning = FALSE,
+                      eval = TRUE,
+                      error = FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      include = TRUE,
+                      collapse = TRUE,
+                      comment = "#>",
+                      fig.show = "hold",
+                      fig.width=10, fig.height=7)
+library(TropFishR)
+library(knitr)
+```
+
+<br><br><br>
+\vspace*{1.5cm}
+
+<font size="-3">
+\small
+**Disclaimer**
+
+This report has been created automatically by the ShinyTropFish software. The
+authors of the app do not accept any responsibility or liability for the
+correctness and reliability of the results summarised in the app or this report
+nor any conclusions based on them. The interpretation and use of the
+ShinyTropFish software, its results, and this report is strictly at your own
+risk.
+
+**Package version numbers**
+
+This report was created with by ShinyTropFish (version `0.9.1`) based on the
+**`TropFishR`** package (version `r packageVersion("TropFishR")`; @Mildenberger2016).
+
+</font>
+\normalsize
+
+<br><br><br>
+\vspace*{1.2cm}
+
+# *Data*
+
+The results in this report are based on the data set labelled
+`r paste0("'",strsplit(params$rv$filename,"Data: ")[[1]][2],"'")`.
+The columns in the uploaded data set (Table 1) were used in the
+analysis (first 10 rows of each column displayed). The complete data set is
+included in the appendix of this report.
+
+```{r rawdat}
+if(!is.null(params$rv$dat)) kable(
+                                head(params$rv$dat, 10), booktabs = TRUE,
+                                caption = "Input data.")
+```
+
+<br><br>
+
+# *Growth*
+
+
+```{r}
+if(!is.null(rv$parsGrowth) & !is.null(rv$resGA)){
+    tmp <- as.data.frame(c(rv$parsGrowth,
+                           list(Rn_max = rv$resGA@fitnessValue)) )
+    names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
+    names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phiL")
+    tmp
+}
+```
+
+```{r}
+if(!is.null(rv$parsGrowth) & !is.null(rv$lfqFC)){
+par(mar=c(5,5,2,1))
+plot(rv$lfqFC, Fname = "rcounts")
+lfqFC <- rv$lfqFC
+tmp <- lfqFitCurves(lfq = lfqFC,
+             par=as.list(rv$parsGrowth),
+             draw = TRUE)
+}
+```
+
+
+<br><br>
+
+
+# *Mortality*
+
+
+```{r}
+if(!is.null(rv$parsMort)){
+    print(params$rv$parsMort)
+}
+```
+
+
+<br><br>
+
+# *Reference levels*
+
+
+```{r, echo = FALSE, eval = TRUE}
+if(!is.null(rv$parsRef)){
+    print(params$rv$parsRef)
+}
+```
+
+<br><br>
+
+# *Summary*
+
+For management purposes, fish stock assessments are mainly conducted for single species or stocks, which describe the manamgent units of a population. There is much to be gained from multi-species and ecosystem models, but data requirements and complexity make them often unsuitable for deriving management advice. For data-poor fisheries, a traditional fish stock assessment solely based on length-frequency (LFQ) data of one year (as presented here) is particularly useful. LFQ data comes with many advantages over long time series of catch and effort or catch-at-age data [Mildenberger2016].
+In this exercise, the exploitation rate and results of the yield per recruit models indicate that the fiseries is close to sustainable exploitation. The exploration of stock status and fisheries characteristics can of course be extended, but go beyond the scope of this tutorial, which is thought to help getting started with the **`TropFishR`** package. Further details about functions and their arguments can be found in the help files of the functions (`help(...)` or `?..`, where the dots refer to any function of the package). Also the two publications by Mildenberger2016 and by Taylor2016 provide more details about the functionality and context of the package.
+
+<br><br>
+
+# *Author's comment*
+
+If you have comments or questions please write an [email](mailto:t.k.mildenberger@gmail.com) or post an issue at [GitHub](https://github.com/tokami/TropFishR/issues). You can follow the development of **`TropFishR`** on [ResearchGate](https://www.researchgate.net/project/TropFishR?_esc=homefeed&_viewIds%5B0%5D=hVPmo2RDCok60qGq2z0JOroN&_viewIds%5B1%5D=zyj0j6jnUgNvrPXMrG9rouAP).
+
+<br><br>
+
+# *References*
+
+<br><br>
+
+# Appendix
+
+## Raw data {#app:data}
+
+The complete data set used for the analysis:
+
+```{r}
+if(!is.null(params$rv$dat))
+    kable(params$rv$dat,
+        booktabs = TRUE,
+        caption = "Full uploaded data.")
+```

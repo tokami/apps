@@ -498,7 +498,7 @@ scenarios are displayed in different colours in Fig. \ref{fig:manplot}.
 if(!is.null(params$rv$mana)) plot2(params$rv$mana)
 ```
 
-In detial, the difference between the management scenarios are:
+In detail, the differences between the management scenarios are:
 
 ```{r mansum}
 if(!is.null(params$rv$mana))

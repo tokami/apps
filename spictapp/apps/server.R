@@ -459,7 +459,6 @@ shinyServer(function(input, output, session) {
                     width = "100%")
     })
 
-
     update.inp <- reactive({
         if(is.null(rv$dat)){
             showNotification(
@@ -581,13 +580,60 @@ shinyServer(function(input, output, session) {
 
             tmp <- ifelse(input$logsdbPrior,1,0)
             mu <- input$logsdbMu
-            mu <- ifelse(input$sdbLog,log(mu),mu)
+            mu <- ifelse(input$logsdbLog,log(mu),mu)
             inp$priors$logsdb <- c(mu,input$logsdbSd,tmp)
 
             tmp <- ifelse(input$logsdiPrior,1,0)
             mu <- input$logsdiMu
             mu <- ifelse(input$logsdiLog,log(mu),mu)
-            inp$priors$logsdi <- c(mu,input$logsdiSd,tmp)
+            inp$priors$logsdi[[1]] <- c(mu,input$logsdiSd,tmp)
+
+            if(ifelse(inherits(inp$obsI, "list"), length(inp$obsI), 1) >= 2){
+                tmp <- ifelse(input$logsdiPrior2,1,0)
+                mu <- input$logsdiMu2
+                mu <- ifelse(input$logsdiLog2,log(mu),mu)
+                inp$priors$logsdi[[2]] <- c(mu,input$logsdiSd2,tmp)
+            }
+
+            if(ifelse(inherits(inp$obsI, "list"), length(inp$obsI), 1) >= 3){
+                tmp <- ifelse(input$logsdiPrior3,1,0)
+                mu <- input$logsdiMu3
+                mu <- ifelse(input$logsdiLog3,log(mu),mu)
+                inp$priors$logsdi[[3]] <- c(mu,input$logsdiSd3,tmp)
+            }
+
+            if(ifelse(inherits(inp$obsI, "list"), length(inp$obsI), 1) >= 4){
+                tmp <- ifelse(input$logsdiPrior4,1,0)
+                mu <- input$logsdiMu4
+                mu <- ifelse(input$logsdiLog4,log(mu),mu)
+                inp$priors$logsdi[[4]] <- c(mu,input$logsdiSd4,tmp)
+            }
+
+            tmp <- ifelse(input$logqPrior,1,0)
+            mu <- input$logqMu
+            mu <- ifelse(input$logqLog,log(mu),mu)
+            inp$priors$logq[[1]] <- c(mu,input$logqSd,tmp)
+
+            if(ifelse(inherits(inp$obsI, "list"), length(inp$obsI), 1) >= 2){
+                tmp <- ifelse(input$logqPrior2,1,0)
+                mu <- input$logqMu2
+                mu <- ifelse(input$logqLog2,log(mu),mu)
+                inp$priors$logq[[2]] <- c(mu,input$logqSd2,tmp)
+            }
+
+            if(ifelse(inherits(inp$obsI, "list"), length(inp$obsI), 1) >= 3){
+                tmp <- ifelse(input$logqPrior3,1,0)
+                mu <- input$logqMu3
+                mu <- ifelse(input$logqLog3,log(mu),mu)
+                inp$priors$logq[[3]] <- c(mu,input$logqSd3,tmp)
+            }
+
+            if(ifelse(inherits(inp$obsI, "list"), length(inp$obsI), 1) >= 4){
+                tmp <- ifelse(input$logqPrior4,1,0)
+                mu <- input$logqMu4
+                mu <- ifelse(input$logqLog4,log(mu),mu)
+                inp$priors$logq[[4]] <- c(mu,input$logqSd4,tmp)
+            }
 
             tmp <- ifelse(input$logsdfPrior,1,0)
             mu <- input$logsdfMu
@@ -609,12 +655,18 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    output$noSurv <- renderText({
+        if(any(!is.null(rv$inp)))
+            ifelse(inherits(rv$inp$obsI, "list"), length(rv$inp$obsI), 1) else 1
+    })
+    outputOptions(output, 'noSurv', suspendWhenHidden=FALSE)
 
     output$dataplot <- renderPlot({
         req(rv$inp)
         if(rv$doDatLoad == FALSE){
             return()
         }else{
+            update.inp()
             inp <- rv$inp
             if(input$dataplotAdv){
                 plotspict.ci(inp)
@@ -710,9 +762,8 @@ shinyServer(function(input, output, session) {
             progress$set(message = "Fitting SPiCT.",
                          detail = "This may take a while. This window will disappear
                      automatically when done.", value = 1)
-
             fit <- fit.spict(inp)
-            fit <- calc.osa.resid(fit)
+            try(fit <- calc.osa.resid(fit),silent=TRUE)
             rv$fit <- fit
         }
     }
@@ -763,18 +814,24 @@ shinyServer(function(input, output, session) {
             nopriors <- get.no.active.priors(rv$fit$inp)
             if(is.numeric(nopriors) && nopriors > 0){
                 par(mfrow = c(1,nopriors))
-                plotspict.priors(rv$fit, automfrow = FALSE)
+                plotspict.priors.inp(rv$fit, automfrow = FALSE, do.plot=nopriors, stamp='')
             }
         }
     })
 
-    output$plotAbs <- renderPlot({
+    output$plotAdd <- renderPlot({
         if(rv$doSPICT == FALSE){
             return()
         }else{
-            par(mfrow=c(1,2))
-            plotspict.biomass(rv$fit)
-            plotspict.f(rv$fit)
+            par(mfrow=c(2,2))
+            plotspict.biomass(rv$fit, stamp='')
+            plotspict.f(rv$fit, stamp='')
+            plotspict.production(rv$fit, stamp='')
+            if (rv$inp$nseasons > 1 && rv$inp$seasontype %in% c(1,3)){
+                plotspict.season(rv$fit, stamp='')
+            }else if (rv$inp$nseasons == 1 && !(rv$inp$timevaryinggrowth || rv$inp$logmcovflag)){
+                plotspict.tc(rv$fit, stamp='')
+            }else plot.new()
         }
     })
 
@@ -1258,7 +1315,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$inp)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 10, height = 11)
                 plotspict.data(rv$inp)
                 dev.off()
             }
@@ -1267,13 +1324,13 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$fit)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 11)
                 plotspict.priors(rv$fit)
                 dev.off()
             }else if(!is.null(rv$inp)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 11)
                 plotspict.priors.inp(rv$inp)
                 dev.off()
             }
@@ -1282,7 +1339,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$fit)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 10)
                 plot2(rv$fit)
                 dev.off()
             }
@@ -1291,7 +1348,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$retro)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 10)
                 plotspict.retro(rv$retro)
                 dev.off()
             }
@@ -1300,7 +1357,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$mana)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 10)
                 plot2(rv$mana)
                 dev.off()
             }
@@ -1309,7 +1366,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$fit)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 11)
                 plot(rv$fit)
                 dev.off()
             }
@@ -1318,7 +1375,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(rv$mana)){
                 path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                 fs <- c(fs, path)
-                pdf(path)
+                pdf(path, width = 12, height = 11)
                 plot(rv$mana)
                 dev.off()
             }

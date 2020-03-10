@@ -108,3 +108,52 @@ dat <- dat[c("timeC","obsC","timeI1","obsI1","timeI2","obsI2")]
 
 ## save
 write.csv(dat, file = "seasonalCatches.csv")
+
+
+
+## really data limited data (catch + 3 biomass indices)
+## ----------------------------------------------
+inp <- pol$albacore
+
+catch <- inp$obsC[17:23]
+timeC <- 2013:2019
+index <- inp$obsI[c(20,22,23)]
+timeI <- c(2016,2018,2019)
+
+inp <- list()
+inp$timeC <- timeC
+inp$obsC <- catch
+inp$timeI <- timeI
+inp$obsI <- index
+
+inp <- check.inp(inp)
+dat <- inp2dat(inp)
+
+dat <- dat[c("timeC","obsC","timeI1","obsI1")]
+
+## save
+write.csv(dat, file = "datlim.csv")
+
+
+## really data limited data (catch + effort)
+## ----------------------------------------------
+inp <- pol$albacore
+
+catch <- inp$obsC[17:23]
+timeC <- 2013:2019
+effort <- inp$obsI[17:23] / catch
+timeE <- timeC
+
+inp <- list()
+inp$timeC <- timeC
+inp$obsC <- catch
+inp$timeE <- timeE
+inp$obsE <- effort
+
+inp <- check.inp(inp)
+dat <- inp2dat(inp)
+
+dat <- dat[c("timeC","obsC","timeE","obsE")]
+
+## save
+write.csv(dat, file = "datlim2.csv")

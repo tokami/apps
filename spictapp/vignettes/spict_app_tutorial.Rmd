@@ -127,7 +127,7 @@ With pressing 'Update data', the columns are assigned to
 the corresponding **SPiCT** variables and the resulting data is displyed under
 'Data with assigned columns' (Fig. 6).
 
-```{r loadData3, fig.width=6, echo=FALSE, fig.cap="Assign columns."}
+```{r loadData3, fig.width=6, echo=FALSE, fig.cap="Uploaded data with assigned columns."}
 img <- readPNG("figs/loadData3.png")
 grid.raster(img)
 ```
@@ -148,78 +148,202 @@ spictapp zip archive.
 
 # Explore & modify data
 
-Blabla sPiCT timeline and data plot
+This step of the analysis visualises the input data and allows to explore and
+modify the input data to the SPiCT assessment. The SPiCT timeline visualises the
+time period with observations (catch, indices, and/or effort), the forecast
+period which is used in all management related functions, and the potential
+intermediate period between observations and start of the management (Fig. 7).
+Furthermore, the observations are displayed as time series graphs (Fig. 7) and
+as text output (Fig. 8). Note that catches in SPiCT are generally labelled with
+a capital 'C', indices with a capital 'I', and effort with a capital 'E'. The
+number of plots can vary with the number of index time series (here 2).
 
-```{r exploData1, fig.width=6, echo=FALSE, fig.cap="Assign columns."}
-img <- readPNG("figs/loadData3.png")
+```{r exploData1, fig.width=6, echo=FALSE, fig.cap="Explore and modify SPiCT input data, part I."}
+img <- readPNG("figs/explo1.png")
 grid.raster(img)
 ```
-changing dteuler, timing of index catch unit
 
-change time range of all data, robust estimation for catches (several for
-indices possible / required if several indices)
+Under 'General Settings', a range of options allows to modify the input data and
+model settings (Figures 7 and 8). The Euler discretisation time step defining the
+number of time steps within a year (default is 16) can be changed. The timing of
+the indices can be adjusted by entering a number(s) for each index, e.g. 0.25 to
+adjust the timing of the index to April. The time period of the observations can
+be shortened by changing the sliders. Be aware that this affects all time series
+(e.g. catches and all indices). For seasonal catch/effort observations, the
+number of seasonal, the season type and and spline order can be adjusted.
 
-seaosnal spict if seaosnal catches, number of seasons, by default dependent on
-input data 4 for quarterly catches and 1 for annual catches, season type and
-splieorder for season type 1 and 3
+The 'Management settings' allow to specify the management interval (period for
+which to predict catches and in which to apply potential management strategies),
+as well as the management evaluation time (time at which to evaluate predicted
+states), and the management strategy by changing the fishing mortality, as a
+factor to multiply current F by or as an absolute F value. Note, that the
+management related settings can be re-adjusted in the 'Management scenarios'
+section.
 
-mangement interval, management evaluation time, ffac or fcon
+```{r exploData2, fig.width=6, echo=FALSE, fig.cap="Explore and modify SPiCT input data, part II."}
+img <- readPNG("figs/explo2.png")
+grid.raster(img)
+```
 
-default priors
+SPiCT defines 3 uninformative priors by default: (i) on the shape of the
+production curve (`log(n)`); (ii) on the relation of the biomass process error
+to the index observation error (`log(alpha)`); and on the fishing mortality
+process error to the catch observation error (`log(beta)`). These priors can
+easily be switched off or modified (Fig. 9). In addition, SPiCT allows to
+specify prior distributions on a range of other model parameters and quantities,
+such as the carrying capacity (`log(K)`) or the stock productivity (`log(m)`).
+However, caution has to be applied when specifying additional priors as they
+affect model estimates and uncertainties and can greatly affect estimated stock
+status.
 
-additional priors
+```{r exploData3, fig.width=6, echo=FALSE, fig.cap="Explore and modify SPiCT input data, part III."}
+img <- readPNG("figs/explo3.png")
+grid.raster(img)
+```
 
-display options (advance data plot)
+Instead of the standard SPiCT data plot, a more advanced version can be
+displayed with the option 'Plot the advanced data plot?' (at the bottom of the
+sidepanel on the lefthand side; not shown in the screenshots).
 
 \vspace*{1cm}
 
-# SPiCT assessment
+# Fit SPiCT
 
-fit spict by click on button,
+After data has been uplaoded and was modified according to meet the assumptions
+of the model, SPiCT can be fitted to the input data by clicking on the 'Fit
+SPiCT' button (Fig. 10). A notification in the lower right corner of the browser
+informs you the model is being fitted, which can take some time dependent on the
+number of data points in the input data. After completion, a message will
+indicate if the model converged and the 4 main SPiCT graphs are shown (Fig. 10).
+Note, that the model results should not be used if the model did not reach
+convergence. There are a number potential reasons why the model did not reach
+convergence and steps that can be taken subsequently (see the [\underline{SPiCT
+Handbook}](../apps/www/spict_handbook.pdf)).
 
-convergence message
+```{r fit1, fig.width=6, echo=FALSE, fig.cap="Fit SPiCT."}
+img <- readPNG("figs/fit1.png")
+grid.raster(img)
+```
 
-set seed value for reproducible results and assessments
-
-optimiser (expert see handbook)
+Additionally, the summary of the SPiCT fit is shown and the graphs with the
+absolute biomass and fishing mortality states as well as the production curve
+and either the seasonal F plot or a plot with time to recovery at the bottom of
+the page. The seed value allows to generate reproducible results. The optimiser
+settings do not need to be changed in the most cases.
 
 \vspace*{1cm}
 
 # Diagnostics
 
-run retrospecitve analysis
+Evaluating the diagnostics of a model fit is as important as the fit itself. The
+'Diagnostics' tab allows to compare the posterior and prior distributions (if
+priors were specified; Fig. 12).
 
-run sesnitivity analysis to intital values
+```{r diag1, fig.width=6, echo=FALSE, fig.cap="Priors."}
+img <- readPNG("figs/priors.png")
+grid.raster(img)
+```
+
+Furthermore, it shows a range of model diagnostics, such as normality of
+residuals (Fig. 13).
+
+```{r diag2, fig.width=6, echo=FALSE, fig.cap="Diagnostics."}
+img <- readPNG("figs/diag.png")
+grid.raster(img)
+```
+
+And allows to perform a retrospective and senstivity analysis to
+intial values (Fig. 14).
+
+```{r diag3, fig.width=6, echo=FALSE, fig.cap="Run retrospective and sensitivity analysis to intial values."}
+img <- readPNG("figs/runretrosensi.png")
+grid.raster(img)
+```
+
+The results of the retrospective and sensitivity analysis to intial values are
+shown under model diagnostics after completion (plot not shown here).
 
 \vspace*{1cm}
 
-# Management with SPiCT
+# Management scenarios
 
-run different management scenarios, intermediate period, catch during
-intermediate period, fratile of catch dist
+The implications of different management strategies on the predicted catch and
+states can be explored by applying different management scenarios. Any number of
+the 8 default management scenarios can be chosen:
+
+\begin{enumerate}
+   \item \textbf{currentCatch}: Keep the catch of the current year (i.e. the last observed catch).
+   \item \textbf{currentF}:  Keep the F of the current year.
+   \item \textbf{Fmsy}: Fish at Fmsy i.e. F=Fmsy.
+   \item \textbf{noF}: No fishing, reduce to 1\% of current F.
+   \item \textbf{reduceF25}: Reduce F by 25\%.
+   \item \textbf{increaseF25}: Increase F by 25\%,
+   \item \textbf{msyHockeyStick}: Use ICES MSY hockey-stick advice rule [@msycat34].
+   \item \textbf{ices}: Use ICES MSY 35th hockey-stick advice rule [@wklifeix].
+\end{enumerate}
+
+By default the scenarios 'currentCatch' and 'Fmsy' are chosen (Fig. 15). The
+management interval and management evaluation time can be adjusted. If an
+intermediate period is defined, the catch during the intermediate period can be
+defined. If undefined, the fishing mortality process is continued in the
+intermediate period. By default the median of the predicted catch distribution
+is used as the the total allowable catch (TAC), but any value can be chosen and
+the TAC will be re-calculated (Fig. 17).
+
+```{r man1, fig.width=6, echo=FALSE, fig.cap="Run management scenarios."}
+img <- readPNG("figs/runmanage.png")
+grid.raster(img)
+```
+
+The management plot shows the implications of the management scenarios on the
+relative biomass, fishing mortality, catches and kobe plot (Fig. 16). Note, that
+the lines corresponding to the different management strategies are only
+depicted in the kobe plot if the catch/effort data is not subannual.
+
+```{r man2, fig.width=6, echo=FALSE, fig.cap="Plot of management scenarios."}
+img <- readPNG("figs/manplot.png")
+grid.raster(img)
+```
+
+Below the management plot the summary of the management scenarios as well as the
+TAC of each scenario is shown (Fig. 17).
+
+```{r man3, fig.width=6, echo=FALSE, fig.cap="Results of management scenarios."}
+img <- readPNG("figs/mansum.png")
+grid.raster(img)
+```
 
 \vspace*{1cm}
 
 # Summary
 
-all results summarised and options to download (assessment report), all tables
-as zip archive, all figures as zip archive or all data as RData (includes a R
-list object called 'rv') which includes all used data and estimations allowing
-to reproduce the whole functionality of the app in R. The description of all
-individual elements of that list would exceed the scope of this vignette. see
-the names of all elements with `names(rv)`.
+The 'Summary' tab summarises the results of all tabs and allows to download the
+results in form of a report (html file), a zip archive with the main results as
+tables, a zip archive with all figures, or the complete data used and produced
+in spictapp as a 'RData' file (Fig. 18). The RData file includes a list called
+'rv' (for reactive values) that includes among others, the input data
+(`rv$inp`), the fitted object (`rv$fit`), as well as the retrospective and
+sensitivity analysis (`rv$retro` and `rv$sensi`, respectively) and the
+management results (`rv$mana`) if applied. It can be loaded in a R session by
+`load("spictapp_alldata_X_Y.RData")` where 'X' stands for the name of the data
+set and 'Y' for the date when it was downloaded. This data set allows to
+reproduce all steps of the spictapp in a plane R session using the spict
+package. The description of all individual elements of that list (`names(rv)`)
+would exceed the scope of this vignette.
+
+```{r sum, fig.width=6, echo=FALSE, fig.cap="Download options."}
+img <- readPNG("figs/summary.png")
+grid.raster(img)
+```
 
 \vspace*{1cm}
 
 # Other
-
-## References
-
-references relevant for this app.
-
-## About
-
-more information about the app, version, developers. question/issues links to
-user forum on RG
+The 'References' tab lists peer-reviewed articles about SPiCT and other
+documentation such as vignettes of the SPiCT package and this tutorial. The
+'About' tab lists the version number of the app, instructions on how to download
+and start the app, information on how to report bugs or issues, ask questions or
+follow the development of the packages. 'Quit' closes the connection to the app
+and the browser window (except on firefox >= 46.0.1).
 
 # References
