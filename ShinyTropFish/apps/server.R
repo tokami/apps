@@ -8,10 +8,12 @@ library(TropFishR)
 library(rmarkdown)
 ##library(jsonlite)
 library(shinyjs)
+library(reshape2)
 
 
 ## Load scripts
 ##-----------------------------------------------------------------------------------
+source("../funcs/serverFuncs.R")
 source("../funcs/ELEFAN_GA_fun.R")
 source("../funcs/LCCC_fun.R")
 source("../funcs/natM_fun.R")
@@ -31,68 +33,21 @@ shinyServer(
                              doLCCC = FALSE,
                              doYPR = FALSE)
 
-        ## LOAD DATA
-        ##-----------------------------------------------------------
-        output$image <- renderImage({
-            return(list(
-                src = "images/zanzibarFoto2.JPG",
-                contentType = "image/jpeg",
-                width = "100%",
-                alt = "Fisheries on Zanzibar",
-                caption = "Fisheries on Zanzibar"
-            ))
-        }, deleteFile = FALSE)
-
-
-        ## LOAD DATA
-        ##-----------------------------------------------------------
-
-        ## only run if action button used
-        # observeEvent(input$file1, {
-        #     if(!is.null(input$exdat) && input$useExDat){
-        #         rv$doDatLoad <- TRUE
-        #     }else if(!is.null(input$file1)){
-        #         rv$doDatLoad <- TRUE
-        #     }else{
-        #         rv$doDatLoad <- FALSE
-        #     }
-        # })
-
-        observe({
-          input$useExDat
-          input$file1
-            if(input$useExDat){
-                rv$doDatLoad <- TRUE
-            }else if(!is.null(input$file1)){
-                rv$doDatLoad <- TRUE
-            }else{
-                rv$doDatLoad <- FALSE
-            }
-        })
-
-        observeEvent(input$exdat, {
-            if(input$useExDat){
-                rv$doDatLoad <- TRUE
-            }else if(!is.null(input$file1)){
-                rv$doDatLoad <- TRUE
-            }else{
-                rv$doDatLoad <- FALSE
-            }
-        })
-
-        ## reset button
-        observeEvent(input$reset, {
-            ## reset file upload
-            reset("file1")
-            rv$doDatLoad <- FALSE
-            rv$doELEFAN <- FALSE
-            rv$doLCCC <- FALSE
-            rv$doYPR <- FALSE
+        ## Defaults
+        rv.defaults <- function(){
+            doDatLoad = FALSE
+            doELEFAN = FALSE
+            doLCCC = FALSE
+            doYPR = FALSE
+            rv$datORI <- NULL
+            rv$colNamesORI <- NULL
+            rv$colNames <- NULL
+            rv$dat <- NULL
             rv$lfq <- NULL
             rv$lfqORI <- NULL
             rv$lfqOrig <- NULL
-            rv$dat <- NULL
-            rv$filename <- ""
+            rv$seed <- NULL
+            rv$filename <- "Data: -"
             rv$Lrange <- c(NaN,NaN)
             rv$binSize <- 4
             rv$ma <- 5
@@ -103,6 +58,49 @@ shinyServer(
             ## reset example data
             rv$useExDat <- FALSE
             rv$exdat <- NULL
+            ## for errors (1 = date format)
+            rv$errCode <- NULL
+        }
+        rv.defaults()
+
+        ## LOAD DATA
+        ##-----------------------------------------------------------
+
+        ## observe({
+        ##     input$useExDat
+        ##     input$file1
+        ##     if(input$useExDat){
+        ##         rv$doDatLoad <- TRUE
+        ##     }else if(!is.null(input$file1)){
+        ##         rv$doDatLoad <- TRUE
+        ##     }else{
+        ##         rv$doDatLoad <- FALSE
+        ##     }
+        ## })
+
+        ## observeEvent(input$exdat, {
+        ##     if(input$useExDat){
+        ##         rv$doDatLoad <- TRUE
+        ##     }else if(!is.null(input$file1)){
+        ##         rv$doDatLoad <- TRUE
+        ##     }else{
+        ##         rv$doDatLoad <- FALSE
+        ##     }
+        ## })
+
+        observeEvent(input$useExDat, {
+            rv$doDatLoad <- TRUE
+        })
+
+        observeEvent(input$file1, {
+            rv$doDatLoad <- TRUE
+        })
+
+        ## reset button
+        observeEvent(input$reset, {
+            ## reset file upload
+            reset("file1")
+            rv.defaults()
             updateCheckboxInput(session = session,
                                 inputId = "useExDat",
                                 value = FALSE)
@@ -111,38 +109,80 @@ shinyServer(
                               selected = NULL)
         })
 
+        output$lengthCol <- renderUI({
+            ind <- which("length" == rv$colNamesORI)
+            if(length(ind) == 1){
+                selected <- rv$colNamesORI[ind]
+            }else{
+                selected <- NULL
+            }
+            selectInput("lengthCol",
+                        "Length measurements / length classes",
+                        choices = c("Choose one"="",rv$colNamesORI),
+                        selected = selected)
+        })
+
+        output$dateCol <- renderUI({
+            ind <- which("dates" == rv$colNamesORI)
+            if(length(ind) == 1){
+                selected <- rv$colNamesORI[ind]
+            }else{
+                selected <- NULL
+            }
+            selectInput("dateCol",
+                        "Sampling dates",
+                        choices = c("Choose one"="",rv$colNamesORI),
+                        selected = selected)
+        })
+
+        output$freqCol <- renderUI({
+            ind <- which("frequency" == rv$colNamesORI)
+            if(length(ind) == 1){
+                selected <- rv$colNamesORI[ind]
+            }else{
+                selected <- NULL
+            }
+            selectInput("freqCol",
+                        "Frequencies",
+                        choices = c("Choose one"="",rv$colNamesORI),
+                        selected = selected)
+        })
+
+        output$freqColsLFQ1 <- renderUI({
+            collength <- length(rv$colNamesORI)
+            if(collength > 1){
+                selected <- 2
+            }else{
+                selected <- NULL
+            }
+            numericInput(inputId = "freqColsLFQ1",
+                         label = "From column",
+                         min = 1, max = collength,
+                         value = selected)
+        })
+        output$freqColsLFQ2 <- renderUI({
+            collength <- length(rv$colNamesORI)
+            numericInput(inputId = "freqColsLFQ2",
+                         label = "To column",
+                         min = 2, max = collength,
+                         value = collength)
+        })
 
         datLoad <- function(){
-            infile <- input$file1
-            exdat <- as.character(input$exdat)
-            if(input$useExDat){
-                data(list=exdat, package="TropFishR")
-                lfq <- get(exdat)
-                dat <- setNames(data.frame(lfq$catch), lfq$dates)
-                dat <- cbind(midLengths = lfq$midLengths, dat)
-                rv$dat <- dat
-                rv$lfq <- rv$lfqORI <- lfq
-            }else if(!is.null(infile)){
-                dat <- read.csv(input$file1$datapath,
-                                header = input$header,
-                                sep = input$sep,
-                                quote = input$quote)
-                rv$dat <- dat
-            }else{
-                rv$dat <- NULL
-                ## data.frame(dates = numeric(),
-                ##                      length = numeric(),
-                ##                      frequency = numeric())
-            }
-        }
-
-
-        datPars <- function(){
             infile <- input$file1
             exdat <- as.character(input$exdat)
             topa <- "Data: "
             if(input$useExDat){
                 rv$filename <- paste0(topa,as.character(exdat))
+                data(list=exdat, package="TropFishR")
+                lfq <- get(exdat)
+                dat <- setNames(data.frame(lfq$catch), lfq$dates)
+                dat <- cbind(midLengths = lfq$midLengths, dat)
+                rv$datORI <- lfq2dat(lfq)
+                rv$colNamesORI <- colnames(rv$datORI)
+                rv$dat <- dat
+                rv$colNames <- colnames(dat)
+                rv$lfq <- rv$lfqORI <- lfq
                 rv$Lrange <- range(rv$dat$midLengths)
                 rv$binSize <- diff(rv$dat$midLengths)[1]
                 rv$ma <- 5
@@ -151,46 +191,28 @@ shinyServer(
                 rv$agg <- "month"
                 rv$plusGroup <- FALSE
             }else if(!is.null(infile)){
-                dat <- rv$dat
-                ## bin size
-                binSize <- diff(dat$length)[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
-                ## create lfq
-                dat$dates <- as.Date(dat$dates)
-                ## create frequencies if don't exist
-                if (!"frequency" %in% colnames(dat)){
-                    dat$frequency <- 1
-                }
-
-                ## arrange LFQ data
-                lfq <- lfqCreate(data = dat,
-                                 Lname = "length",
-                                 Dname = "dates",
-                                 Fname = "frequency",
-                                 plot = FALSE,
-                                 bin_size = binSize,
-                                 aggregate_dates = TRUE)
-                rv$lfqORI <- lfq
-                rv$lfq <- lfq
+                dat <- read.csv(input$file1$datapath,
+                                header = input$header,
+                                sep = input$sep,
+                                quote = input$quote,
+                                stringsAsFactors = FALSE)
+                rv$datORI <- dat
+                rv$colNamesORI <- colnames(dat)
+                rv$dat <- NULL
+                rv$colNames <- NULL
+                rv$lfqORI <- NULL
+                rv$lfq <- NULL
                 ## filename
                 tmp <- strsplit(infile[,1], ".csv")[[1]]
                 tmp <- strsplit(tmp, ".txt")[[1]]
                 filename <- paste0(topa,as.character(tmp))
                 rv$filename <- filename
-                ## length range
-                rv$Lrange <- range(dat$length,na.rm=TRUE)
-                ## bin size
-                rv$binSize <- binSize
-                rv$ma <- 5
-                rv$addlSqrt <- FALSE
-                rv$years <- unique(format(lfq$dates, "%Y"))
-                rv$agg <- "month"
-                rv$plusGroup <- FALSE
             }else{
+                rv$datORI <- NULL
+                rv$dat <- NULL
+                rv$colNamesORI <- NULL
                 rv$lfqORI <- NULL
                 rv$lfq <- NULL
-                ## list(dates = numeric(),
-                ##                midLengths = numeric(),
-                ##                catch = numeric())
                 rv$filename <- ""
                 rv$Lrange <- c(NaN,NaN)
                 rv$binSize <- 4
@@ -202,55 +224,152 @@ shinyServer(
             }
         }
 
-       output$downloadExData <- downloadHandler(
-         filename = function() {
-           paste0('data-', input$exdat, '.csv')
-         },
-         content = function(con) {
-           dat <- rv$dat
-           # Wide to long
-           res <- expand.grid(dat[, "midLengths"], names(dat)[-1], stringsAsFactors = FALSE)
-           res$frequency <- sapply(seq(nrow(res)), function(i) dat[, -1][dat[, 1] == res[i, 1], names(dat)[-1] == res[i, 2]])
-           res <- setNames(res, c('length', 'dates', 'frequency'))
-           write.csv(res, con, row.names = FALSE)
-         }
-       )
+        match.cols <- function(){
+            if(!input$useExDat){
+                datORI <- rv$datORI
+                if(!input$isLFQ){
+                    colNames = list("length" = input$lengthCol,
+                                    "dates" = input$dateCol,
+                                    "frequency" = input$freqCol)
+                }else{
+                    colNames = list("midLengths" = input$lengthCol,
+                                    "freqColsLFQ1" = input$freqColsLFQ1,
+                                    "freqColsLFQ2" = input$freqColsLFQ2)
+                }
+                rv$colNames <- colNames
+            }
+        }
 
-        output$contents <- renderTable({
+        update.dat <- function(){
+            datORI <- rv$datORI
+            colNames <- rv$colNames
+            if(!input$useExDat && !is.null(colNames) && !is.null(datORI)){
+                if(!input$isLFQ){
+                    dat <- checkDat(datORI, colNames)
+                }else{
+                    dat <- lfqdat2dat(datORI,rv$colNames,input$dateFormat)
+                }
+                if(any(is.na(as.character(dat$dates)))){
+                    rv$errCode <- c(rv$errCode,1)
+                }else{
+                    rv$errCode <- rv$errCode[-which(rv$errCode == 1)]
+                    dat$length <- as.numeric(dat$length)
+                    dat$frequency <- as.numeric(dat$frequency)
+                    rv$lfqORI <- rv$lfq <- lfq <- dat2lfq(dat,
+                                                          dateFormat = ifelse(input$isLFQ,"%Y-%m-%d",
+                                                                              input$dateFormat),
+                                                          aggDates = input$aggDates)
+                    lfqdat <- setNames(data.frame(lfq$catch), lfq$dates)
+                    lfqdat <- cbind(lfq$midLengths, lfqdat)
+                    colnames(lfqdat) <- c("midLengths",colnames(lfqdat)[-1])
+                    rv$dat <- lfqdat
+                    ## length range
+                    rv$Lrange <- range(dat$length,na.rm=TRUE)
+                    ## bin size
+                    rv$binSize <- diff(dat$length)[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
+                    rv$ma <- 5
+                    rv$addlSqrt <- FALSE
+                    rv$years <- unique(format(lfq$dates, "%Y"))
+                    rv$agg <- "month"
+                    rv$plusGroup <- FALSE
+                }
+            }
+        }
+
+
+        observe({
+            if(rv$doDatLoad){
+                datLoad()
+            }
+        })
+
+        observe({
+            if(!is.null(rv$datORI)){
+                match.cols()
+                colNames <- unlist(rv$colNames)
+                if((!input$isLFQ && any(colNames == "length") && any(colNames == "dates") &&
+                    any(colNames == "frequency")) ||
+                   (input$isLFQ && any(colNames == "midLengths") && any(colNames == "freqColslfq1") &&
+                    any(colNames == "freqColsLFQ2"))){
+                    update.dat()
+                }
+            }
+        })
+
+        observe({
+            if(!is.null(rv$datORI)){
+                shinyjs::enable("datUpdate")
+            }else{
+                shinyjs::disable("datUpdate")
+            }
+        })
+
+        ## only run if action button used
+        observeEvent(input$datUpdate, {
+            update.dat()
+        })
+
+
+        output$downloadExData <- downloadHandler(
+            filename = function() {
+                paste0('data-', input$exdat, '.csv')
+            },
+            content = function(con) {
+                dat <- rv$dat
+                # Wide to long
+                res <- expand.grid(dat[, "midLengths"], names(dat)[-1], stringsAsFactors = FALSE)
+                res$frequency <- sapply(seq(nrow(res)),
+                                        function(i) dat[, -1][dat[, 1] == res[i, 1], names(dat)[-1] == res[i, 2]])
+                res <- setNames(res, c('length', 'dates', 'frequency'))
+                write.csv(res, con, row.names = FALSE)
+            }
+        )
+
+        output$fileContentRaw <- renderTable({
             if(rv$doDatLoad == FALSE){
                 return()
             }else{
-                datLoad()
-                if(ncol(rv$dat) < 2){
-                    stop("Something went wrong when uploading the data! Please try another separator or just try again!")
-                    return()
-                }
-                if(!input$useExDat && !"length" %in% colnames(rv$dat)){
-                    stop("Something went wrong when uploading the data! Please make sure that you have a column with the length measurements in your file! This column must be called 'length'")
-                    return()
-                }
-                if(!input$useExDat && !"dates" %in% colnames(rv$dat)){
-                    stop("Something went wrong when uploading the data! Please make sure that you have a column with the sampling dates in your file! This column must be called 'dates'!")
-                    return()
-                }
-                datPars()
-                dat <- rv$dat
+                datORI <- rv$datORI
                 if(input$disp == "head"){
-                    return(head(dat))
+                    return(head(datORI))
                 }else{
-                    return(dat)
+                    return(datORI)
+                }
+            }
+        })
+
+        output$fileContent <- renderTable({
+            if(rv$doDatLoad == FALSE){
+                return()
+            }else{
+                isolate({
+                    update.dat()
+                })
+                dat <- rv$dat
+                ## informative error messages
+                if(any(rv$errCode == 1)){
+                    stop("There is at least one NA in the date vector. Did you provide the correct date format, for the date column/header with date information?")
+                    return()
+                }else{
+                    if(input$disp == "head"){
+                        return(head(dat))
+                    }else{
+                        return(dat)
+                    }
                 }
             }
         })
 
         output$filename <- renderText({
-            if(rv$doDatLoad == FALSE){
-                return()
-            }else{
-                return(rv$filename)
-            }
+            return(rv$filename)
         })
 
+        observe({
+            if(!is.null(rv$dat)){
+                showNotification("The data meets the data requirements for TropFishR. You can move on to the next tab.",
+                                     duration = 10)
+            }
+        })
 
 
         ## EXPLORE DATA
@@ -268,19 +387,19 @@ shinyServer(
                         round = TRUE)
         })
 
-##         observeEvent(input$tabset,{
-##             if(is.null(input$binSize) & is.null(rv$binSize)){
-##                 binSizeVal <- 1
-##             }else if(is.null(input$binSize) & !is.null(rv$binSize)){
-##                 binSizeVal <- rv$binSize
-##             }else{
-##                 binSizeVal <- input$binSize
-##             }
-## ##            rv$binSize <- binSizeVal
-##             updateSliderInput(session = session,
-##                               inputId = "binSize",
-##                               value = binSizeVal)
-##         })
+        ##         observeEvent(input$tabset,{
+        ##             if(is.null(input$binSize) & is.null(rv$binSize)){
+        ##                 binSizeVal <- 1
+        ##             }else if(is.null(input$binSize) & !is.null(rv$binSize)){
+        ##                 binSizeVal <- rv$binSize
+        ##             }else{
+        ##                 binSizeVal <- input$binSize
+        ##             }
+        ## ##            rv$binSize <- binSizeVal
+        ##             updateSliderInput(session = session,
+        ##                               inputId = "binSize",
+        ##                               value = binSizeVal)
+        ##         })
 
         output$selYears <- renderUI({
             selectInput(inputId = "selYears",
@@ -291,19 +410,19 @@ shinyServer(
                         width ='60%')
         })
 
-##         observeEvent(input$tabset,{
-##             if(is.null(rv$lfq)){
-## ##                years <- NA
-##                 yearsSEL <- rv$years
-##             }else{
-## ##                years <- unique(format(rv$lfqORI$dates, "%Y"))
-##                 yearsSEL <- rv$years
-##             }
-## ##            rv$years <- years
-##             updateSelectInput(session = session,
-##                               inputId = "selYears",
-##                               selected = yearsSEL)
-##         })
+        ##         observeEvent(input$tabset,{
+        ##             if(is.null(rv$lfq)){
+        ## ##                years <- NA
+        ##                 yearsSEL <- rv$years
+        ##             }else{
+        ## ##                years <- unique(format(rv$lfqORI$dates, "%Y"))
+        ##                 yearsSEL <- rv$years
+        ##             }
+        ## ##            rv$years <- years
+        ##             updateSelectInput(session = session,
+        ##                               inputId = "selYears",
+        ##                               selected = yearsSEL)
+        ##         })
 
         output$plusGroup <- renderUI({
             if(!is.null(rv$lfq)){
@@ -656,8 +775,8 @@ shinyServer(
                 lfq$par <- rv$parsGrowth
                 rv$parsRecruit <- recruitment(lfq, plot=FALSE)
                 tmp <- data.frame("relative month" = as.integer(rv$parsRecruit$mids),
-                                     counts = rv$parsRecruit$counts,
-                                     density = round(rv$parsRecruit$density,3))
+                                  counts = rv$parsRecruit$counts,
+                                  density = round(rv$parsRecruit$density,3))
                 tmp
             }
         })
@@ -977,15 +1096,15 @@ shinyServer(
         output$LCCC_plot <- output$LCCC_plot_ov <- renderPlot({
             if(rv$doLCCC == FALSE)
                 return()
-                par(mar=c(5,5,2,1))
-                plotLCCC(rv$resLCCC)
+            par(mar=c(5,5,2,1))
+            plotLCCC(rv$resLCCC)
         })
 
         output$LCCC_sel_plot <- output$LCCC_sel_plot_ov <- renderPlot({
             if(rv$doLCCC == FALSE)
                 return()
-                par(mar=c(5,5,2,1))
-                plotLCCC_sel(rv$resLCCC)
+            par(mar=c(5,5,2,1))
+            plotLCCC_sel(rv$resLCCC)
         })
 
         output$mortParsGotcha <- output$mortParsGotcha_ov <- renderTable({
@@ -1006,8 +1125,8 @@ shinyServer(
         output$LCCC_gotcha_plot <- output$LCCC_gotcha_plot_ov <- renderPlot({
             if(rv$doLCCC == FALSE | !input$gotcha)
                 return()
-                par(mar=c(5,5,2,1))
-                plotLCCC(rv$resLCCC_gotcha)
+            par(mar=c(5,5,2,1))
+            plotLCCC(rv$resLCCC_gotcha)
         })
 
         ##-----------------------------------------------------------
@@ -1241,7 +1360,7 @@ shinyServer(
             }else{
                 isolate({
                     YPR_res()
-                    })
+                })
                 tmp <- as.data.frame(rv$parsRef)
                 tmp
             }
@@ -1250,22 +1369,22 @@ shinyServer(
         output$YPR_plot <- output$YPR_plot_ov <- renderPlot({
             if(rv$doYPR == FALSE)
                 return()
-                par(mar=c(5,5,2,1))
-                plot(rv$resYPR, mark=TRUE)
+            par(mar=c(5,5,2,1))
+            plot(rv$resYPR, mark=TRUE)
         })
 
         output$YPR_Lc_plot <- output$YPR_Lc_plot_ov <- renderPlot({
             if(rv$doYPR == FALSE)
                 return()
-                par(mar=c(5,5,2,1))
-                plot(rv$resYPR_Lc, mark=TRUE,xaxis1 = "FM", yaxis_iso = "Lc")
+            par(mar=c(5,5,2,1))
+            plot(rv$resYPR_Lc, mark=TRUE,xaxis1 = "FM", yaxis_iso = "Lc")
         })
 
         output$YPR_Lc2_plot <- output$YPR_Lc2_plot_ov <- renderPlot({
             if(rv$doYPR == FALSE)
                 return()
-                par(mar=c(5,5,2,1))
-                plot(rv$resYPR_Lc, mark=TRUE, yaxis1 = "B_R",xaxis1 = "FM", yaxis_iso = "Lc")
+            par(mar=c(5,5,2,1))
+            plot(rv$resYPR_Lc, mark=TRUE, yaxis1 = "B_R",xaxis1 = "FM", yaxis_iso = "Lc")
         })
 
         ##-----------------------------------------------------------
@@ -1288,12 +1407,12 @@ shinyServer(
                 return()
             }else{
                 isolate({
-                tmp <- as.data.frame(c(rv$parsGrowth,
-                                        list(Rn_max = rv$resGA@fitnessValue)) )
-                names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
-                names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phi'")
-                rv$allpars <- t(round(tmp,3))
-                tmp
+                    tmp <- as.data.frame(c(rv$parsGrowth,
+                                           list(Rn_max = rv$resGA@fitnessValue)) )
+                    names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
+                    names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phi'")
+                    rv$allpars <- t(round(tmp,3))
+                    tmp
                 })
             }
         })
@@ -1303,9 +1422,9 @@ shinyServer(
                 return()
             }else{
                 isolate({
-                tmp <- as.data.frame(t(as.matrix(rv$parsMort)))
-                rv$allpars <- rbind(rv$allpars,t(round(tmp,3)))
-                tmp
+                    tmp <- as.data.frame(t(as.matrix(rv$parsMort)))
+                    rv$allpars <- rbind(rv$allpars,t(round(tmp,3)))
+                    tmp
                 })
             }
         })
@@ -1313,11 +1432,11 @@ shinyServer(
         output$yprPars_ov <- renderTable({
             if(rv$doYPR == FALSE)
                 return()
-                isolate({
+            isolate({
                 tmp <- as.data.frame(rv$parsRef)
                 rv$allpars <- rbind(rv$allpars,t(round(tmp,3)))
                 tmp
-                })
+            })
         })
 
         report <- reactiveValues(filepath = NULL) #This creates a short-term storage location for a filepath
@@ -1561,14 +1680,14 @@ shinyServer(
         }, deleteFile = FALSE)
         ##-----------------------------------------------------------
 
-    ## OTHER  ##################################################################################
+        ## OTHER  ##################################################################################
 
-    observe({
-        if (input$tabset == "stop"){
-            js$closeWindow();
-            stopApp(message("App stopped"))
-        }
-    })
+        observe({
+            if (input$tabset == "stop"){
+                js$closeWindow();
+                stopApp(message("App stopped"))
+            }
+        })
 
 
     }

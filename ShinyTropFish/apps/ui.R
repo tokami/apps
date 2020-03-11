@@ -12,20 +12,14 @@ library(htmltools)
 
 ## Load scripts
 ##-----------------------------------------------------------------------------------
-source("../funcs/ELEFAN_GA_fun.R")
-source("../funcs/LCCC_fun.R")
-source("../funcs/natM_fun.R")
-##source("../funcs/VPA_fun.R")
-source("../funcs/YPR_fun.R")
-source("../funcs/layout_fun.R")
-
+source("../funcs/uiFuncs.R")
 
 
 shinyUI(
     fluidPage(
 
-        useShinyjs(),
-
+        shinyjs::useShinyjs(),
+        shinyjs::extendShinyjs(text = jscode, functions=c("closeWindow")),
 
         ## style settings
         tags$head(
@@ -59,13 +53,12 @@ shinyUI(
                                 ##                                            h2("TropFishS"),h3(" - This app allows you to do a length-based stock assessment without requiring any R knowledge."),
 
                                 HTML('<h1 style="text-align:center;float:center;line-height:50px;">ShinyTropFish</h1>
-<h3 style="text-align:center;float:center;line-height:50px;"> - This app allows you to conduct a length-based stock assessment based on ELEFAN and YPR - </h3>
+<h3 style="text-align:center;float:center;line-height:50px;"> - This app allows you to conduct a length-based stock assessment based on ELEFAN, LCCC, and YPR - </h3>
 <hr style="clear:both;"/>'),
-imageOutput("image"),
+div(img(src="TropFishROverviewPlot.png",width="60%"), style="text-align: center;"),
 br(),
 ##tags$hr(),
 br()
-
 
 )
 ),
@@ -85,84 +78,137 @@ tabPanel("Load data", id = "loaddat",
                   HTML("hr{border-top: 2px solid #3891BA;}")),
 
          ## Sidebar panel for inputs
-         sidebarPanel(
+         sidebarPanel(div(style="display:inline-block;width:95%;text-align:center;",
+                          ## Input: Select a file
+                          fileInput("file1", "Choose your csv/txt file",
+                                    multiple = FALSE,
+                                    accept = c("text/csv",
+                                               "text/x-csv",
+                                               "text/tab-separated-values",
+                                               "text/comma-separated-values",
+                                               "text/x-comma-separated-values",
+                                               "text/plain")),
+                          actionButton("reset", label = " Reset",
+                              style="color: #3891BA; background-color: #d35400; border-color: #d35400",
+                              icon = icon("refresh", "fa-1.5x")
+                              )
+                          ),
+                      br(),
 
-             div(style="display:inline-block;width:95%;text-align:center;",
-                 ## Input: Select a file
-                 fileInput("file1", "Choose your csv/txt file",
-                           multiple = FALSE,
-                           accept = c("text/csv",
-                                      "text/x-csv",
-                                      "text/tab-separated-values",
-                                      "text/comma-separated-values",
-                                      "text/x-comma-separated-values",
-                                      "text/plain")),
-                 actionButton("reset", label = "Clear")),
+                      "Please arrange your length measurements in an csv or txt file in the format explained in detail in this",a("tutorial.", href="https://cran.r-project.org/web/packages/TropFishR/vignettes/lfqData.html"),"Make sure that the headers of your data are called: 'length', 'dates', and 'frequency'.",
 
-             br(),
+                      br(),
+                      br(),
 
-             "Please arrange your length measurements in an csv or txt file in the format explained in detail in this",a("tutorial.", href="https://cran.r-project.org/web/packages/TropFishR/vignettes/lfqData.html"),"Make sure that the headers of your data are called: 'length', 'dates', and 'frequency'.",
+                      wellPanel(
+                          fluidRow(
+                              ## Input: Select separator
+                              column(4, radioButtons("sep", "Separator",
+                                                     choices = c(Comma = ",",
+                                                                 Semicolon = ";",
+                                                                 Tab = "\t",
+                                                                 "White space"  = ""),
+                                                     selected = ",")),
+                              ## Input: Select quotes
+                              column(4, radioButtons("quote", "Quote",
+                                                     choices = c(None = "",
+                                                                 "Double Quote" = '"',
+                                                                 "Single Quote" = "'"),
+                                                     selected = '"')),
+                              ## Input: Select number of rows to display
+                              column(4, radioButtons("disp", "Display",
+                                                     choices = c(Head = "head",
+                                                                 All = "all"),
+                                                     selected = "head")))
+                      ),
+                      ## Input: Checkbox if file has header
+                      checkboxInput("header", "Header", TRUE),
 
-             br(),
-             br(),
+                      h3("Choose data type & assign columns"),
+                      tags$hr(),
+                      "Please choose the data type (raw length measurements vs. length-frequency table, see", a("(link),",target="_blank",href="lfqData.pdf"),"for more information). Further, please assign the columns of your data to the required columns. Press 'Update data' when all columns are assigned.",
+                      br(),
+                      br(),
+                      checkboxInput(inputId = "isLFQ",
+                                    label = "Length-frequency table",
+                                    value = FALSE),
+                      br(),
+                      uiOutput("lengthCol"),
+                      br(),
+                      conditionalPanel(
+                          condition = "input.isLFQ == 0",
+                          ## Choose dates
+                          uiOutput("dateCol"),
+                          ## Choose frequceny
+                          uiOutput("freqCol")
+                      ),
+                      br(),
+                      conditionalPanel(
+                          condition = "input.isLFQ == 1",
+                          ## Choose range of freq cols
+                          uiOutput("freqColsLFQ1"),
+                          uiOutput("freqColsLFQ2"),
+                      ),
 
-             wellPanel(
-                 ## Input: Checkbox if file has header
-                 checkboxInput("header", "Header", TRUE),
-                 fluidRow(
-                     ## Input: Select separator
-                     column(4, radioButtons("sep", "Separator",
-                                            choices = c(Comma = ",",
-                                                        Semicolon = ";",
-                                                        Tab = "\t",
-                                                        "White space"  = ""),
-                                            selected = ",")),
-                     ## Input: Select quotes
-                     column(4, radioButtons("quote", "Quote",
-                                            choices = c(None = "",
-                                                        "Double Quote" = '"',
-                                                        "Single Quote" = "'"),
-                                            selected = '"')),
-                     ## Input: Select number of rows to display
-                     column(4, radioButtons("disp", "Display",
-                                            choices = c(Head = "head",
-                                                        All = "all"),
-                                            selected = "head")))),
+                      br(),
+                      textInput("dateFormat",
+                                "Date format",
+                                value = "%Y-%m-%d"),
+                      br(),
+                      checkboxInput(inputId = "aggDates",
+                                    label = "Aggregate dates by month?",
+                                    value = FALSE),
+                      br(),
 
-             ## tags$div(
-             ##          HTML("<font size='4'>Example data</font>")),
-             h3("Example data"),
-             tags$hr(),
-             checkboxInput(inputId = "useExDat",
-                           label = "Use example data set?",
-                           value = FALSE),
-             br(),
-             conditionalPanel(
-                 condition = "input.useExDat",
-                 ## Input: Select example data set
-                 selectInput(inputId = "exdat",
-                             "Example LFQ data sets",
-                             choices = c("alba",
-                                         "synLFQ4",
-                                         "synLFQ5",
-                                         "synLFQ6",
-                                         "synLFQ7",
-                                         "synLFQ8"),
-                             width='35%'),
-                 ## Download example data
-                 conditionalPanel("input.exdat",
-                                  downloadLink('downloadExData', 'Download')))
-         ),
+                      div(
+                          style="display:inline-block;width:95%;text-align:center;",
+                          actionButton(
+                              "datUpdate",
+                              label = " Update data",
+                              style="color: #3891BA; background-color: #d35400; border-color: #d35400",
+                              icon = icon("refresh", "fa-1.5x")
+                          )
+                      ),
+                      br(),
+                      br(),
+                      br(),
+
+                      h3("Example data"),
+                      tags$hr(),
+                      checkboxInput(inputId = "useExDat",
+                                    label = "Use example data set?",
+                                    value = FALSE),
+                      br(),
+                      conditionalPanel(
+                          condition = "input.useExDat",
+                          ## Input: Select example data set
+                          selectInput(inputId = "exdat",
+                                      "Example LFQ data sets",
+                                      choices = c("alba",
+                                                  "synLFQ4",
+                                                  "synLFQ5",
+                                                  "synLFQ6",
+                                                  "synLFQ7",
+                                                  "synLFQ8"),
+                                      width='35%'),
+                          ## Download example data
+                          conditionalPanel("input.exdat",
+                                           downloadLink('downloadExData', 'Download')))
+                      ),
 
 
          ## Main panel for displaying outputs
          mainPanel(
              br(),
-
-
-             ## Output: Data file
-             tableOutput("contents")
-
+             h3("Uploaded file in raw format:"),
+             tags$hr(),
+             tableOutput("fileContentRaw"),
+             br(),
+             br(),
+             h3("Data as length-frequency table"),
+             tags$hr(),
+             tableOutput("fileContent"),
+             br()
          )
          ),
 ##-----------------------------------------------------------
@@ -209,8 +255,8 @@ tabPanel("Explore data", id = "explodat",
 
 
                           selectInput(inputId = "agg",
-                                      label = "LFQ aggregation",
-                                      choices = c("month", "quarter"),
+                                      label = "Aggregate dates by:",
+                                      choices = c("Choose one"="",c("month","quarter","year")),
                                       selected = "month",
                                       width ='30%'),
 
@@ -1013,11 +1059,11 @@ tabPanel("About", id = "about",
 
          ),
 
-            tabPanel(
-                title = "Quit ",
-                value = "stop",
-                icon = icon("power-off")
-            ),
+tabPanel(
+    title = "Quit ",
+    value = "stop",
+    icon = icon("power-off")
+),
 
 
 tabPanel(
