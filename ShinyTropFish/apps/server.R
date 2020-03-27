@@ -100,13 +100,13 @@ shinyServer(
         observeEvent(input$reset, {
             ## reset file upload
             reset("file1")
-            rv.defaults()
             updateCheckboxInput(session = session,
                                 inputId = "useExDat",
                                 value = FALSE)
             updateSelectInput(session = session,
                               inputId = "exdat",
                               selected = NULL)
+            rv.defaults()
         })
 
         output$lengthCol <- renderUI({
@@ -276,7 +276,6 @@ shinyServer(
             }
         }
 
-
         observe({
             if(rv$doDatLoad){
                 datLoad()
@@ -346,17 +345,17 @@ shinyServer(
                     update.dat()
                 })
                 dat <- rv$dat
-                ## informative error messages
-                if(any(rv$errCode == 1)){
-                    stop("There is at least one NA in the date vector. Did you provide the correct date format, for the date column/header with date information?")
-                    return()
-                }else{
+                ## informative error messages  ## reset button doesn't work anymore!
+                ## if(any(rv$errCode == 1)){
+                ##     stop("There is at least one NA in the date vector. Did you provide the correct date format, for the date column/header with date information?")
+                ##     return()
+                ## }else{
                     if(input$disp == "head"){
                         return(head(dat))
                     }else{
                         return(dat)
                     }
-                }
+                ## }
             }
         })
 

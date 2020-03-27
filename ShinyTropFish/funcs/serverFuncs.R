@@ -61,7 +61,9 @@ dat2lfq <- function(dat, dateFormat, aggDates){
     dat$length <- as.numeric(as.character(dat$length))
 
     ## lfq data set
-    binSize <- diff(dat$length)[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
+    ## tmp = diff(dat$length)[1]
+    ##    binSize <- ifelse(tmp > 0.5, tmp, 1)   # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
+    binSize = 0.5
     ## create lfq
     dat$dates <- as.Date(as.character(dat$dates), dateFormat)
     ## create frequencies if don't exist
