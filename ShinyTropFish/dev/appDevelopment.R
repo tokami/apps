@@ -1,18 +1,11 @@
 
 ## removed from runapp but should be in there
 
-## Install packages
-installed <- rownames(installed.packages())
-needed <- c("shiny", "shinyjs", "shinythemes", "shinydashboard",
-            "rmarkdown", "htmltools", "remotes")
-install.packages(needed[! needed %in% installed],
-                 repos="https://cloud.r-project.org/")
-
 ## Operating system
 ## -------------------------
 os <- .Platform$OS.type
 if(os == "unix"){ ## linux + mac
-    ## remotes::install_github("tokami/spict/TropFishR@dev")
+    ## remotes::install_github("tokami/TropFishR@dev")
     install.packages("pkg/TropFishR_1.7.0.tar.gz",repos=NULL)  ## package needs to be in path!
 }else if(os == "windows"){ ## windows
     install.packages("pkg/TropFishR_1.7.0.zip",repos=NULL)  ## package needs to be in path!

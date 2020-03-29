@@ -100,12 +100,15 @@ lfq2dat <- function(lfq){
     catch = as.data.frame(lfq$catch,stringsAsFactors = FALSE)
 
     dat = cbind(lengths,catch)
-    colnames(dat) = c("length",dates)
+    colnames(dat) = c("length",paste0("X",dates))
 
     ret <- reshape2::melt(dat, id.vars = "length")
     colnames(ret) <- c("length","dates","frequency")
 
+    ret$dates <- sapply(strsplit(as.character(ret$dates),"X"),"[[",2)
+
     ret <- as.data.frame(ret, stringsAsFactors = FALSE)
+
 
     return(ret)
 }

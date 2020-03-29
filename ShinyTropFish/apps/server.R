@@ -28,17 +28,14 @@ shinyServer(
         ## GENERAL
         ##-----------------------------------------------------------
         ## reactive buttons (when tabs changed or undo pressed)
-        rv <- reactiveValues(doDatLoad = FALSE,
-                             doELEFAN = FALSE,
-                             doLCCC = FALSE,
-                             doYPR = FALSE)
+        rv <- reactiveValues()
 
         ## Defaults
         rv.defaults <- function(){
-            doDatLoad = FALSE
-            doELEFAN = FALSE
-            doLCCC = FALSE
-            doYPR = FALSE
+            rv$doDatLoad = FALSE
+            rv$doELEFAN = FALSE
+            rv$doLCCC = FALSE
+            rv$doYPR = FALSE
             rv$datORI <- NULL
             rv$colNamesORI <- NULL
             rv$colNames <- NULL
@@ -58,40 +55,16 @@ shinyServer(
             ## reset example data
             rv$useExDat <- FALSE
             rv$exdat <- NULL
-            ## for errors (1 = date format)
-            rv$errCode <- NULL
         }
         rv.defaults()
+        errCode <- NULL
 
         ## LOAD DATA
         ##-----------------------------------------------------------
-
-        ## observe({
-        ##     input$useExDat
-        ##     input$file1
-        ##     if(input$useExDat){
-        ##         rv$doDatLoad <- TRUE
-        ##     }else if(!is.null(input$file1)){
-        ##         rv$doDatLoad <- TRUE
-        ##     }else{
-        ##         rv$doDatLoad <- FALSE
-        ##     }
-        ## })
-
-        ## observeEvent(input$exdat, {
-        ##     if(input$useExDat){
-        ##         rv$doDatLoad <- TRUE
-        ##     }else if(!is.null(input$file1)){
-        ##         rv$doDatLoad <- TRUE
-        ##     }else{
-        ##         rv$doDatLoad <- FALSE
-        ##     }
-        ## })
-
+        ## switch on DatLoad if ex data used or data uploaded
         observeEvent(input$useExDat, {
             rv$doDatLoad <- TRUE
         })
-
         observeEvent(input$file1, {
             rv$doDatLoad <- TRUE
         })
@@ -100,6 +73,37 @@ shinyServer(
         observeEvent(input$reset, {
             ## reset file upload
             reset("file1")
+            updateRadioButtons(session = session,
+                                inputId = "sep",
+                               selected = ",")
+            updateRadioButtons(session = session,
+                                inputId = "quote",
+                               selected = '"')
+            updateRadioButtons(session = session,
+                                inputId = "header",
+                               selected = "TRUE")
+            updateRadioButtons(session = session,
+                                inputId = "dispRaw",
+                               selected = "head")
+            updateRadioButtons(session = session,
+                                inputId = "disp",
+                               selected = "head")
+            updateCheckboxInput(session = session,
+                                inputId = "isLFQ",
+                                value = FALSE)
+            updateSelectInput(session = session,
+                              inputId = "lengthCol",
+                              selected = NULL)
+            updateSelectInput(session = session,
+                              inputId = "dateCol",
+                              selected = NULL)
+            updateSelectInput(session = session,
+                              inputId = "freqCol",
+                              selected = NULL)
+            updateCheckboxInput(session = session,
+                                inputId = "aggDates",
+                                value = FALSE)
+            ## example data
             updateCheckboxInput(session = session,
                                 inputId = "useExDat",
                                 value = FALSE)
@@ -107,6 +111,7 @@ shinyServer(
                               inputId = "exdat",
                               selected = NULL)
             rv.defaults()
+            errDat <- NULL
         })
 
         output$lengthCol <- renderUI({
@@ -168,10 +173,25 @@ shinyServer(
                          value = collength)
         })
 
-        datLoad <- function(){
+        load.dat <- function(){
             infile <- input$file1
             exdat <- as.character(input$exdat)
             topa <- "Data: "
+            ## Defaults
+            rv$datORI <- NULL
+            rv$dat <- NULL
+            rv$colNamesORI <- NULL
+            rv$lfqORI <- NULL
+            rv$lfq <- NULL
+            rv$filename <- ""
+            rv$Lrange <- c(NaN,NaN)
+            rv$binSize <- 4
+            rv$ma <- 5
+            rv$addlSqrt <- FALSE
+            rv$years <- NA
+            rv$agg <- "month"
+            rv$plusGroup <- FALSE
+            errDat <- NULL
             if(input$useExDat){
                 rv$filename <- paste0(topa,as.character(exdat))
                 data(list=exdat, package="TropFishR")
@@ -181,7 +201,7 @@ shinyServer(
                 rv$datORI <- lfq2dat(lfq)
                 rv$colNamesORI <- colnames(rv$datORI)
                 rv$dat <- dat
-                rv$colNames <- colnames(dat)
+                rv$colNames <- colnames(rv$datORI)
                 rv$lfq <- rv$lfqORI <- lfq
                 rv$Lrange <- range(rv$dat$midLengths)
                 rv$binSize <- diff(rv$dat$midLengths)[1]
@@ -191,36 +211,24 @@ shinyServer(
                 rv$agg <- "month"
                 rv$plusGroup <- FALSE
             }else if(!is.null(infile)){
-                dat <- read.csv(input$file1$datapath,
-                                header = input$header,
+                dat <- try(read.csv(input$file1$datapath,
+                                header = as.logical(input$header),
                                 sep = input$sep,
                                 quote = input$quote,
-                                stringsAsFactors = FALSE)
-                rv$datORI <- dat
-                rv$colNamesORI <- colnames(dat)
-                rv$dat <- NULL
-                rv$colNames <- NULL
-                rv$lfqORI <- NULL
-                rv$lfq <- NULL
-                ## filename
-                tmp <- strsplit(infile[,1], ".csv")[[1]]
-                tmp <- strsplit(tmp, ".txt")[[1]]
-                filename <- paste0(topa,as.character(tmp))
-                rv$filename <- filename
-            }else{
-                rv$datORI <- NULL
-                rv$dat <- NULL
-                rv$colNamesORI <- NULL
-                rv$lfqORI <- NULL
-                rv$lfq <- NULL
-                rv$filename <- ""
-                rv$Lrange <- c(NaN,NaN)
-                rv$binSize <- 4
-                rv$ma <- 5
-                rv$addlSqrt <- FALSE
-                rv$years <- NA
-                rv$agg <- "month"
-                rv$plusGroup <- FALSE
+                                stringsAsFactors = FALSE),silent = TRUE)
+                if(!inherits(dat,"try-error")){
+                    rv$datORI <- dat
+                    rv$colNamesORI <- colnames(dat)
+                    rv$dat <- NULL
+                    rv$colNames <- NULL
+                    rv$lfqORI <- NULL
+                    rv$lfq <- NULL
+                    ## filename
+                    tmp <- strsplit(infile[,1], ".csv")[[1]]
+                    tmp <- strsplit(tmp, ".txt")[[1]]
+                    filename <- paste0(topa,as.character(tmp))
+                    rv$filename <- filename
+                }
             }
         }
 
@@ -245,14 +253,16 @@ shinyServer(
             colNames <- rv$colNames
             if(!input$useExDat && !is.null(colNames) && !is.null(datORI)){
                 if(!input$isLFQ){
-                    dat <- checkDat(datORI, colNames)
+                    dat <- try(checkDat(datORI, colNames),silent=TRUE)
                 }else{
-                    dat <- lfqdat2dat(datORI,rv$colNames,input$dateFormat)
+                    dat <- try(lfqdat2dat(datORI,rv$colNames,input$dateFormat),silent=TRUE)
                 }
-                if(any(is.na(as.character(dat$dates)))){
-                    rv$errCode <- c(rv$errCode,1)
+                if(inherits(dat,"try-error")){
+                    errCode <- c(errCode,1)
+                }else if(any(is.na(as.character(dat$dates)))){
+                    errCode <- c(errCode,2)
                 }else{
-                    rv$errCode <- rv$errCode[-which(rv$errCode == 1)]
+                    errCode <- errCode[-which(errCode %in% c(1,2))]
                     dat$length <- as.numeric(dat$length)
                     dat$frequency <- as.numeric(dat$frequency)
                     rv$lfqORI <- rv$lfq <- lfq <- dat2lfq(dat,
@@ -277,25 +287,6 @@ shinyServer(
         }
 
         observe({
-            if(rv$doDatLoad){
-                datLoad()
-            }
-        })
-
-        observe({
-            if(!is.null(rv$datORI)){
-                match.cols()
-                colNames <- unlist(rv$colNames)
-                if((!input$isLFQ && any(colNames == "length") && any(colNames == "dates") &&
-                    any(colNames == "frequency")) ||
-                   (input$isLFQ && any(colNames == "midLengths") && any(colNames == "freqColslfq1") &&
-                    any(colNames == "freqColsLFQ2"))){
-                    update.dat()
-                }
-            }
-        })
-
-        observe({
             if(!is.null(rv$datORI)){
                 shinyjs::enable("datUpdate")
             }else{
@@ -307,7 +298,6 @@ shinyServer(
         observeEvent(input$datUpdate, {
             update.dat()
         })
-
 
         output$downloadExData <- downloadHandler(
             filename = function() {
@@ -328,8 +318,9 @@ shinyServer(
             if(rv$doDatLoad == FALSE){
                 return()
             }else{
+                load.dat()
                 datORI <- rv$datORI
-                if(input$disp == "head"){
+                if(input$dispRaw == "head"){
                     return(head(datORI))
                 }else{
                     return(datORI)
@@ -338,24 +329,44 @@ shinyServer(
         })
 
         output$fileContent <- renderTable({
-            if(rv$doDatLoad == FALSE){
+            if(is.null(rv$datORI)){
                 return()
             }else{
-                isolate({
-                    update.dat()
-                })
-                dat <- rv$dat
-                ## informative error messages  ## reset button doesn't work anymore!
-                ## if(any(rv$errCode == 1)){
-                ##     stop("There is at least one NA in the date vector. Did you provide the correct date format, for the date column/header with date information?")
-                ##     return()
-                ## }else{
+                if(!input$useExDat){
+                    match.cols()
+                    colNames <- unlist(rv$colNames)
+                    if((!input$isLFQ && any(colNames == "length") && any(colNames == "dates") &&
+                        any(colNames == "frequency")) ||
+                       (input$isLFQ && any(colNames == "midLengths") && any(colNames == "freqColslfq1") &&
+                        any(colNames == "freqColsLFQ2"))){
+                        update.dat()
+                        ## informative error messages  ## reset button doesn't work anymore!
+                        if(any(errCode == 1)){
+                            stop("Something went wrong with the file upload or assignment of column names. Did you choose the correct seperator and column names?")
+                            return()
+                        }else if(any(errCode == 2)){
+                            stop("There is at least one NA in the date vector. Did you provide the correct date format, for the date column/header with date information?")
+                            return()
+                        }else{
+                            dat <- rv$dat
+                            if(input$disp == "head"){
+                                return(head(dat))
+                            }else{
+                                return(dat)
+                            }
+                        }
+                    }else{
+                        stop("Something went wrong with the file upload or assignment of column names. Did you choose the correct seperator and column names?")
+                        return()
+                    }
+                }else{
+                    dat <- rv$dat
                     if(input$disp == "head"){
                         return(head(dat))
                     }else{
                         return(dat)
                     }
-                ## }
+                }
             }
         })
 
@@ -671,8 +682,16 @@ shinyServer(
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             }else{
-                lfqUp()
-                lfq <- rv$lfq
+                ## use all info from datExplo tab
+                tmp <- try(lfqUp())
+                rv$binSize <- input$binSizeGrowth
+                rv$ma <- input$maGrowth
+                ## use growth tab info
+                lfq <- lfqModify(rv$lfqORI,
+                                 bin_size = input$binSizeGrowth)
+                lfqre <- lfqRestructure(lfq, MA = input$maGrowth)
+                rv$lfq <- lfq
+                rv$lfqre <- lfqre
                 withProgress(message = "Running ELEFAN", value = 0, {
                     resGA <- ELEFAN_GA_shiny(
                         x=lfq, seasonalised = input$seasonalized, MA = input$maGrowth, parallel = FALSE,
@@ -1390,7 +1409,7 @@ shinyServer(
 
 
 
-        ## OVERVIEW
+        ## SUMMARY
         ##-----------------------------------------------------------
         output$allpars_ov <- renderTable({
             if(is.null(rv$allpars))
@@ -1442,34 +1461,62 @@ shinyServer(
 
         observeEvent(input$generateReport, {
 
-            progress <- shiny::Progress$new()
-
-            ## Make sure it closes when we exit this reactive, even if there's an error
-            on.exit(progress$close())
-            progress$set(message = "Building report.",
-                         detail = "This may take a while. This window will disappear
-                     when the report is ready.", value = 1)
-
-            if(is.null(rv$lfq))
-                showNotification(paste("The minimum requirements for the report is a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
+            ## check if tex distribution installed
+            texAvail <- try(Sys.which('pdflatex'), silent=TRUE)
+            ## check if pandoc installed
+            pandocAvail <- rmarkdown::pandoc_available()
+            ## system2('pdflatex', '--version')
+            if(input$reportFormat == "pdf" && (is.null(texAvail) || inherits(texAvail, "try-error"))){
+                showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = NULL,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
+            }else if(input$reportFormat == "docx" && !pandocAvail){
+                showNotification("The software 'pandoc' not found. Install pandoc on your computer or generate the report in 'html' format.",
+                                 type = "error",
+                                 duration = NULL,
+                                 closeButton = TRUE,
+                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 )
+            }else {
+                progress <- shiny::Progress$new()
+
+                ## Make sure it closes when we exit this reactive, even if there's an error
+                on.exit(progress$close())
+                progress$set(message = "Building report.",
+                             detail = "This may take a while. This window will disappear
+                     when the report is ready.", value = 1)
+
+                if(is.null(rv$lfq))
+                    showNotification(paste("The minimum requirements for the report is a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
+                                     type = "error",
+                                     duration = NULL,
+                                     closeButton = TRUE,
+                                     action = a(href = "javascript:location.reload();", "Reload page")
+                                     )
 
                 params <- list(rv = rv)
 
                 td <- tempdir()
-                tmp_file <- tempfile(fileext = ".html")
+                tmp_file <- tempfile(fileext = paste0(".",input$reportFormat))
                 tmp_file2 <- tempfile(fileext = ".Rmd")
 
                 file.copy("report/TropFishR.bib", td,
                           overwrite = TRUE)
                 file.copy("report/assessmentReport.Rmd", tmp_file2, overwrite = TRUE)
 
+                if(input$reportFormat == "html"){
+                    output_format <- "html_document"
+                }else if(input$reportFormat == "pdf"){
+                    output_format <- "pdf_document"
+                }else if(input$reportFormat == "docx"){
+                    output_format <- "word_document"
+                }
+
                 rmarkdown::render(tmp_file2,
-                                  output_format = "html_document",
+                                  output_format = output_format,
                                   output_file = tmp_file,
                                   output_dir = td,
                                   intermediates_dir = td,
@@ -1479,7 +1526,7 @@ shinyServer(
                                   envir = new.env())
 
                 report$filepath <- tmp_file #Assigning in the temp file where the .pdf is located to the reactive file created above
-
+            }
         })
 
         ## Hide download button until report is generated
@@ -1494,7 +1541,7 @@ shinyServer(
             ## This function returns a string which tells the client
             ## browser what name to use when saving the file.
             filename = function() {
-                paste0("ShinyTropFish_report_", Sys.Date(), ".html")
+                paste0("ShinyTropFish_report_", Sys.Date(), ".", input$reportFormat)
                 ##     filename = strsplit(rv$filename,"Data: ")[[1]][2]
                 ##     paste0("STF_report_",filename,"_",Sys.Date(),".pdf")
             },
