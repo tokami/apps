@@ -15,7 +15,8 @@ if(inherits(tried, "try-error"))
 ## -------------------------
 installed <- rownames(installed.packages())
 needed <- c("shiny", "shinyjs", "shinythemes", "shinydashboard",
-            "rmarkdown", "htmltools","remotes","ks", "flextable")
+            "rmarkdown", "htmltools","remotes","ks", "flextable",
+            "pander")
 ## install only missing packages
 install.packages(needed[! needed %in% installed],
                  repos="https://cloud.r-project.org/")

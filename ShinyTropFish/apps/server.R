@@ -10,6 +10,7 @@ library(rmarkdown)
 library(shinyjs)
 library(reshape2)
 library(flextable)
+library(pander)
 
 
 ## Load scripts
@@ -1698,7 +1699,7 @@ shinyServer(
                 paste0("ShinyTropFish_alldata_",filename,"_",Sys.Date(),".RData")
             },
             content = function(con){
-                save(rv, file = con)
+                save(reactiveValuesToList(rv), file = con)
             }
         )
 

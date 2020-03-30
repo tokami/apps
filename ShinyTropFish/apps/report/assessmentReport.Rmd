@@ -45,9 +45,16 @@ knitr::opts_chunk$set(echo = FALSE,
                       comment = "#>",
                       fig.show = "hold",
                       fig.width=10, fig.height=7)
+
+## REMOVE:
+## load("~/Downloads/ShinyTropFish_alldata_alba_2020-03-30.RData")
+## params <- list()
+## params$rv <- isolate(reactiveValuesToList(rv))
+
 library(TropFishR)
 library(knitr)
 library(flextable)
+library(pander)
 
 doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
 ```
@@ -102,24 +109,27 @@ if(!is.null(params$rv$dat)){
 
 # *Growth*
 
+Estimated growth parameters are:
 
 ```{r}
-if(!is.null(rv$parsGrowth) & !is.null(rv$resGA)){
-    tmp <- as.data.frame(c(rv$parsGrowth,
-                           list(Rn_max = rv$resGA@fitnessValue)) )
+if(!is.null(params$rv$parsGrowth) & !is.null(params$rv$resGA)){
+    tmp <- as.data.frame(c(params$rv$parsGrowth,
+                           list(Rn_max = params$rv$resGA@fitnessValue)) )
     names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
     names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phiL")
     tmp
 }
 ```
 
+This can also be presented visually:
+
 ```{r}
-if(!is.null(rv$parsGrowth) & !is.null(rv$lfqFC)){
+if(!is.null(params$rv$parsGrowth) & !is.null(params$rv$lfqFC)){
 par(mar=c(5,5,2,1))
-plot(rv$lfqFC, Fname = "rcounts")
-lfqFC <- rv$lfqFC
+plot(params$rv$lfqFC, Fname = "rcounts")
+lfqFC <- params$rv$lfqFC
 tmp <- lfqFitCurves(lfq = lfqFC,
-             par=as.list(rv$parsGrowth),
+             par=as.list(params$rv$parsGrowth),
              draw = TRUE)
 }
 ```
@@ -130,9 +140,10 @@ tmp <- lfqFitCurves(lfq = lfqFC,
 
 # *Mortality*
 
+The estimated mortality parameters are:
 
 ```{r}
-if(!is.null(rv$parsMort)){
+if(!is.null(params$rv$parsMort)){
     print(params$rv$parsMort)
 }
 ```
@@ -142,9 +153,10 @@ if(!is.null(rv$parsMort)){
 
 # *Reference levels*
 
+Estimated reference levels are:
 
 ```{r, echo = FALSE, eval = TRUE}
-if(!is.null(rv$parsRef)){
+if(!is.null(params$rv$parsRef)){
     print(params$rv$parsRef)
 }
 ```
@@ -153,14 +165,49 @@ if(!is.null(rv$parsRef)){
 
 # *Summary*
 
-For management purposes, fish stock assessments are mainly conducted for single species or stocks, which describe the manamgent units of a population. There is much to be gained from multi-species and ecosystem models, but data requirements and complexity make them often unsuitable for deriving management advice. For data-poor fisheries, a traditional fish stock assessment solely based on length-frequency (LFQ) data of one year (as presented here) is particularly useful. LFQ data comes with many advantages over long time series of catch and effort or catch-at-age data [Mildenberger2016].
-In this exercise, the exploitation rate and results of the yield per recruit models indicate that the fiseries is close to sustainable exploitation. The exploration of stock status and fisheries characteristics can of course be extended, but go beyond the scope of this tutorial, which is thought to help getting started with the **`TropFishR`** package. Further details about functions and their arguments can be found in the help files of the functions (`help(...)` or `?..`, where the dots refer to any function of the package). Also the two publications by Mildenberger2016 and by Taylor2016 provide more details about the functionality and context of the package.
+```{r summary}
+if(is.null(params$rv$dat) || is.null(params$rv$parsMort) || is.null(params$rv$parsRef)){
+    datapoints <- 0
+    datastart <- NaN
+    dataend <- NaN
+    exploi <- NaN
+    stockstatusExploi <- NaN
+    fishmort <- NaN
+    f01 <- NaN
+    ff01 <- NaN
+    ff01Ind <- NaN
+    stockstatusFF01 <- NaN
+}else{
+    datapoints <- as.integer(sum(colSums(as.matrix(params$rv$lfqre$catch))))
+    datastart <- format(min(params$rv$lfqre$dates),"%b %d, %Y")
+    dataend <- format(max(params$rv$lfqre$dates),"%b %d, %Y")
+    exploi <- round(params$rv$parsMort[which(names(params$rv$parsMort) == "F")] /
+                    params$rv$parsMort[which(names(params$rv$parsMort) == "Z")], 2)
+    stockstatusExploi <- ifelse(exploi >= 0.5,"overfished","not overfished")
+    fishmort <- round(params$rv$parsMort[which(names(params$rv$parsMort) == "F")], 2)
+    f01 <- round(params$rv$parsRef[which(names(params$rv$parsRef) == "F01")], 2)
+    ff01 <- round(params$rv$parsMort[which(names(params$rv$parsMort) == "F")]/
+                  params$rv$parsRef[which(names(params$rv$parsRef) == "F01")] ,2)
+    ff01Ind <- ifelse(ff01 >= 1, "larger", "smaller")
+    stockstatusFF01 <- ifelse(ff01 > 1,"overfished","not overfished")
+}
+```
+
+The length-based stock assessment using **TropFishR** is based on `r datapoints`
+length measurements representing the time period from `r datastart` to `r dataend`.
+The exploitation rate (`r paste0("F/Z = ", exploi)`) indicates that
+the stock is `r stockstatusExploi` based on the length-converted catch curve.
+The current fishing mortality (`r paste0("F = ", fishmort)`) is `r ff01Ind` than
+the reference level (`r pander(paste0("$F_{0.1}$ = ", f01))`) and thus
+indicates that the stock is `r stockstatusFF01`
+(`r pander(paste0("$F/F_{0.1}$ = ", ff01))`) based on the yield per recruit
+analysis.
 
 <br><br>
 
 # *Author's comment*
 
-If you have comments or questions please write an [email](mailto:t.k.mildenberger@gmail.com) or post an issue at [GitHub](https://github.com/tokami/TropFishR/issues). You can follow the development of **`TropFishR`** on [ResearchGate](https://www.researchgate.net/project/TropFishR?_esc=homefeed&_viewIds%5B0%5D=hVPmo2RDCok60qGq2z0JOroN&_viewIds%5B1%5D=zyj0j6jnUgNvrPXMrG9rouAP).
+If you have comments or questions please write an [email](mailto:t.k.mildenberger@gmail.com) or post an issue at [GitHub](https://github.com/tokami/TropFishR/issues). You can follow the development of **`TropFishR`** on [ResearchGate](https://www.researchgate.net/project/TropFishR).
 
 <br><br>
 
