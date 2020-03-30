@@ -100,7 +100,6 @@ shinyUI(
                  ## Input: Select a file
                  fileInput("file1", "Choose a csv/txt file",
                            multiple = FALSE,
-                           ##                                  style="color: #fff; background-color: #d35400; border-color: #d35400",
                            accept = c("text/csv",
                                       "text/x-csv",
                                       "text/tab-separated-values",

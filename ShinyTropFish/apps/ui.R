@@ -1,7 +1,10 @@
-## Shiny app for TropFishR related data exploration
-## ui script
+## GUI for ShinyTropFish
+## Tobias K. Mildenberger
+## January 2020
 
-## load packages
+
+## Load packages
+##-----------------------------------------------------------------------------------
 library(shiny)
 library(shinyjs)
 library(shinythemes)
@@ -10,11 +13,14 @@ library(rmarkdown)
 library(TropFishR)
 library(htmltools)
 
+
 ## Load scripts
 ##-----------------------------------------------------------------------------------
 source("../funcs/uiFuncs.R")
 
 
+## UI
+##-----------------------------------------------------------------------------------
 shinyUI(
     fluidPage(
 
@@ -32,20 +38,19 @@ shinyUI(
                            font-weight: bold;
                            color: black;
                            }
-
                            "))
              ),
 
+        tags$style(
+                 type="text/css",
+                 "textarea {width:100%}"
+             ),
 
         navbarPage(title = "ShinyTropFish",
                    id = "tabset",
                    theme = shinytheme("cerulean"),
-                   ##                   position = "fixed-top",
                    inverse = TRUE,
                    collapsible = TRUE,
-
-
-                   ##        tabsetPanel(id="tabset", type = "pills",
                    tabPanel("Home", id = "home",
                             ##-----------------------------------------------------------
                             ##                                        headerPanel(title = "TropFishS"),
@@ -77,12 +82,24 @@ tabPanel("Load data", id = "loaddat",
          tags$style(
                   HTML("hr{border-top: 2px solid #3891BA;}")),
 
+                tags$style("
+             .btn-file {
+             background-color:#3891BA;
+             border-color: #3891BA;
+             }
+
+             .progress-bar {
+             background-color: #3891BA;
+             }
+
+             "),
+
          ## Sidebar panel for inputs
          sidebarPanel(
              "Please upload your data cotaining the length measurements with a date reference. The app accepts two different data formats, (1) a table with at least two columns, which includes one with the length measurements and one with the dates corresponding to the measurements, this format is hereafter referred to as 'raw length measurements', and (2) a table with a column containing the mid lengths of the length classes and a column with the number of individuals in each length class for each date, hereafter referred to as 'length-frequency table'. You can find more information about the data formats in this",a("tutorial.", target="_blank", href="lfqData.pdf"),"The app can upload either txt or csv files. After uploading your data, you can choose the respective data format, assign the columns, adjust the date format, and press 'Create LFQ data' to create the length-frequency data required by the software.",
              br(),
              br(),
-             div(style="display:inline-block;width:95%;text-align:center;",
+             div(style="display:inline-block;width:95%;text-align:center;align:center;",
                  ## Input: Select a file
                  fileInput("file1", "Choose your csv/txt file",
                            multiple = FALSE,
@@ -91,9 +108,13 @@ tabPanel("Load data", id = "loaddat",
                                       "text/tab-separated-values",
                                       "text/comma-separated-values",
                                       "text/x-comma-separated-values",
-                                      "text/plain")),
+                                      "text/plain")
+                           ),
+                 "Please use reset before uploading a new data set:",
+                 br(),
+                 br(),
                  actionButton("reset", label = " Reset",
-                              style="color: #3891BA; background-color: #d35400; border-color: #d35400",
+                              style="color: #3891BA; background-color: #3891BA; border-color: #3891BA;",
                               icon = icon("refresh", "fa-1.5x")
                               )
                  ),
@@ -169,8 +190,8 @@ tabPanel("Load data", id = "loaddat",
                  actionButton(
                      "datUpdate",
                      label = " Create LFQ data",
-                     style="color: #3891BA; background-color: #d35400; border-color: #d35400",
-                     icon = icon("stats", "fa-1.5x")
+                     style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                     icon = icon("filter", "fa-1.5x")
                  )
              ),
              br(),
@@ -381,10 +402,14 @@ tabPanel("Growth", id = "growth",
                  br(),
                  div(style="display:inline-block;width:95%;text-align:center;",
                      actionButton("runELEFAN",
-                                  label = "Run ELEFAN_GA",
-                                  icon = icon("arrow-right")),
+                                  label = " Run ELEFAN_GA",
+                                  style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                  icon = icon("chart-line", "fa-1.5x")),
                      actionButton("resetELEFAN",
-                                  label = "Clear")),
+                                  style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                  label = " Reset",
+                                  icon = icon("refresh", "fa-1.5x"))
+                     ),
                  br(),
                  br(),
                  br(),
@@ -552,12 +577,17 @@ tabPanel("Mortality/Selectivity", id = "mort",
                           br(),
                           br(),
                           br(),
-                          div(style="display:inline-block;width:95%;text-align: center;",
+                          div(
+                              style="display:inline-block;width:95%;text-align: center;",
                               actionButton("runLCCC",
-                                           label = "Run LCCC",
-                                           icon = icon("arrow-right")),
+                                           label = " Run LCCC",
+                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                           icon = icon("cross", "fa-1.5x")),
                               actionButton("resetLCCC",
-                                           label = "Clear")),
+                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                           label = " Reset",
+                                           icon = icon("refresh", "fa-1.5x"))
+                          ),
                           br(),
                           br(),
                           br(),
@@ -679,10 +709,15 @@ tabPanel("Reference levels", id = "refs",
                           br(),
                           div(style="display:inline-block;width:95%;text-align: center;",
                               actionButton("runYPR",
-                                           label = "Run YPR",
-                                           icon = icon("arrow-right")),
+                                           label = " Run YPR",
+                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                           icon = icon("fish", "fa-1.5x")),
                               actionButton("resetYPR",
-                                           label = "Clear")),
+                                           label = " Reset",
+                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                           icon = icon("refresh", "fa-1.5x")
+                                           )
+                              ),
                           br(),
                           br(),
                           br(),
@@ -837,14 +872,18 @@ tabPanel("Summary", id = "summary",
                               width = '50%'
                           ),
                           br(),
-                          actionButton("generateReport", "Generate Assessment Report",
+                          actionButton("generateReport", " Generate Assessment Report",
+                                       style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
                                        icon = icon("file", "fa-1.5x")),
                           br(),
                           br(),
                           br(),
-                          conditionalPanel(condition = "output.reportbuilt",
-                                           downloadButton("downloadReport",
-                                                          "Download Assessment Report")),
+                          conditionalPanel(
+                              condition = "output.reportbuilt",
+                              downloadButton(
+                                  "downloadReport",
+                                  " Download Assessment Report",
+                                  style="color: #3891BA; background-color: #3891BA; border-color: #3891BA")),
                           br(),
                           br(),
                           br(),
@@ -853,7 +892,8 @@ tabPanel("Summary", id = "summary",
                           br(),
                           br(),
                           downloadButton("allParameters",
-                                         label = "Download all parameters"),
+                                         label = " Download parameters",
+                                         style="color: #3891BA; background-color: #3891BA; border-color: #3891BA"),
                           br(),
                           br(),
                           br(),
@@ -862,7 +902,8 @@ tabPanel("Summary", id = "summary",
                           br(),
                           br(),
                           downloadButton("allGraphs",
-                                         label = "Download all graphs"),
+                                         label = " Download graphs",
+                                         style="color: #3891BA; background-color: #3891BA; border-color: #3891BA"),
                           br(),
                           br(),
                           br(),
@@ -871,7 +912,8 @@ tabPanel("Summary", id = "summary",
                           br(),
                           br(),
                           downloadButton("allData",
-                                         label = "Download all data"),
+                                         label = " Download RData file",
+                                         style="color: #3891BA; background-color: #3891BA; border-color: #3891BA"),
                           br(),
                           br(),
                           br()
