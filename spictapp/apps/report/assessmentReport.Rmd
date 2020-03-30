@@ -45,6 +45,10 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.width=10, fig.height=7)
 library(spict)
 library(knitr)
+library(flextable)
+library(pander)
+
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
 ```
 
 <br><br><br>
@@ -80,9 +84,16 @@ analysis (first 10 rows of each column displayed). The complete data set is
 included in the appendix of this report.
 
 ```{r rawdat}
-if(!is.null(params$rv$dat)) kable(
-                                head(params$rv$dat, 10), booktabs = TRUE,
-                                caption = "Input data.")
+if(!is.null(params$rv$dat)){
+    if(doc.type == "docx"){
+        flextable(
+            head(params$rv$dat, 10))
+    }else{
+        kable(
+            head(params$rv$dat, 10), booktabs = TRUE,
+            caption = "Input data.")
+    }
+}
 ```
 
 The input list used for the SPiCT assessment can also be displayed graphically
@@ -257,11 +268,18 @@ upper 95% confidence intervals (`cilow` and `ciupp`, respectively), as well as
 the log estimates (`log.est`) of all fixed parameters of the SPiCT model.
 
 ```{r}
-if(!is.null(params$rv$fit))
-    kable(
-        round(sumspict.parest(params$rv$fit),3),
-        booktabs = TRUE,
-        caption = "Model parameters.")
+if(!is.null(params$rv$fit)){
+    if(doc.type == "docx"){
+        flextable(
+            round(sumspict.parest(params$rv$fit),3)
+        )
+    }else{
+        kable(
+            round(sumspict.parest(params$rv$fit),3),
+            booktabs = TRUE,
+            caption = "Model parameters.")
+    }
+}
 ```
 
 <font size="-3">
@@ -287,11 +305,18 @@ intervals, the log estimates, and the relative difference to the deterministic
 reference points (`rel.diff.Drp`) are:
 
 ```{r}
-if(!is.null(params$rv$fit))
-    kable(
-        round(sumspict.srefpoints(params$rv$fit),3),
-        booktabs = TRUE,
-        caption = "Stochastic reference points.")
+if(!is.null(params$rv$fit)){
+    if(doc.type == "docx"){
+        flextable(
+            round(sumspict.srefpoints(params$rv$fit),3)
+        )
+    }else{
+        kable(
+            round(sumspict.srefpoints(params$rv$fit),3),
+            booktabs = TRUE,
+            caption = "Stochastic reference points.")
+    }
+}
 ```
 
 <font size="-3">
@@ -322,11 +347,18 @@ time of last index observation) are called 'States' in SPiCT and estimated with
 confidence intervals as:
 
 ```{r}
-if(!is.null(params$rv$fit))
-    kable(
-        round(sumspict.states(params$rv$fit),3),
-        booktabs = TRUE,
-        caption = "Model states.")
+if(!is.null(params$rv$fit)){
+    if(doc.type == "docx"){
+        flextable(
+            round(sumspict.states(params$rv$fit),3)
+        )
+    }else{
+        kable(
+            round(sumspict.states(params$rv$fit),3),
+            booktabs = TRUE,
+            caption = "Model states.")
+    }
+}
 ```
 
 <font size="-3">
@@ -347,11 +379,18 @@ interval' or `maninterval`) and `E(B_inf)` is the predicted equilibrium biomass
 and current fishing mortality.
 
 ```{r fitpred}
-if(!is.null(params$rv$fit))
-    kable(
-        round(sumspict.predictions(params$rv$fit),3),
-        booktabs = TRUE,
-        caption = "Model predictions.")
+if(!is.null(params$rv$fit)){
+    if(doc.type == "docx"){
+        flextable(
+            round(sumspict.predictions(params$rv$fit),3)
+        )
+    }else{
+        kable(
+            round(sumspict.predictions(params$rv$fit),3),
+            booktabs = TRUE,
+            caption = "Model predictions.")
+    }
+}
 ```
 
 The 4 main plots of SPiCT summarising the results graphically, are the relative
@@ -384,10 +423,18 @@ posterior distributions of used priors. Additionally, the retrospective analysis
 and sensitivity analysis for intital values is recommended.
 
 ```{r}
-if(!is.null(params$rv$fit))
-    kable(sumspict.diagnostics(params$rv$fit),
-        booktabs = TRUE,
-        caption = "Model diagnostics.")
+if(!is.null(params$rv$fit)){
+    if(doc.type == "docx"){
+        flextable(
+            sumspict.diagnostics(params$rv$fit)
+        )
+    }else{
+        kable(
+            sumspict.diagnostics(params$rv$fit),
+            booktabs = TRUE,
+            caption = "Model diagnostics.")
+    }
+}
 ```
 
 This can also be evaluated visually:
@@ -432,24 +479,48 @@ different initial values. Disagreeing assessment outcomes for the different
 model fits indicate potential problems with underlying assessment.
 
 ```{r}
-if(!is.null(params$rv$sensi))
-    kable(sumspict.ini(params$rv$sensi[[1]]),
-        booktabs = TRUE,
-        caption = "Relative difference between initial values of different trials and base run.")
+if(!is.null(params$rv$sensi)){
+    if(doc.type == "docx"){
+        flextable(
+            sumspict.ini(params$rv$sensi[[1]])
+        )
+    }else{
+        kable(
+            sumspict.ini(params$rv$sensi[[1]]),
+              booktabs = TRUE,
+              caption = "Relative difference between initial values of different trials and base run.")
+    }
+}
 ```
 
 ```{r}
-if(!is.null(params$rv$sensi))
-    kable(sumspict.ini(params$rv$sensi[[2]]),
-        booktabs = TRUE,
-        caption = "Initial values (log scale) for the different trials used in the sensitivity analysis.")
+if(!is.null(params$rv$sensi)){
+    if(doc.type == "docx"){
+        flextable(
+            sumspict.ini(params$rv$sensi[[2]])
+        )
+    }else{
+        kable(
+            sumspict.ini(params$rv$sensi[[2]]),
+            booktabs = TRUE,
+            caption = "Initial values (log scale) for the different trials used in the sensitivity analysis.")
+    }
+}
 ```
 
 ```{r}
-if(!is.null(params$rv$sensi))
-    kable(sumspict.ini(params$rv$sensi[[3]]),
-        booktabs = TRUE,
-        caption = "Paramater estimates for all trials of the sensitivity analysis, as well as the distance from the parameters of each trial to the base run.")
+if(!is.null(params$rv$sensi)){
+    if(doc.type == "docx"){
+        flextable(
+            sumspict.ini(params$rv$sensi[[3]])
+        )
+    }else{
+        kable(
+            sumspict.ini(params$rv$sensi[[3]]),
+            booktabs = TRUE,
+            caption = "Paramater estimates for all trials of the sensitivity analysis, as well as the distance from the parameters of each trial to the base run.")
+    }
+}
 ```
 
 <font size="-3">
@@ -501,10 +572,18 @@ if(!is.null(params$rv$mana)) plot2(params$rv$mana)
 In detail, the differences between the management scenarios are:
 
 ```{r mansum}
-if(!is.null(params$rv$mana))
-    kable(sumspict.manage(params$rv$mana),
-        booktabs = TRUE,
-        caption = "Management scenarios.")
+if(!is.null(params$rv$mana)){
+    if(doc.type == "docx"){
+        flextable(
+            sumspict.manage(params$rv$mana)
+        )
+    }else{
+        kable(
+            sumspict.manage(params$rv$mana),
+            booktabs = TRUE,
+            caption = "Management scenarios.")
+    }
+}
 ```
 
 The total allowable catch for each management scenario for the period
@@ -585,10 +664,18 @@ If you have comments or questions please write an [email](mailto:t.k.mildenberge
 The complete data set used for the analysis:
 
 ```{r}
-if(!is.null(params$rv$dat))
-    kable(params$rv$dat,
-        booktabs = TRUE,
-        caption = "Full uploaded data.")
+if(!is.null(params$rv$dat)){
+    if(doc.type == "docx"){
+        flextable(
+            params$rv$dat
+        )
+    }else{
+        kable(
+            params$rv$dat,
+            booktabs = TRUE,
+            caption = "Full uploaded data.")
+    }
+}
 ```
 
 ## Full SPiCT summary {#app:summary}

@@ -1230,7 +1230,7 @@ shinyServer(function(input, output, session) {
             paste0("spictapp_RData_",filename,"_",Sys.Date(),".RData")
         },
         content = function(con){
-            save(rv, file = con)
+            save(reactiveValuesToList(rv), file = con)
         }
     )
 
@@ -1392,44 +1392,73 @@ shinyServer(function(input, output, session) {
 
     observeEvent(input$generateReport, {
 
-        progress <- shiny::Progress$new()
+            ## check if tex distribution installed
+            texAvail <- try(Sys.which('pdflatex'), silent=TRUE)
+            ## check if pandoc installed
+            pandocAvail <- rmarkdown::pandoc_available()
+            ## system2('pdflatex', '--version')
+            if(input$reportFormat == "pdf" && (is.null(texAvail) || inherits(texAvail, "try-error"))){
+                showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
+                                 type = "error",
+                                 duration = 30,
+                                 closeButton = TRUE,
+                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 )
+            }else if(input$reportFormat == "docx" && !pandocAvail){
+                showNotification("The software 'pandoc' not found. Install pandoc on your computer or generate the report in 'html' format.",
+                                 type = "error",
+                                 duration = 30,
+                                 closeButton = TRUE,
+                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 )
+            }else {
 
-        ## Make sure it closes when we exit this reactive, even if there's an error
-        on.exit(progress$close())
-        progress$set(message = "Building report.",
-                     detail = "This may take a while. This window will disappear
+                progress <- shiny::Progress$new()
+
+                ## Make sure it closes when we exit this reactive, even if there's an error
+                on.exit(progress$close())
+                progress$set(message = "Building report.",
+                             detail = "This may take a while. This window will disappear
                      when the report is ready.", value = 1)
 
-        if(is.null(rv$inp))
-            showNotification(paste("The minimum requirements for the report is input data. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
-                             type = "error",
-                             duration = NULL,
-                             closeButton = TRUE,
-                             action = a(href = "javascript:location.reload();", "Reload page")
-                             )
+                if(is.null(rv$inp))
+                    showNotification(paste("The minimum requirements for the report is input data. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
+                                     type = "error",
+                                     duration = 30,
+                                     closeButton = TRUE,
+                                     action = a(href = "javascript:location.reload();", "Reload page")
+                                     )
 
-            params <- list(rv = rv)
+                params <- list(rv = rv)
 
-            td <- tempdir()
-            tmp_file <- tempfile(fileext = ".html")
-            tmp_file2 <- tempfile(fileext = ".Rmd")
+                td <- tempdir()
+                tmp_file <- tempfile(fileext = paste0(".",input$reportFormat))
+                tmp_file2 <- tempfile(fileext = ".Rmd")
 
-            file.copy("report/spictapp.bib", td,
-                      overwrite = TRUE)
-            file.copy("report/assessmentReport.Rmd", tmp_file2, overwrite = TRUE)
+                file.copy("report/spictapp.bib", td,
+                          overwrite = TRUE)
+                file.copy("report/assessmentReport.Rmd", tmp_file2, overwrite = TRUE)
 
-            rmarkdown::render(tmp_file2,
-                              output_format = "html_document",
-                              output_file = tmp_file,
-                              output_dir = td,
-                              intermediates_dir = td,
-                              knit_root_dir = td,
-                              clean = TRUE,
-                              params = params,
-                              envir = new.env())
+                if(input$reportFormat == "html"){
+                    output_format <- "html_document"
+                }else if(input$reportFormat == "pdf"){
+                    output_format <- "pdf_document"
+                }else if(input$reportFormat == "docx"){
+                    output_format <- "word_document"
+                }
 
-            report$filepath <- tmp_file #Assigning in the temp file where the .pdf is located to the reactive file created above
+                rmarkdown::render(tmp_file2,
+                                  output_format = output_format,
+                                  output_file = tmp_file,
+                                  output_dir = td,
+                                  intermediates_dir = td,
+                                  knit_root_dir = td,
+                                  clean = TRUE,
+                                  params = params,
+                                  envir = new.env())
 
+                report$filepath <- tmp_file #Assigning in the temp file where the .pdf is located to the reactive file created above
+            }
     })
 
     ## Hide download button until report is generated
@@ -1444,7 +1473,7 @@ shinyServer(function(input, output, session) {
         ## This function returns a string which tells the client
         ## browser what name to use when saving the file.
         filename = function() {
-            paste0("spictapp_report_", Sys.Date(), ".html")
+            paste0("spictapp_report_", Sys.Date(), input$reportFormat)
             ##     filename = strsplit(rv$filename,"Data: ")[[1]][2]
             ##     paste0("STF_report_",filename,"_",Sys.Date(),".pdf")
         },
