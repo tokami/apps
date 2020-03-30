@@ -114,7 +114,7 @@ tabPanel("Load data", id = "loaddat",
                                                         "Double Quote" = '"',
                                                         "Single Quote" = "'"),
                                             selected = '"')),
-                     ## Input: Select number of rows to display
+                     ## Input: Checkbox if file has header
                      column(4, radioButtons("header", "Header",
                                             choices = c("True" = "TRUE",
                                                         "False" = "FALSE"),

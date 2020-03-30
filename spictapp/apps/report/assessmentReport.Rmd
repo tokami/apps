@@ -271,7 +271,7 @@ the log estimates (`log.est`) of all fixed parameters of the SPiCT model.
 if(!is.null(params$rv$fit)){
     if(doc.type == "docx"){
         flextable(
-            round(sumspict.parest(params$rv$fit),3)
+            as.data.frame(round(sumspict.parest(params$rv$fit),3))
         )
     }else{
         kable(
@@ -308,7 +308,7 @@ reference points (`rel.diff.Drp`) are:
 if(!is.null(params$rv$fit)){
     if(doc.type == "docx"){
         flextable(
-            round(sumspict.srefpoints(params$rv$fit),3)
+            as.data.frame(round(sumspict.srefpoints(params$rv$fit),3))
         )
     }else{
         kable(
@@ -332,11 +332,18 @@ deterministic reference points.
 Comparitively, the deterministic reference points are:
 
 ```{r}
-if(!is.null(params$rv$fit))
-    kable(
-        round(sumspict.drefpoints(params$rv$fit),3),
-        booktabs = TRUE,
-        caption = "Deterministic reference points.")
+if(!is.null(params$rv$fit)){
+    if(doc.type == "docx"){
+        flextable(
+            as.data.frame(round(sumspict.drefpoints(params$rv$fit),3))
+        )
+    }else{
+        kable(
+            round(sumspict.drefpoints(params$rv$fit),3),
+            booktabs = TRUE,
+            caption = "Deterministic reference points.")
+    }
+}
 ```
 
 ## States
@@ -350,7 +357,7 @@ confidence intervals as:
 if(!is.null(params$rv$fit)){
     if(doc.type == "docx"){
         flextable(
-            round(sumspict.states(params$rv$fit),3)
+            as.data.frame(round(sumspict.states(params$rv$fit),3))
         )
     }else{
         kable(
@@ -382,7 +389,7 @@ and current fishing mortality.
 if(!is.null(params$rv$fit)){
     if(doc.type == "docx"){
         flextable(
-            round(sumspict.predictions(params$rv$fit),3)
+            as.data.frame(round(sumspict.predictions(params$rv$fit),3))
         )
     }else{
         kable(
@@ -426,7 +433,8 @@ and sensitivity analysis for intital values is recommended.
 if(!is.null(params$rv$fit)){
     if(doc.type == "docx"){
         flextable(
-            sumspict.diagnostics(params$rv$fit)
+            as.data.frame(sumspict.diagnostics(params$rv$fit)),
+                          col_keys = c("shapiro","bias","acf","LBox","shapiro_2","bias_2","acf_2","LBox_2")
         )
     }else{
         kable(
@@ -482,7 +490,7 @@ model fits indicate potential problems with underlying assessment.
 if(!is.null(params$rv$sensi)){
     if(doc.type == "docx"){
         flextable(
-            sumspict.ini(params$rv$sensi[[1]])
+            as.data.frame(sumspict.ini(params$rv$sensi[[1]]))
         )
     }else{
         kable(
@@ -497,7 +505,7 @@ if(!is.null(params$rv$sensi)){
 if(!is.null(params$rv$sensi)){
     if(doc.type == "docx"){
         flextable(
-            sumspict.ini(params$rv$sensi[[2]])
+            as.data.frame(sumspict.ini(params$rv$sensi[[2]]))
         )
     }else{
         kable(
@@ -512,7 +520,7 @@ if(!is.null(params$rv$sensi)){
 if(!is.null(params$rv$sensi)){
     if(doc.type == "docx"){
         flextable(
-            sumspict.ini(params$rv$sensi[[3]])
+            as.data.frame(sumspict.ini(params$rv$sensi[[3]]))
         )
     }else{
         kable(
@@ -575,7 +583,7 @@ In detail, the differences between the management scenarios are:
 if(!is.null(params$rv$mana)){
     if(doc.type == "docx"){
         flextable(
-            sumspict.manage(params$rv$mana)
+            as.data.frame(sumspict.manage(params$rv$mana))
         )
     }else{
         kable(
@@ -640,8 +648,8 @@ if(is.null(params$rv$fit)){
 The stock assessment with SPiCT is based on `r datapoints` data points
 representing the time period from `r datastart` to `r dataend`. The assessment
 indicates that the stock is `r stockstatusB` in terms of biomass
-($\frac{B}{B_{MSY}} =$ `r bbmsy`), and `r stockstatusF` in terms of fishing
-mortality ($\frac{F}{F_{MSY}} =$ `r ffmsy`). `r ffac` the predicted catch for
+`r pander(paste0("$B/B_{MSY}$ = ", bbmsy))`), and `r stockstatusF` in terms of fishing
+mortality (`r pander(paste0("$F/F_{MSY}$ = ", ffmsy))`). `r ffac` the predicted catch for
 the period from `r manstart` to `r manend` is `r predcatch` and the predicted
 biomass relative to $B_{MSY}$ in `r maneval` is `r bpbmsy`.
 
@@ -667,7 +675,7 @@ The complete data set used for the analysis:
 if(!is.null(params$rv$dat)){
     if(doc.type == "docx"){
         flextable(
-            params$rv$dat
+            as.data.frame(params$rv$dat)
         )
     }else{
         kable(

@@ -710,7 +710,7 @@ shinyServer(
                                  )
             }else{
                 ## use all info from datExplo tab
-                tmp <- try(lfqUp())
+                tmp <- try(lfqUp(),silent=TRUE)
                 rv$binSize <- input$binSizeGrowth
                 rv$ma <- input$maGrowth
                 ## use growth tab info
@@ -1047,6 +1047,14 @@ shinyServer(
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
+
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Running LCCC.",
+                         detail = "This may take a while. This window will disappear
+                     automatically.", value = 1)
+
             lfq <- rv$lfq
             lfq$par <- rv$parsGrowth
 
@@ -1352,6 +1360,14 @@ shinyServer(
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
+
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Running YPR.",
+                         detail = "This may take a while. This window will disappear
+                     automatically.", value = 1)
+
             lfq <- rv$lfq
             lfq <- lfqModify(lfq, vectorise_catch = TRUE,
                              bin_size = input$binSizeYPR)
@@ -1553,6 +1569,8 @@ shinyServer(
                                   envir = new.env())
 
                 report$filepath <- tmp_file #Assigning in the temp file where the .pdf is located to the reactive file created above
+                showNotification("The report was generated successfully. You can download with the 'Download Assessment Report' button on the left.",
+                                 duration = 10)
             }
         })
 

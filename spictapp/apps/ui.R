@@ -122,7 +122,6 @@ shinyUI(
              tags$hr(),
              wellPanel(
                  fluidRow(
-
                      ## Input: Select separator
                      column(4, radioButtons("sep", "Separator",
                                             choices = c(Comma = ",",
@@ -136,18 +135,12 @@ shinyUI(
                                                         "Double Quote" = '"',
                                                         "Single Quote" = "'"),
                                             selected = '"')),
-                     ## Input: Select number of rows to display
-                     column(4, radioButtons("disp", "Display",
-                                            choices = c(Head = "head",
-                                                        All = "all"),
-                                            selected = "head")
-                            )
-                 ),
-                 ## Input: Checkbox if file has header
-                 checkboxInput("header", "Header", TRUE)
+                     ## Input: Checkbox if file has header
+                     column(4, radioButtons("header", "Header",
+                                            choices = c("True" = "TRUE",
+                                                        "False" = "FALSE"),
+                                            selected = "TRUE")))
              ),
-
-
              h3("Assign columns"),
              tags$hr(),
              "Please assign the columns of your data to the required SPiCT input data. SPiCT requires a vector with catch observations and their times, as well as either index observations and their times or effort observations and their times. Press 'Update data' when all columns are assigned.",
@@ -219,8 +212,23 @@ shinyUI(
                      uiOutput("stdevfacE_lab")
                  )
              ),
+             "Display only part of or full data sets?",
+             wellPanel(
+                 fluidRow(
+                     ## Input: Select separator
+                     ## Input: Select number of rows to display
+                     column(4, radioButtons("dispRaw", "Raw data",
+                                            choices = c(Head = "head",
+                                                        All = "all"),
+                                            selected = "head")),
+                     ## Input: Select number of rows to display
+                     column(4, radioButtons("disp", "Updated data",
+                                            choices = c(Head = "head",
+                                                        All = "all"),
+                                            selected = "head")))
+             ),
              br(),
-             h3("Use example data"),
+             h3("Example data"),
              tags$hr(),
              checkboxInput(inputId = "useExDat",
                            label = "Use example data set?",

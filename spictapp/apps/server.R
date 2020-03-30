@@ -91,6 +91,22 @@ shinyServer(function(input, output, session) {
         ## reset file upload
         reset("file1")
         rv.defaults()
+        updateRadioButtons(session = session,
+                           inputId = "sep",
+                           selected = ",")
+        updateRadioButtons(session = session,
+                           inputId = "quote",
+                           selected = "'")
+        updateRadioButtons(session = session,
+                           inputId = "header",
+                           selected = "TRUE")
+        updateRadioButtons(session = session,
+                           inputId = "dispRaw",
+                           selected = "head")
+        updateRadioButtons(session = session,
+                           inputId = "disp",
+                           selected = "head")
+        ## example data
         updateCheckboxInput(session = session,
                             inputId = "useExDat",
                             value = FALSE)
@@ -220,7 +236,7 @@ shinyServer(function(input, output, session) {
                     selected = selected)
     })
 
-    datLoad <- function(){
+    load.dat <- function(){
         infile <- input$file1
         exdat <- as.character(input$exdat)
         topa <- "Data: "
@@ -243,7 +259,7 @@ shinyServer(function(input, output, session) {
             rv$nseasons <- inp$nseasons
         }else if(!is.null(infile)){
             dat <- read.csv(input$file1$datapath,
-                            header = input$header,
+                            header = as.logical(input$header),
                             sep = input$sep,
                             quote = input$quote)
             rv$datORI <- dat
@@ -299,7 +315,7 @@ shinyServer(function(input, output, session) {
 
     observe({
         if(rv$doDatLoad){
-            datLoad()
+            load.dat()
         }
     })
 
@@ -343,7 +359,7 @@ shinyServer(function(input, output, session) {
             return()
         }else{
             datORI <- rv$datORI
-            if(input$disp == "head"){
+            if(input$dispRaw == "head"){
                 return(head(datORI))
             }else{
                 return(datORI)
@@ -748,7 +764,10 @@ shinyServer(function(input, output, session) {
                 action = a(href = "javascript:location.reload();", "Reload page")
             )
         }else{
-            update.inp()
+            tmp <- try(update.inp(),silent=TRUE)
+            if(inherits(tmp, "try-error")){
+                rv$inp <- check.inp(rv$inpORI)
+            }
             inp <- rv$inp
             inp$optimiser <- input$optimiser
             inp$optim.method <- input$optimMethod
@@ -1459,6 +1478,8 @@ shinyServer(function(input, output, session) {
 
                 report$filepath <- tmp_file #Assigning in the temp file where the .pdf is located to the reactive file created above
             }
+            showNotification("The report was generated successfully. You can download with the 'Download Assessment Report' button on the left.",
+                             duration = 10)
     })
 
     ## Hide download button until report is generated
@@ -1473,7 +1494,7 @@ shinyServer(function(input, output, session) {
         ## This function returns a string which tells the client
         ## browser what name to use when saving the file.
         filename = function() {
-            paste0("spictapp_report_", Sys.Date(), input$reportFormat)
+            paste0("spictapp_report_", Sys.Date(), ".", input$reportFormat)
             ##     filename = strsplit(rv$filename,"Data: ")[[1]][2]
             ##     paste0("STF_report_",filename,"_",Sys.Date(),".pdf")
         },
