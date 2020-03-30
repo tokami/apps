@@ -9,6 +9,7 @@ library(rmarkdown)
 ##library(jsonlite)
 library(shinyjs)
 library(reshape2)
+library(flextable)
 
 
 ## Load scripts
@@ -33,6 +34,7 @@ shinyServer(
         ## Defaults
         rv.defaults <- function(){
             rv$doDatLoad = FALSE
+            rv$doDatUp = FALSE
             rv$doELEFAN = FALSE
             rv$doLCCC = FALSE
             rv$doYPR = FALSE
@@ -57,7 +59,6 @@ shinyServer(
             rv$exdat <- NULL
         }
         rv.defaults()
-        errCode <- NULL
 
         ## LOAD DATA
         ##-----------------------------------------------------------
@@ -88,9 +89,9 @@ shinyServer(
             updateRadioButtons(session = session,
                                 inputId = "disp",
                                selected = "head")
-            updateCheckboxInput(session = session,
+            updateRadioButtons(session = session,
                                 inputId = "isLFQ",
-                                value = FALSE)
+                                selected = "raw")
             updateSelectInput(session = session,
                               inputId = "lengthCol",
                               selected = NULL)
@@ -103,6 +104,9 @@ shinyServer(
             updateCheckboxInput(session = session,
                                 inputId = "aggDates",
                                 value = FALSE)
+            updateTextInput(session=session,
+                            inputId = "dateFormat",
+                            value = "%Y-%m-%d")
             ## example data
             updateCheckboxInput(session = session,
                                 inputId = "useExDat",
@@ -111,7 +115,7 @@ shinyServer(
                               inputId = "exdat",
                               selected = NULL)
             rv.defaults()
-            errDat <- NULL
+            errCode <- NULL
         })
 
         output$lengthCol <- renderUI({
@@ -191,7 +195,7 @@ shinyServer(
             rv$years <- NA
             rv$agg <- "month"
             rv$plusGroup <- FALSE
-            errDat <- NULL
+            errCode <<- NULL
             if(input$useExDat){
                 rv$filename <- paste0(topa,as.character(exdat))
                 data(list=exdat, package="TropFishR")
@@ -210,6 +214,7 @@ shinyServer(
                 rv$years <- unique(format(rv$lfq$dates, "%Y"))
                 rv$agg <- "month"
                 rv$plusGroup <- FALSE
+                rv$doDatUp <- TRUE
             }else if(!is.null(infile)){
                 dat <- try(read.csv(input$file1$datapath,
                                 header = as.logical(input$header),
@@ -228,6 +233,7 @@ shinyServer(
                     tmp <- strsplit(tmp, ".txt")[[1]]
                     filename <- paste0(topa,as.character(tmp))
                     rv$filename <- filename
+                    rv$doDatUp <- FALSE
                 }
             }
         }
@@ -235,7 +241,7 @@ shinyServer(
         match.cols <- function(){
             if(!input$useExDat){
                 datORI <- rv$datORI
-                if(!input$isLFQ){
+                if(input$isLFQ == "raw"){
                     colNames = list("length" = input$lengthCol,
                                     "dates" = input$dateCol,
                                     "frequency" = input$freqCol)
@@ -252,36 +258,42 @@ shinyServer(
             datORI <- rv$datORI
             colNames <- rv$colNames
             if(!input$useExDat && !is.null(colNames) && !is.null(datORI)){
-                if(!input$isLFQ){
+                if(input$isLFQ == "raw"){
                     dat <- try(checkDat(datORI, colNames),silent=TRUE)
                 }else{
                     dat <- try(lfqdat2dat(datORI,rv$colNames,input$dateFormat),silent=TRUE)
                 }
                 if(inherits(dat,"try-error")){
-                    errCode <- c(errCode,1)
+                    errCode <<- c(errCode,1)
                 }else if(any(is.na(as.character(dat$dates)))){
-                    errCode <- c(errCode,2)
+                    errCode <<- c(errCode,2)
                 }else{
-                    errCode <- errCode[-which(errCode %in% c(1,2))]
+                    errCode <<- errCode[-which(errCode %in% c(1,2))]
                     dat$length <- as.numeric(dat$length)
                     dat$frequency <- as.numeric(dat$frequency)
-                    rv$lfqORI <- rv$lfq <- lfq <- dat2lfq(dat,
-                                                          dateFormat = ifelse(input$isLFQ,"%Y-%m-%d",
-                                                                              input$dateFormat),
-                                                          aggDates = input$aggDates)
-                    lfqdat <- setNames(data.frame(lfq$catch), lfq$dates)
-                    lfqdat <- cbind(lfq$midLengths, lfqdat)
-                    colnames(lfqdat) <- c("midLengths",colnames(lfqdat)[-1])
-                    rv$dat <- lfqdat
-                    ## length range
-                    rv$Lrange <- range(dat$length,na.rm=TRUE)
-                    ## bin size
-                    rv$binSize <- diff(dat$length)[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
-                    rv$ma <- 5
-                    rv$addlSqrt <- FALSE
-                    rv$years <- unique(format(lfq$dates, "%Y"))
-                    rv$agg <- "month"
-                    rv$plusGroup <- FALSE
+                    lfq <- try(dat2lfq(dat,
+                                       dateFormat = ifelse(input$isLFQ == "lfq","%Y-%m-%d",
+                                                           input$dateFormat),
+                                       aggDates = input$aggDates),silent = TRUE)
+                    if(inherits(lfq,"try-error")){
+                        errCode <<- c(errCode,3)
+                    }else{
+                        errCode <<- errCode[-which(errCode %in% c(3))]
+                        rv$lfqORI <- rv$lfq <- lfq
+                        lfqdat <- setNames(data.frame(lfq$catch), lfq$dates)
+                        lfqdat <- cbind(lfq$midLengths, lfqdat)
+                        colnames(lfqdat) <- c("midLengths",colnames(lfqdat)[-1])
+                        rv$dat <- lfqdat
+                        ## length range
+                        rv$Lrange <- range(dat$length,na.rm=TRUE)
+                        ## bin size
+                        rv$binSize <- diff(dat$length)[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
+                        rv$ma <- 5
+                        rv$addlSqrt <- FALSE
+                        rv$years <- unique(format(lfq$dates, "%Y"))
+                        rv$agg <- "month"
+                        rv$plusGroup <- FALSE
+                    }
                 }
             }
         }
@@ -296,7 +308,7 @@ shinyServer(
 
         ## only run if action button used
         observeEvent(input$datUpdate, {
-            update.dat()
+            rv$doDatUp <- input$datUpdate
         })
 
         output$downloadExData <- downloadHandler(
@@ -332,41 +344,55 @@ shinyServer(
             if(is.null(rv$datORI)){
                 return()
             }else{
-                if(!input$useExDat){
-                    match.cols()
-                    colNames <- unlist(rv$colNames)
-                    if((!input$isLFQ && any(colNames == "length") && any(colNames == "dates") &&
-                        any(colNames == "frequency")) ||
-                       (input$isLFQ && any(colNames == "midLengths") && any(colNames == "freqColslfq1") &&
-                        any(colNames == "freqColsLFQ2"))){
+                if(rv$doDatUp){
+                    isolate({
+                        match.cols()
                         update.dat()
-                        ## informative error messages  ## reset button doesn't work anymore!
-                        if(any(errCode == 1)){
-                            stop("Something went wrong with the file upload or assignment of column names. Did you choose the correct seperator and column names?")
-                            return()
-                        }else if(any(errCode == 2)){
-                            stop("There is at least one NA in the date vector. Did you provide the correct date format, for the date column/header with date information?")
-                            return()
-                        }else{
-                            dat <- rv$dat
-                            if(input$disp == "head"){
-                                return(head(dat))
-                            }else{
-                                return(dat)
+                        if(!input$useExDat){
+                            ## informative error messages  ## reset button doesn't work anymore!
+                            if(any(errCode == 1)){
+                                showNotification(paste("Something went wrong with the recognition and/or assignment of column names. Did you choose the correct settings for the seperator, quote, header and the correct column names?"),
+                                                 type = "error",
+                                                 duration = 30,
+                                                 closeButton = TRUE,
+                                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                                 )
+                                return()
+                            }else if(any(errCode == 2)){
+                                showNotification(paste("Something went wrong with the date conversion. Did you provide the correct format for the date column/header with date information (e.g. %Y.%m.%d)?"),
+                                                 type = "error",
+                                                 duration = 30,
+                                                 closeButton = TRUE,
+                                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                                 )
+                                return()
+                            }else if(any(errCode == 3)){
+                                showNotification(paste("There was an error in the creation of the LFQ table. Please check: Did you choose the correct data format? Are the column names assigned correctly? Is the date format correct?"),
+                                                 type = "error",
+                                                 duration = 30,
+                                                 closeButton = TRUE,
+                                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                                 )
+                                return()
                             }
                         }
-                    }else{
-                        stop("Something went wrong with the file upload or assignment of column names. Did you choose the correct seperator and column names?")
-                        return()
-                    }
-                }else{
+                    })
+                    if(!is.null(rv$dat)){
+                        dat <- rv$dat
+                        if(input$disp == "head"){
+                            return(head(dat))
+                        }else{
+                            return(dat)
+                        }
+                    }else return()
+                }else if(!is.null(rv$dat)){
                     dat <- rv$dat
                     if(input$disp == "head"){
                         return(head(dat))
                     }else{
                         return(dat)
                     }
-                }
+                }else return()
             }
         })
 
@@ -488,7 +514,7 @@ shinyServer(
 
 
         output$sampPermonth <- renderTable({
-            if(rv$doDatLoad == FALSE){
+            if(is.null(rv$dat)){
                 return()
             }else{
                 ##
@@ -677,7 +703,7 @@ shinyServer(
             if(is.null(rv$lfq)){
                 showNotification(paste("ELEFAN requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -872,14 +898,14 @@ shinyServer(
             if(is.null(rv$lfq))
                 showNotification(paste("The length-converted catch curve analysis requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             if(is.null(rv$parsGrowth))
                 showNotification(paste("The length-converted catch curve analysis requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -939,14 +965,14 @@ shinyServer(
             if(is.null(rv$lfq))
                 showNotification(paste("The length-converted catch curve analysis requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             if(is.null(rv$parsGrowth))
                 showNotification(paste("The length-converted catch curve analysis requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -1009,14 +1035,14 @@ shinyServer(
             if(is.null(rv$lfq))
                 showNotification(paste("The length-converted catch curve analysis requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             if(is.null(rv$parsGrowth))
                 showNotification(paste("The length-converted catch curve analysis requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -1091,7 +1117,7 @@ shinyServer(
             if(is.null(rv$resLCCC$L50))
                 showNotification(paste("The selectivity parameters could not be estimated. Try another regression interval."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -1307,21 +1333,21 @@ shinyServer(
             if(is.null(rv$lfq))
                 showNotification(paste("The yield per recruit model requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             if(is.null(rv$parsGrowth))
                 showNotification(paste("The yield per recruit model requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             if(is.null(rv$resLCCC) | is.null(rv$resnatM))
                 showNotification(paste("The yield per recruit model requires estimated total and natural mortality rates. Please go to the tab 'Mortality' and run the length-converted catch curve (LCCC) and empirical formula for the estimation of the natural mortality."),
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -1469,14 +1495,14 @@ shinyServer(
             if(input$reportFormat == "pdf" && (is.null(texAvail) || inherits(texAvail, "try-error"))){
                 showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             }else if(input$reportFormat == "docx" && !pandocAvail){
                 showNotification("The software 'pandoc' not found. Install pandoc on your computer or generate the report in 'html' format.",
                                  type = "error",
-                                 duration = NULL,
+                                 duration = 30,
                                  closeButton = TRUE,
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
@@ -1492,7 +1518,7 @@ shinyServer(
                 if(is.null(rv$lfq))
                     showNotification(paste("The minimum requirements for the report is a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                      type = "error",
-                                     duration = NULL,
+                                     duration = 30,
                                      closeButton = TRUE,
                                      action = a(href = "javascript:location.reload();", "Reload page")
                                      )

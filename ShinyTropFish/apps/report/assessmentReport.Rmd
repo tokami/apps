@@ -47,6 +47,9 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.width=10, fig.height=7)
 library(TropFishR)
 library(knitr)
+library(flextable)
+
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
 ```
 
 <br><br><br>
@@ -83,9 +86,16 @@ analysis (first 10 rows of each column displayed). The complete data set is
 included in the appendix of this report.
 
 ```{r rawdat}
-if(!is.null(params$rv$dat)) kable(
-                                head(params$rv$dat, 10), booktabs = TRUE,
-                                caption = "Input data.")
+if(!is.null(params$rv$dat)){
+    if(doc.type == "docx"){
+        flextable(
+            head(params$rv$dat, 10))
+    }else{
+        kable(
+            head(params$rv$dat, 10), booktabs = TRUE,
+            caption = "Input data.")
+    }
+}
 ```
 
 <br><br>
@@ -165,8 +175,13 @@ If you have comments or questions please write an [email](mailto:t.k.mildenberge
 The complete data set used for the analysis:
 
 ```{r}
-if(!is.null(params$rv$dat))
-    kable(params$rv$dat,
-        booktabs = TRUE,
-        caption = "Full uploaded data.")
+if(!is.null(params$rv$dat)){
+    if(doc.type == "docx"){
+        flextable(params$rv$dat)
+    }else{
+        kable(params$rv$dat,
+              booktabs = TRUE,
+              caption = "Full uploaded data.")
+    }
+}
 ```
