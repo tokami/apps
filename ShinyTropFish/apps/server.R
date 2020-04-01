@@ -1068,7 +1068,7 @@ shinyServer(
                 catch_columns = as.numeric(catchCol), calc_ogive = TRUE)
             rv$resLCCC <- resLCCC
 
-            if(input$gotcha){
+            if(!is.null(input$gotcha) && input$gotcha){
                 ## GOTCHA
                 lfqc <- lfqCohort(lfq, calc_dt = FALSE)
                 df <- data.frame(
@@ -1107,7 +1107,7 @@ shinyServer(
 
 
         parsMort <- function(){
-            if(input$gotchaEst & !is.null(rv$resLCCC_gotcha)){
+            if(input$gotchaEst && !is.null(rv$resLCCC_gotcha)){
                 pars <- list(Z=rv$resLCCC_gotcha$par$Z,
                              M=rv$resnatM,
                              F=rv$resLCCC_gotcha$par$Z - rv$resnatM,
@@ -1161,9 +1161,9 @@ shinyServer(
         })
 
         output$mortParsGotcha <- output$mortParsGotcha_ov <- renderTable({
-            if(rv$doLCCC == FALSE | !input$gotcha){
+            if(rv$doLCCC == FALSE){
                 return()
-            }else{
+            }else if(!is.null(input$gotcha) && input$gotcha){
                 pars <- c(rv$resLCCC_gotcha$Z,
                           rv$resnatM,
                           rv$resLCCC_gotcha$Z- rv$resnatM,
@@ -1172,14 +1172,16 @@ shinyServer(
                 rv$parsMortGotcha <- pars
                 tmp <- as.data.frame(t(as.matrix(rv$parsMortGotcha)))
                 tmp
-            }
+            }else return()
         })
 
         output$LCCC_gotcha_plot <- output$LCCC_gotcha_plot_ov <- renderPlot({
-            if(rv$doLCCC == FALSE | !input$gotcha)
+            if(rv$doLCCC == FALSE){
                 return()
-            par(mar=c(5,5,2,1))
-            plotLCCC(rv$resLCCC_gotcha)
+            }else if(!is.null(input$gotcha) && input$gotcha){
+                par(mar=c(5,5,2,1))
+                plotLCCC(rv$resLCCC_gotcha)
+            }else return()
         })
 
         ##-----------------------------------------------------------
@@ -1509,7 +1511,8 @@ shinyServer(
             ## check if pandoc installed
             pandocAvail <- rmarkdown::pandoc_available()
             ## system2('pdflatex', '--version')
-            if(input$reportFormat == "pdf" && (is.null(texAvail) || inherits(texAvail, "try-error"))){
+            if(input$reportFormat == "pdf" &&
+               (is.null(texAvail) || inherits(texAvail, "try-error") || texAvail == "")){
                 showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
@@ -1517,7 +1520,7 @@ shinyServer(
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             }else if(input$reportFormat == "docx" && !pandocAvail){
-                showNotification("The software 'pandoc' not found. Install pandoc on your computer or generate the report in 'html' format.",
+                showNotification("The software 'pandoc' was not found. Install pandoc on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
                                  closeButton = TRUE,

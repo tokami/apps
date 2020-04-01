@@ -20,7 +20,6 @@ output:
         toc_depth: 2
 params:
   rv: NA
-bibliography: "`r file.path(tempdir(), 'TropFishR.bib')`"
 header-includes:
  \usepackage{booktabs}
  \usepackage{longtable}
@@ -76,7 +75,8 @@ risk.
 **Package version numbers**
 
 This report was created with by ShinyTropFish (version `0.9.1`) based on the
-**`TropFishR`** package (version `r packageVersion("TropFishR")`; @Mildenberger2016).
+**`TropFishR`** package (version `r packageVersion("TropFishR")`; Mildenberger
+et al., 2017).
 
 </font>
 \normalsize
@@ -212,6 +212,10 @@ If you have comments or questions please write an [email](mailto:t.k.mildenberge
 <br><br>
 
 # *References*
+
+Mildenberger, T. K., Taylor, M. H., & Wolff, M. (2017). TropFishR: an R package
+for fisheries analysis with length-frequency data. Methods in Ecology and
+Evolution, 8(11), 1520-1527.
 
 <br><br>
 

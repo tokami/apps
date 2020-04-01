@@ -1,3 +1,7 @@
+## removed from report: (not working when rendering to word on windows)
+
+bibliography: "`r file.path(tempdir(), 'TropFishR.bib')`"
+
 
 ## removed from runapp but should be in there
 

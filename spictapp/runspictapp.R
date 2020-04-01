@@ -30,8 +30,8 @@ if(inherits(tried, "try-error")){
 }
 if(inherits(tried, "try-error")){
     Dirname <- "ShinyTropFish"
-    Dirs <- R.utils::withTimeout(list.dirs(path=file.path("~"),recursive=T),
-                                 timeout=90, onTimeout = "silent")
+    Dirs <- R.utils::withTimeout(list.dirs(path=file.path("~/.."),recursive=T),
+                                 timeout=120, onTimeout = "silent")
     tried <- try(setwd(names(unlist(sapply(Dirs,grep,pattern=Dirname))[1])), silent=TRUE)
     rm(Dirs)
     gc()

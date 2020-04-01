@@ -1416,7 +1416,8 @@ shinyServer(function(input, output, session) {
             ## check if pandoc installed
             pandocAvail <- rmarkdown::pandoc_available()
             ## system2('pdflatex', '--version')
-            if(input$reportFormat == "pdf" && (is.null(texAvail) || inherits(texAvail, "try-error"))){
+            if(input$reportFormat == "pdf" &&
+               (is.null(texAvail) || inherits(texAvail, "try-error") || texAvail == "")){
                 showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
@@ -1424,7 +1425,7 @@ shinyServer(function(input, output, session) {
                                  action = a(href = "javascript:location.reload();", "Reload page")
                                  )
             }else if(input$reportFormat == "docx" && !pandocAvail){
-                showNotification("The software 'pandoc' not found. Install pandoc on your computer or generate the report in 'html' format.",
+                showNotification("The software 'pandoc' was not found. Install pandoc on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
                                  closeButton = TRUE,

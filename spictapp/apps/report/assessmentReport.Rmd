@@ -20,7 +20,6 @@ output:
         toc_depth: 2
 params:
   rv: NA
-bibliography: "`r file.path(tempdir(), 'spictapp.bib')`"
 header-includes:
  \usepackage{booktabs}
  \usepackage{longtable}
@@ -70,7 +69,8 @@ its results, and this report is strictly at your own risk.
 **Package version numbers**
 
 This report was created with by spictapp (version `0.9.1`) based on the
-**`SPiCT`** package (version `r packageVersion("spict")`; @spict).
+**`SPiCT`** package (version `r packageVersion("spict")`; Pedersen and Berg,
+2017).
 
 </font>
 \normalsize
@@ -426,11 +426,11 @@ the appendix of this report.
 
 The evaluation and cross-validation of the model fitting is a crucial step in
 any stock assessment. The minimum model evaluation for a SPiCT assessment should
-include the consideration of the assumptions of the input data (see
-@spict_guidelines), checking residuals against violation of independence,
-normality, biases, or auto-correlation, as well as evaluating the prior and
-posterior distributions of used priors. Additionally, the retrospective analysis
-and sensitivity analysis for intital values is recommended.
+include the consideration of the assumptions of the input data (see Mildenberger
+et al., 2019), checking residuals against violation of independence, normality,
+biases, or auto-correlation, as well as evaluating the prior and posterior
+distributions of used priors. Additionally, the retrospective analysis and
+sensitivity analysis for intital values is recommended.
 
 ```{r}
 if(!is.null(params$rv$fit)){
@@ -665,6 +665,16 @@ If you have comments or questions please write an [email](mailto:t.k.mildenberge
 <br><br>
 
 # References
+
+Mildenberger, T. K., Kokkalis, A. and C.W. Berg. 2019. Guidelines for the use of
+the stochastic production model in continuous time (SPiCT).
+
+Mohn, R. (1999). The retrospective problem in sequential population analysis: an
+investigation using cod fishery and simulated data. ICES Journal of Marine
+Science, 56(4), 473-488.
+
+Pedersen, M. W., & Berg, C. W. (2017). A stochastic surplus production model in
+continuous time. Fish and Fisheries, 18(2), 226-243.
 
 <br><br>
 
