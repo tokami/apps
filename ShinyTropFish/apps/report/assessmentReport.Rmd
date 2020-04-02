@@ -19,7 +19,7 @@ output:
         toc: true
         toc_depth: 2
 params:
-  rv: NA
+  shinyRes: NA
 header-includes:
  \usepackage{booktabs}
  \usepackage{longtable}
@@ -41,14 +41,10 @@ knitr::opts_chunk$set(echo = FALSE,
                       message = FALSE,
                       include = TRUE,
                       collapse = TRUE,
-                      comment = "#>",
+                      comment = "",
                       fig.show = "hold",
+                      fig.align="center",
                       fig.width=10, fig.height=7)
-
-## REMOVE:
-## load("~/Downloads/ShinyTropFish_alldata_alba_2020-03-30.RData")
-## params <- list()
-## params$rv <- isolate(reactiveValuesToList(rv))
 
 library(TropFishR)
 library(knitr)
@@ -84,92 +80,358 @@ et al., 2017).
 <br><br><br>
 \vspace*{1.2cm}
 
-# *Data*
+# Data
 
-The results in this report are based on the data set labelled
-`r paste0("'",strsplit(params$rv$filename,"Data: ")[[1]][2],"'")`.
-The columns in the uploaded data set (Table 1) were used in the
-analysis (first 10 rows of each column displayed). The complete data set is
-included in the appendix of this report.
+```{r dataset}
+dataset <- paste0("'",strsplit(params$shinyRes$filename,"Data: ")[[1]][2],"'")
+if(is.null(params$shinyRes$lfqre)){
+    datapoints <- 0
+    datastart <- NA
+    dataend <- NA
+    sampletimes <- 0
+    datayears <- "-"
+    reflevyears <- NA
+    MA <- 0
+}else{
+    datapoints <- as.integer(sum(colSums(as.matrix(params$shinyRes$lfqre$catch))))
+    datastart <- format(min(params$shinyRes$lfqre$dates),"%b %d, %Y")
+    dataend <- format(max(params$shinyRes$lfqre$dates),"%b %d, %Y")
+    sampletimes <- ncol(params$shinyRes$lfqre$catch)
+    datayears <- params$shinyRes$years
+    reflevyears <- params$shinyRes$yearsRefLev
+    MA <- params$shinyRes$ma
+}
+```
+
+The results in this report are based on the data set labelled `r dataset`. The
+columns from the uploaded data set shown in Table 1 were used in the analysis
+(first 10 rows displayed). The complete data set is included in the appendix of
+this report.
+
+<font size="-3">
+\small
 
 ```{r rawdat}
-if(!is.null(params$rv$dat)){
+if(!is.null(params$shinyRes$dat)){
     if(doc.type == "docx"){
         flextable(
-            head(params$rv$dat, 10))
+            head(params$shinyRes$dat, 10))
     }else{
         kable(
-            head(params$rv$dat, 10), booktabs = TRUE,
-            caption = "Input data.")
+            head(params$shinyRes$dat, 10), booktabs = TRUE,
+            caption = "First 10 rows of the input data.")
+    }
+}
+```
+
+</font>
+\normalsize
+
+The length frequency (LFQ) data spans following year(s): `r datayears`. It
+comprises `r datapoints` length measurements, which are aggregated over
+`r sampletimes` sampling times (Figure 1). The figure shows the raw LFQ data
+(Fig. 1a) and after restructuring with among others a moving average of `r MA`
+(Fig. 1b).
+
+```{r data_plot, out.width = "80%", fig.width = 9, fig.height = 8, fig.cap = "Raw (a) and restructured (b) length frequency data"}
+if(!is.null(params$shinyRes$lfq)){
+    par(mar=c(5,5,2,1), mfrow= c(2,1))
+    plot(params$shinyRes$lfq, Fname = "catch")
+    mtext("a)",adj=0, font=2, line=.2)
+    plot(params$shinyRes$lfqre, Fname = "rcounts")
+    mtext("b)",adj=0, font=2, line=.2)
+}
+```
+
+
+<br><br>
+\vspace*{1cm}
+
+
+# Growth
+
+The Electronic LEngth Frequency ANalysis (ELEFAN; Pauly and David, 1981) allows
+the estimation of the parameters of the (seasonalised) von Bertalanffy growth
+equation: the asymptotic length $L_{\infty}$ (Linf), the growth coefficient $K$,
+and the anchor point $t_a$ (ta). The quantity $\phi_L$ (phiL) is the growth
+performance index ($\phi_L = log_{10}(K) + 2 log_{10}(L_{\infty})$). The
+quantity Rn is the score value of the ELEFAN fitting procedure. It can be used
+to compare fits for the same data set with different settings, but not between
+different data sets or the same data set with different bin sizes. The data used
+for ELEFAN spans the time period from `r datastart ` to `r dataend`. Estimated
+values for the data set `r dataset` are given in Table 2.
+
+<br>
+\vspace*{5mm}
+
+
+```{r growth_parameters}
+if(!is.null(params$shinyRes$parsGrowth) & !is.null(params$shinyRes$resGA)){
+    tmp <- as.data.frame(c(lapply(params$shinyRes$parsGrowth,round,3),
+                           list(Rn_max = round(params$shinyRes$resGA@fitnessValue,3))))
+    names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
+    names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phiL")
+    if(doc.type == "docx"){
+        flextable(tmp)
+    }else{
+        kable(tmp,
+              booktabs = TRUE,
+              caption = "Estimated growth parameters.")
+    }
+}
+```
+
+<br>
+\vspace*{5mm}
+
+Figure 2 shows the score function of the ELEFAN_GA fitting procedure over time
+(generations) and thus, allows to evaluate the sufficiency of the number of
+generations in finding optimum parameters.
+
+```{r elefan_score_plot, out.width = "75%", fig.width = 8, fig.height = 6, fig.cap = "ELEFAN score plot"}
+if(!is.null(params$shinyRes$parsGrowth) & !is.null(params$shinyRes$resGA)){
+    par(mar=c(5,5,2,1))
+    plot(params$shinyRes$resGA)
+}
+```
+
+<br>
+\vspace*{8mm}
+
+Figure 3 depicts estimated growth curves fit through the restructured LFQ data.
+
+```{r growth_plot, out.width = "80%", fig.width = 8, fig.height = 5.5, fig.cap = "Length frequency data with fitted growth curves"}
+if(!is.null(params$shinyRes$parsGrowth) & !is.null(params$shinyRes$lfqFC)){
+par(mar=c(5,5,2,1))
+plot(params$shinyRes$lfqFC, Fname = "rcounts")
+lfqFC <- params$shinyRes$lfqFC
+tmp <- lfqFitCurves(lfq = lfqFC,
+             par=as.list(params$shinyRes$parsGrowth),
+             draw = TRUE)
+}
+```
+
+<br>
+\vspace*{8mm}
+
+Estimated growth curves allow to allocate the difference length classes at
+different times to potential cohorts (Fig. 4).
+
+```{r cohort_plot, out.width = "80%", fig.width = 8, fig.height = 5.5, fig.cap ="Length frequency data with interpolated cohorts in different colours."}
+if(!is.null(params$shinyRes$parsGrowth) & !is.null(params$shinyRes$lfq)){
+    par(mar=c(5,5,2,1))
+    lfqc <- lfqCohort(params$shinyRes$lfqFC, calc_dt = FALSE)
+    plot(lfqc, Fname = "catch",
+         ylim = c(0, max(params$shinyRes$lfq$midLengths)), image.col=NA)
+    pal <- colorRampPalette(c(4,5,7,2))
+    with(lfqc, image(x = dates, y = midLengths, z = t(cohort),
+                     col = adjustcolor(pal(max(cohort, na.rm = TRUE)), 0.75),
+                     add=TRUE
+                     ))
+}
+```
+
+Given the growth parameters the LFQ data can be extrapolated backwards onto the
+time axis and such indicate the relative recruitment pattern (Table 3 and Fig.
+5). The pattern can not be interpreted in absolute terms as information about
+the length at age 0 is lacking ($L_0$).
+
+<br>
+\vspace*{5mm}
+
+
+```{r recruitment_table}
+if(!is.null(params$shinyRes$parsGrowth) & !is.null(params$shinyRes$lfq)){
+    lfq <- params$shinyRes$lfq
+    lfq$par <- params$shinyRes$parsGrowth
+    parsRecruit <- recruitment(lfq, plot=FALSE)
+    tmp <- data.frame("relative month" = as.integer(parsRecruit$mids),
+                      counts = parsRecruit$counts,
+                      density = round(parsRecruit$density,3))
+    colnames(tmp) <- c("Relative month", "Number", "Density")
+    if(doc.type == "docx"){
+        flextable(tmp)
+    }else{
+        kable(tmp,
+              booktabs = TRUE,
+              caption = "Relative recruitment pattern.")
+    }
+}
+```
+
+<br>
+\vspace*{5mm}
+
+```{r recruitment_plot, out.width = "80%", fig.width = 8, fig.height = 5, fig.cap ="Relative recruitment pattern."}
+if(!is.null(params$shinyRes$parsGrowth) & !is.null(params$shinyRes$lfq)){
+    lfq <- params$shinyRes$lfq
+    lfq$par <- params$shinyRes$parsGrowth
+    par(mar=c(5,5,2,1))
+    tmp <- recruitment(lfq, plot=TRUE)
+}
+```
+
+<br><br>
+\vspace*{1cm}
+
+
+# Mortality & Selectivity
+
+The length-converted catch curve (LCCC; Pauly, 1990) allows the estimation of
+the mortality rates and gear selectivity parameters. Estimated quantities for
+the year(s) `r reflevyears` are given in Table 4. GOTCHA describes an alternative
+catch curve approach, which aggregates the data by cohorts rather than length
+classes. If applied, the results are included in Table 4.
+
+<br><br>
+\vspace*{5mm}
+
+```{r mort_pars}
+if(!is.null(params$shinyRes$parsMort)){
+        tmp <- as.data.frame(round(t(params$shinyRes$parsMort),3))
+        if(!is.null(params$shinyRes$parsMortGOTCHA)){
+            tmp <- as.data.frame(rbind(tmp, c(round(t(params$shinyRes$parsMortGOTCHA),3),NaN,NaN)))
+            rownames(tmp) <- c("LCCC","GOTCHA")
+        }
+    if(doc.type == "docx"){
+        flextable(tmp)
+    }else{
+        kable(tmp,
+              booktabs = TRUE,
+              caption = "Mortality and selectivity parameters based on the length-converted catch curve.")
     }
 }
 ```
 
 <br><br>
+\vspace*{5mm}
 
-# *Growth*
+The catch curve with the selected data points for the regression analysis is
+shown in Figure 6.
 
-Estimated growth parameters are:
-
-```{r}
-if(!is.null(params$rv$parsGrowth) & !is.null(params$rv$resGA)){
-    tmp <- as.data.frame(c(params$rv$parsGrowth,
-                           list(Rn_max = params$rv$resGA@fitnessValue)) )
-    names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
-    names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phiL")
-    tmp
-}
-```
-
-This can also be presented visually:
-
-```{r}
-if(!is.null(params$rv$parsGrowth) & !is.null(params$rv$lfqFC)){
-par(mar=c(5,5,2,1))
-plot(params$rv$lfqFC, Fname = "rcounts")
-lfqFC <- params$rv$lfqFC
-tmp <- lfqFitCurves(lfq = lfqFC,
-             par=as.list(params$rv$parsGrowth),
-             draw = TRUE)
-}
-```
-
-
-<br><br>
-
-
-# *Mortality*
-
-The estimated mortality parameters are:
-
-```{r}
-if(!is.null(params$rv$parsMort)){
-    print(params$rv$parsMort)
-}
-```
-
-
-<br><br>
-
-# *Reference levels*
-
-Estimated reference levels are:
-
-```{r, echo = FALSE, eval = TRUE}
-if(!is.null(params$rv$parsRef)){
-    print(params$rv$parsRef)
+```{r catch_curve, out.width = "90%", fig.width = 8, fig.height = 5, fig.cap ="Length-converted catch curve."}
+if(!is.null(params$shinyRes$parsMort)){
+    par(mar=c(5,5,2,1))
+    plotLCCC(params$shinyRes$resLCCC)
 }
 ```
 
 <br><br>
+\vspace*{8mm}
 
-# *Summary*
+Based on the non-selected data points in the catch curve, the trawl-like gear
+selectivity can be estimated (Fig. 7).
+
+```{r catch_curve_sel, out.width = "90%", fig.width = 8, fig.height = 5, fig.cap="Selectivity curve based on the length-converted catch curve."}
+if(!is.null(params$shinyRes$parsMort)){
+    par(mar=c(5,5,2,1))
+    plotLCCC_sel(params$shinyRes$resLCCC)
+}
+```
+
+<br><br>
+\vspace*{8mm}
+
+```{r catch_curve_GOTCHA, out.width = "90%", fig.width = 8, fig.height = 5, fig.cap ="GOTCHA catch curve."}
+if(!is.null(params$shinyRes$parsMortGOTCHA)){
+    par(mar=c(5,5,2,1))
+    plotLCCC(params$shinyRes$resGOTCHA)
+}
+```
+
+<br><br>
+\vspace*{1cm}
+
+# Reference levels
+
+The estimation of the biological reference levels is based on the length-based
+yield per recruit model (Thompson and Bell, 1934). Estimated levels for the
+year(s) `r reflevyears` are given in Table 5.
+
+<br><br>
+\vspace*{5mm}
+
+```{r ypr_pars}
+if(!is.null(params$shinyRes$parsRef)){
+    tmp <- as.data.frame(round(params$shinyRes$parsRef,3))
+    if(doc.type == "docx"){
+        flextable(tmp)
+    }else{
+        kable(tmp,
+              booktabs = TRUE,
+              caption = "Referenve levels.")
+    }
+}
+```
+
+<br><br>
+\vspace*{5mm}
+
+```{r figNum_calc}
+if(is.null(params$shinyRes$parsMortGOTCHA)){
+    figNumYPR1 <- 8
+    figNumYPR2 <- 9
+    figNumBPR <- 10
+}else{
+    figNumYPR1 <- 9
+    figNumYPR2 <- 10
+    figNumBPR <- 11
+}
+```
+
+Figure `r figNumYPR1` shows the yield per recruit curve, where the black and
+blue solid lines show the yield and biomass per recruit for a range of fishing mortality
+values, respectively. The colourful dashed lines show the reference levels, where
+green depicts the $F_{0.1}$ reference level. The black dashed line indicates the
+current fishing mortality based on the catch curve analysis.
+
+```{r ypr_plot1, out.width = "85%", fig.width = 9, fig.height = 6, fig.cap="Yield per recruit curve."}
+if(!is.null(params$shinyRes$parsRef)){
+    par(mar=c(5,5,2,4))
+    plotYPR(params$shinyRes$resYPR, mark=TRUE)
+}
+```
+
+<br><br>
+\vspace*{8mm}
+
+Figure `r figNumYPR2` shows the yield per recruit isopleth graph. The colour
+indicates the yield per recruit from low (blue) to high (red) values. The black
+solid lines are the isopleths indicating different areas of the same yield. The
+black dashed line indicates the current fishing mortality and selectivity based
+on the catch curve analysis.
+
+```{r ypr_plot2, out.width = "65%", fig.width = 9, fig.height = 7, fig.cap="Yield per recruit isopleth graph."}
+if(!is.null(params$shinyRes$parsRef)){
+    par(mar=c(5,5,2,1))
+    plotYPR(params$shinyRes$resYPR_Lc, mark=TRUE,xaxis1 = "FM", yaxis_iso = "L50")
+}
+```
+
+<br><br>
+\vspace*{8mm}
+
+Figure `r figNumBPR` shows the biomass per recruit isopleth graph. The colour
+indicates the biomass per recruit from low (red) to high (blue) values. The
+black solid lines are the isopleths indicating different areas of the same
+biomass. The black dashed line indicates the current fishing mortality and
+selectivity based on the catch curve analysis.
+
+```{r bpr_plot, out.width = "65%", fig.width = 9, fig.height = 7, fig.cap="Biomass per recruit isopleth graph."}
+if(!is.null(params$shinyRes$parsRef)){
+    par(mar=c(5,5,2,1))
+    plotYPR(params$shinyRes$resYPR_Lc, mark=TRUE, yaxis1 = "B_R",xaxis1 = "FM", yaxis_iso = "L50")
+}
+```
+
+<br><br>
+\vspace*{1cm}
+
+
+# Summary
 
 ```{r summary}
-if(is.null(params$rv$dat) || is.null(params$rv$parsMort) || is.null(params$rv$parsRef)){
-    datapoints <- 0
-    datastart <- NaN
-    dataend <- NaN
+if(is.null(params$shinyRes$dat) || is.null(params$shinyRes$parsMort) || is.null(params$shinyRes$parsRef)){
     exploi <- NaN
     stockstatusExploi <- NaN
     fishmort <- NaN
@@ -178,61 +440,84 @@ if(is.null(params$rv$dat) || is.null(params$rv$parsMort) || is.null(params$rv$pa
     ff01Ind <- NaN
     stockstatusFF01 <- NaN
 }else{
-    datapoints <- as.integer(sum(colSums(as.matrix(params$rv$lfqre$catch))))
-    datastart <- format(min(params$rv$lfqre$dates),"%b %d, %Y")
-    dataend <- format(max(params$rv$lfqre$dates),"%b %d, %Y")
-    exploi <- round(params$rv$parsMort[which(names(params$rv$parsMort) == "F")] /
-                    params$rv$parsMort[which(names(params$rv$parsMort) == "Z")], 2)
+    exploi <- round(params$shinyRes$parsMort[which(names(params$shinyRes$parsMort) == "F")] /
+                    params$shinyRes$parsMort[which(names(params$shinyRes$parsMort) == "Z")], 2)
     stockstatusExploi <- ifelse(exploi >= 0.5,"overfished","not overfished")
-    fishmort <- round(params$rv$parsMort[which(names(params$rv$parsMort) == "F")], 2)
-    f01 <- round(params$rv$parsRef[which(names(params$rv$parsRef) == "F01")], 2)
-    ff01 <- round(params$rv$parsMort[which(names(params$rv$parsMort) == "F")]/
-                  params$rv$parsRef[which(names(params$rv$parsRef) == "F01")] ,2)
+    fishmort <- round(params$shinyRes$parsMort[which(names(params$shinyRes$parsMort) == "F")], 2)
+    f01 <- round(params$shinyRes$parsRef[which(names(params$shinyRes$parsRef) == "F01")], 2)
+    ff01 <- round(params$shinyRes$parsMort[which(names(params$shinyRes$parsMort) == "F")]/
+                  params$shinyRes$parsRef[which(names(params$shinyRes$parsRef) == "F01")] ,2)
     ff01Ind <- ifelse(ff01 >= 1, "larger", "smaller")
     stockstatusFF01 <- ifelse(ff01 > 1,"overfished","not overfished")
 }
 ```
 
-The length-based stock assessment using **TropFishR** is based on `r datapoints`
-length measurements representing the time period from `r datastart` to `r dataend`.
-The exploitation rate (`r paste0("F/Z = ", exploi)`) indicates that
-the stock is `r stockstatusExploi` based on the length-converted catch curve.
-The current fishing mortality (`r paste0("F = ", fishmort)`) is `r ff01Ind` than
-the reference level (`r pander(paste0("$F_{0.1}$ = ", f01))`) and thus
-indicates that the stock is `r stockstatusFF01`
-(`r pander(paste0("$F/F_{0.1}$ = ", ff01))`) based on the yield per recruit
-analysis.
+The estimation of growth parameters using ELEFAN with the genetic algorithm as
+included in the R package **`TropFishR`** (Mildenberger et al., 2017) is based on
+`r datapoints` length measurements representing the time period from `r datastart`
+to `r dataend`. Based on estimated growth parameters, two dependent
+stock status for the year(s) `r reflevyears` indicators were estimated by means
+of the length-converted catch curve and the length-based yield per recruit
+model. The exploitation rate (`r paste0("F/Z = ", exploi)`) indicates that the
+stock is `r stockstatusExploi` based on the length-converted catch curve. The
+current fishing mortality (`r paste0("F = ", fishmort)`) based on the catch
+curve is `r ff01Ind` than the reference level (`r pander(paste0("$F_{0.1}$ = ", f01))`)
+based on the yield per recruit analysis and thus indicates that the stock is `r stockstatusFF01`
+(`r pander(paste0("$F/F_{0.1}$ = ", ff01))`).
 
 <br><br>
 
-# *Author's comment*
+# Author's comment
 
-If you have comments or questions please write an [email](mailto:t.k.mildenberger@gmail.com) or post an issue at [GitHub](https://github.com/tokami/TropFishR/issues). You can follow the development of **`TropFishR`** on [ResearchGate](https://www.researchgate.net/project/TropFishR).
+If you have comments or questions please write an
+[email](mailto:t.k.mildenberger@gmail.com) or post an issue at
+[GitHub](https://github.com/tokami/TropFishR/issues). You can follow the
+development of **`TropFishR`** on
+[ResearchGate](https://www.researchgate.net/project/TropFishR).
+
 
 <br><br>
 
-# *References*
+# References
 
 Mildenberger, T. K., Taylor, M. H., & Wolff, M. (2017). TropFishR: an R package
 for fisheries analysis with length-frequency data. Methods in Ecology and
 Evolution, 8(11), 1520-1527.
 
+Pauly, D. (1990). Length-converted catch curves and the seasonal growth of
+fishes. Fishbyte, 8(3), 33-38.
+
+Pauly, D., & David, N. (1981). ELEFAN I, a BASIC program for the objective
+extraction of growth parameters from length-frequency data. Meeresforschung,
+28(4), 205-211.
+
+Thompson, W. F., & Bell, F. H. (1934). Effect of changes in intensity upon total
+yield and yield per unit of gear. Report of the International Fisheries
+Commission, 8, 7-49.
+
 <br><br>
+
 
 # Appendix
 
 ## Raw data {#app:data}
 
-The complete data set used for the analysis:
+The complete data set used for the analysis is given below.
 
-```{r}
-if(!is.null(params$rv$dat)){
+<font size="-4">
+\small
+
+```{r full_data}
+if(!is.null(params$shinyRes$dat)){
+    tmp <- as.data.frame(params$shinyRes$dat)
     if(doc.type == "docx"){
-        flextable(params$rv$dat)
+        flextable(tmp)
     }else{
-        kable(params$rv$dat,
+        kable(tmp,
               booktabs = TRUE,
               caption = "Full uploaded data.")
     }
 }
 ```
+</font>
+\normalsize

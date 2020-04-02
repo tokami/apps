@@ -38,6 +38,7 @@ shinyServer(
             rv$doDatUp = FALSE
             rv$doELEFAN = FALSE
             rv$doLCCC = FALSE
+            rv$doGOTCHA = FALSE
             rv$doYPR = FALSE
             rv$datORI <- NULL
             rv$colNamesORI <- NULL
@@ -53,6 +54,7 @@ shinyServer(
             rv$ma <- 5
             rv$addlSqrt <- FALSE
             rv$years <- NA
+            rv$yearsRefLev <- NA
             rv$agg <- "month"
             rv$plusGroup <- FALSE
             ## reset example data
@@ -194,6 +196,7 @@ shinyServer(
             rv$ma <- 5
             rv$addlSqrt <- FALSE
             rv$years <- NA
+            rv$yearsRefLev <- NA
             rv$agg <- "month"
             rv$plusGroup <- FALSE
             errCode <<- NULL
@@ -355,24 +358,21 @@ shinyServer(
                                 showNotification(paste("Something went wrong with the recognition and/or assignment of column names. Did you choose the correct settings for the seperator, quote, header and the correct column names?"),
                                                  type = "error",
                                                  duration = 30,
-                                                 closeButton = TRUE,
-                                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                                 closeButton = TRUE
                                                  )
                                 return()
                             }else if(any(errCode == 2)){
                                 showNotification(paste("Something went wrong with the date conversion. Did you provide the correct format for the date column/header with date information (e.g. %Y.%m.%d)?"),
                                                  type = "error",
                                                  duration = 30,
-                                                 closeButton = TRUE,
-                                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                                 closeButton = TRUE
                                                  )
                                 return()
                             }else if(any(errCode == 3)){
                                 showNotification(paste("There was an error in the creation of the LFQ table. Please check: Did you choose the correct data format? Are the column names assigned correctly? Is the date format correct?"),
                                                  type = "error",
                                                  duration = 30,
-                                                 closeButton = TRUE,
-                                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                                 closeButton = TRUE
                                                  )
                                 return()
                             }
@@ -490,8 +490,7 @@ shinyServer(
                 showNotification(paste("No length-frequency data set has been chosen. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
                                  duration = NULL,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
             }else{
                 ## update rv elements
@@ -705,8 +704,7 @@ shinyServer(
                 showNotification(paste("ELEFAN requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
             }else{
                 ## use all info from datExplo tab
@@ -815,7 +813,6 @@ shinyServer(
             if(rv$doELEFAN == FALSE){
                 return()
             }else{
-
                 lfq <- rv$lfq
                 lfq$par <- rv$parsGrowth
                 rv$parsRecruit <- recruitment(lfq, plot=FALSE)
@@ -844,12 +841,16 @@ shinyServer(
         ## MORTALITY
         ##-----------------------------------------------------------
         observeEvent(input$tabset, {
-            if(!is.null(rv$lfq) & !is.null(rv$parsGrowth)){
+            if(!is.null(rv$lfq) && !is.null(rv$parsGrowth)){
                 shinyjs::enable("runLCCC")
                 shinyjs::enable("resetLCCC")
+                shinyjs::enable("runGOTCHA")
+                shinyjs::enable("resetGOTCHA")
             }else{
                 shinyjs::disable("runLCCC")
                 shinyjs::disable("resetLCCC")
+                shinyjs::disable("runGOTCHA")
+                shinyjs::disable("resetGOTCHA")
             }
         })
 
@@ -858,17 +859,47 @@ shinyServer(
             rv$doLCCC <- input$runLCCC
         })
 
-        ## reset button
-        observeEvent(input$resetLCCC, {
-            rv$doLCCC <- FALSE
-        })
         ## observe ELEFAN
         observeEvent(input$runELEFAN, {
             rv$doLCCC <- FALSE
+            rv$doGOTCHA <- FALSE
         })
-        ## observe gotcha
-        observeEvent(input$gotcha, {
+
+        ## only run if action button used
+        observeEvent(input$runGOTCHA, {
+            rv$doGOTCHA <- input$runGOTCHA
+        })
+
+        ## reset button
+        observeEvent(input$resetLCCC, {
+            updateSelectInput(session=session,
+                        inputId = "selYearsLCCC",
+                        selected = rv$years)
+            if(is.null(input$binSize)){
+                bsVal <- 2
+            }else{
+                bsVal <- input$binSize
+            }
+            updateSliderInput(session = session,
+                              inputId = "binSizeMort",
+                              value = bsVal)
+            tmp <- est.regInt()
+            updateSliderInput(session=session,
+                              inputId="regInt",
+                              value=tmp$opt)
             rv$doLCCC <- FALSE
+        })
+
+        ## reset button
+        observeEvent(input$resetGOTCHA, {
+            updateCheckboxInput(session=session,
+                                inputId="gotchaEst",
+                                value=FALSE)
+            tmp <- est.regIntGOTCHA()
+            updateSliderInput(session=session,
+                              inputId="regIntGOTCHA",
+                              value=tmp$opt)
+            rv$doGOTCHA <- FALSE
         })
 
         getNumYears <- function(){
@@ -889,35 +920,27 @@ shinyServer(
                               value = bsVal)
         })
 
-        output$gotcha <- renderUI({
-            checkboxInput(inputId = "gotcha",
-                          label = "Run GOTCHA?",
-                          value = ifelse(input$seasonalized, TRUE, FALSE))
+        output$selYearsLCCC <- renderUI({
+            selectInput(inputId = "selYearsLCCC",
+                        label = "Year(s) for LCCC, GOTCHA, and YPR:",
+                        choices = unique(format(rv$lfqORI$dates, "%Y")),
+                        selected = rv$years,
+                        multiple = TRUE,
+                        width ='80%')
         })
 
-        output$regInt <- renderUI({
-            if(is.null(rv$lfq))
-                showNotification(paste("The length-converted catch curve analysis requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
-                                 type = "error",
-                                 duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
-                                 )
-            if(is.null(rv$parsGrowth))
-                showNotification(paste("The length-converted catch curve analysis requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
-                                 type = "error",
-                                 duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
-                                 )
+        est.regInt <- function(){
             lfq <- rv$lfq
             lfq$par <- rv$parsGrowth
+            binSize <- ifelse(is.null(input$binSizeMort), input$binSize, input$binSizeMort)
+            selYearsLCCC <- ifelse(is.null(input$selYearsLCCC),rv$years,input$selYearsLCCC)
             lfqU <- lfqModify(lfq,
                               vectorise_catch = TRUE,
-                              bin_size = input$binSizeMort)
+                              bin_size = binSize)
             lfqU$catch <- as.matrix(lfqU$catch)
             years <- unique(format(lfqU$dates, "%Y"))
-            catchCol <- which(years %in% input$selYearsLCCC)
+            catchCol <- which(years %in% selYearsLCCC)
+            rv$yearsRefLev <- years[catchCol]
             tmp <- LCCC_shiny(lfqU, returnRegInt = TRUE,
                               catch_columns = as.numeric(catchCol))
             if(is.numeric(tmp[[1]]) && length(tmp[[1]]) == 2){
@@ -932,51 +955,27 @@ shinyServer(
                 min <- 1
                 max <- 40
             }
+            res <- list(opt = opt, max = max, min = min)
+            return(res)
+        }
+
+
+        output$regInt <- renderUI({
+            req(rv$lfq)
+            req(rv$parsGrowth)
+            tmp <- est.regInt()
             sliderInput(
                 inputId = "regInt",
                 label = "Regression points",
                 dragRange = TRUE,
-                value = opt,
-                min = min,
-                max = max,
+                value = tmp$opt,
+                min = tmp$min,
+                max = tmp$max,
                 step = 1
             )
         })
 
-        output$selYearsLCCC <- renderUI({
-            selectInput(inputId = "selYearsLCCC",
-                        label = "Year(s) for LCCC:",
-                        choices = unique(format(rv$lfqORI$dates, "%Y")),
-                        selected = rv$years,
-                        multiple = TRUE,
-                        width ='60%')
-        })
-
-        output$catchCol <- renderUI({
-            tmp <- getNumYears()
-            tmp2 <- ifelse(is.numeric(tmp) && tmp > 0, tmp, 1)
-            selectInput(inputId = "catchCol",
-                        label = "Years for LCCC",
-                        choices = c(NA,1:tmp2),
-                        selected = NA,
-                        width = '50%')
-        })
-
-        output$regIntGotcha <- renderUI({
-            if(is.null(rv$lfq))
-                showNotification(paste("The length-converted catch curve analysis requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
-                                 type = "error",
-                                 duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
-                                 )
-            if(is.null(rv$parsGrowth))
-                showNotification(paste("The length-converted catch curve analysis requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
-                                 type = "error",
-                                 duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
-                                 )
+        est.regIntGOTCHA <- function(){
             lfq <- rv$lfq
             lfq$par <- rv$parsGrowth
             lfqc <- lfqCohort(lfq, calc_dt = FALSE)
@@ -1002,17 +1001,24 @@ shinyServer(
                 min <- 1
                 max <- 40
             }
+            res <- list(opt = opt, max = max, min = min)
+            return(res)
+        }
+
+        output$regIntGOTCHA <- renderUI({
+            req(rv$lfq)
+            req(rv$parsGrowth)
+            tmp <- est.regIntGOTCHA()
             sliderInput(
-                inputId = "regIntGotcha",
+                inputId = "regIntGOTCHA",
                 label = "Regression points for GOTCHA",
                 dragRange = TRUE,
-                value = opt,
-                min = min,
-                max = max,
+                value = tmp$opt,
+                min = tmp$min,
+                max = tmp$max,
                 step = 1
             )
         })
-
 
         ## inactive temp, schooling and tmax
         observeEvent(input$natM, {
@@ -1037,15 +1043,13 @@ shinyServer(
                 showNotification(paste("The length-converted catch curve analysis requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
             if(is.null(rv$parsGrowth))
                 showNotification(paste("The length-converted catch curve analysis requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
 
             progress <- shiny::Progress$new()
@@ -1067,34 +1071,55 @@ shinyServer(
                 x = lfqU, reg_int = c(input$regInt[1], input$regInt[2]),
                 catch_columns = as.numeric(catchCol), calc_ogive = TRUE)
             rv$resLCCC <- resLCCC
+        }
 
-            if(!is.null(input$gotcha) && input$gotcha){
-                ## GOTCHA
-                lfqc <- lfqCohort(lfq, calc_dt = FALSE)
-                df <- data.frame(
-                    length = rep(lfqc$midLengths, times = length(lfqc$dates)),
-                    rel.age = c(lfqc$rel.age),
-                    bday = c(lfqc$bday),
-                    cohort = c(lfqc$cohort),
-                    n = c(lfqc$catch))
-                lfqU <- c(lfqc, list(df=df))
+        GOTCHA_res <- function(){
+            if(is.null(rv$lfq))
+                showNotification(paste("GOTCHA requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
+                                 type = "error",
+                                 duration = 30,
+                                 closeButton = TRUE
+                                 )
+            if(is.null(rv$parsGrowth))
+                showNotification(paste("GOTCHA requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
+                                 type = "error",
+                                 duration = 30,
+                                 closeButton = TRUE
+                                 )
 
-                ## relages <- unique(as.numeric(lfqc$rel.age))
-                ## catch <- rep(NA, length(relages))
-                ## for(i in 1:length(relages)){
-                ##     catch[i] <- sum(lfqc$catch[lfqc$rel.age == relages[i]])
-                ## }
-                ## lfqU <- list(catch=catch, relages=relages,
-                ##              par = rv$parsGrowth)
+            progress <- shiny::Progress$new()
+            ## Make sure it closes when we exit this reactive, even if there's an error
+            on.exit(progress$close())
+            progress$set(message = "Running GOTCHA.",
+                         detail = "This may take a while. This window will disappear
+                     automatically.", value = 1)
 
-                resLCCC_gotcha <- LCCC_shiny(
-                    x = lfqU, reg_int = c(input$regIntGotcha[1],
-                                          input$regIntGotcha[2]),
-                    calc_ogive = FALSE, gotcha = input$gotcha)
-                rv$resLCCC_gotcha <- resLCCC_gotcha
-            }else{
-                rv$resLCCC_gotcha <- NULL
-            }
+            lfq <- rv$lfq
+            lfq$par <- rv$parsGrowth
+
+            ## GOTCHA
+            lfqc <- lfqCohort(lfq, calc_dt = FALSE)
+            df <- data.frame(
+                length = rep(lfqc$midLengths, times = length(lfqc$dates)),
+                rel.age = c(lfqc$rel.age),
+                bday = c(lfqc$bday),
+                cohort = c(lfqc$cohort),
+                n = c(lfqc$catch))
+            lfqU <- c(lfqc, list(df=df))
+
+            ## relages <- unique(as.numeric(lfqc$rel.age))
+            ## catch <- rep(NA, length(relages))
+            ## for(i in 1:length(relages)){
+            ##     catch[i] <- sum(lfqc$catch[lfqc$rel.age == relages[i]])
+            ## }
+            ## lfqU <- list(catch=catch, relages=relages,
+            ##              par = rv$parsGrowth)
+
+            resGOTCHA <- LCCC_shiny(
+                x = lfqU, reg_int = c(input$regIntGOTCHA[1],
+                                      input$regIntGOTCHA[2]),
+                calc_ogive = FALSE, gotcha = TRUE)
+            rv$resGOTCHA <- resGOTCHA
         }
 
         natM_res <- function(){
@@ -1107,13 +1132,19 @@ shinyServer(
 
 
         parsMort <- function(){
-            if(input$gotchaEst && !is.null(rv$resLCCC_gotcha)){
-                pars <- list(Z=rv$resLCCC_gotcha$par$Z,
+            if(input$gotchaEst && !is.null(rv$resGOTCHA)){
+                pars <- list(Z=rv$resGOTCHA$par$Z,
                              M=rv$resnatM,
-                             F=rv$resLCCC_gotcha$par$Z - rv$resnatM,
-                             E=(rv$resLCCC_gotcha$par$Z- rv$resnatM) / rv$resLCCC_gotcha$par$Z,
+                             F=rv$resGOTCHA$par$Z - rv$resnatM,
+                             E=(rv$resGOTCHA$par$Z- rv$resnatM) / rv$resGOTCHA$par$Z,
                              L50=rv$resLCCC$L50,
                              L75=rv$resLCCC$L75)
+            }else if(input$gotchaEst && is.null(rv$resGOTCHA)){
+                showNotification(paste("No results of GOTCHA found. Please run GOTCHA first (press 'Run GOTCHA')."),
+                                 type = "error",
+                                 duration = 30,
+                                 closeButton = TRUE
+                                 )
             }else{
                 pars <- list(Z=rv$resLCCC$par$Z,
                              M=rv$resnatM,
@@ -1127,14 +1158,13 @@ shinyServer(
                 showNotification(paste("The selectivity parameters could not be estimated. Try another regression interval."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
         }
 
         output$mortPars <- renderTable({
             if(rv$doLCCC == FALSE){
-                return()
+                data.frame()
             }else{
                 isolate({
                     LCCC_res()
@@ -1147,41 +1177,50 @@ shinyServer(
         })
 
         output$LCCC_plot <- output$LCCC_plot_ov <- renderPlot({
-            if(rv$doLCCC == FALSE)
+            if(rv$doLCCC == FALSE){
                 return()
-            par(mar=c(5,5,2,1))
-            plotLCCC(rv$resLCCC)
+            }else{
+                par(mar=c(5,5,2,1))
+                plotLCCC(rv$resLCCC)
+            }
         })
 
         output$LCCC_sel_plot <- output$LCCC_sel_plot_ov <- renderPlot({
-            if(rv$doLCCC == FALSE)
-                return()
-            par(mar=c(5,5,2,1))
-            plotLCCC_sel(rv$resLCCC)
-        })
-
-        output$mortParsGotcha <- output$mortParsGotcha_ov <- renderTable({
             if(rv$doLCCC == FALSE){
                 return()
-            }else if(!is.null(input$gotcha) && input$gotcha){
-                pars <- c(rv$resLCCC_gotcha$Z,
-                          rv$resnatM,
-                          rv$resLCCC_gotcha$Z- rv$resnatM,
-                          (rv$resLCCC_gotcha$Z- rv$resnatM ) / rv$resLCCC_gotcha$Z)
-                names(pars) <- c("Z", "M", "F", "E")
-                rv$parsMortGotcha <- pars
-                tmp <- as.data.frame(t(as.matrix(rv$parsMortGotcha)))
-                tmp
-            }else return()
-        })
-
-        output$LCCC_gotcha_plot <- output$LCCC_gotcha_plot_ov <- renderPlot({
-            if(rv$doLCCC == FALSE){
-                return()
-            }else if(!is.null(input$gotcha) && input$gotcha){
+            }else{
                 par(mar=c(5,5,2,1))
-                plotLCCC(rv$resLCCC_gotcha)
-            }else return()
+                plotLCCC_sel(rv$resLCCC)
+            }
+        })
+
+        output$mortParsGOTCHA <- output$mortParsGOTCHA_ov <- renderTable({
+            if(rv$doGOTCHA == FALSE){
+                data.frame()
+            }else{
+                isolate({
+                    GOTCHA_res()
+                })
+                natM_res()
+                parsMort()
+                pars <- c(rv$resGOTCHA$Z,
+                          rv$resnatM,
+                          rv$resGOTCHA$Z- rv$resnatM,
+                          (rv$resGOTCHA$Z- rv$resnatM ) / rv$resGOTCHA$Z)
+                names(pars) <- c("Z", "M", "F", "E")
+                rv$parsMortGOTCHA <- pars
+                tmp <- as.data.frame(t(as.matrix(rv$parsMortGOTCHA)))
+                tmp
+            }
+        })
+
+        output$GOTCHA_plot <- output$GOTCHA_plot_ov <- renderPlot({
+            if(rv$doGOTCHA == FALSE){
+                return()
+                }else{
+            par(mar=c(5,5,2,1))
+            plotLCCC(rv$resGOTCHA)
+            }
         })
 
         ##-----------------------------------------------------------
@@ -1190,30 +1229,8 @@ shinyServer(
 
         ## REF LEVELS
         ##-----------------------------------------------------------
-        output$Lmat <- renderUI({
-            sliderInput(
-                inputId = "Lmat",
-                label = "Length at 50% maturity",
-                value = round(rv$parsGrowth$Linf * 0.25),
-                min = 0,
-                max = round(rv$parsGrowth$Linf),
-                step = 0.1
-            )
-        })
-
-        output$wmat <- renderUI({
-            sliderInput(
-                inputId = "wmat",
-                label = "Width of maturity ogive",
-                value = round(rv$parsGrowth$Linf * 0.25 * 0.2),
-                min = 0,
-                max = round(rv$parsGrowth$Linf/2),
-                step = 0.1
-            )
-        })
-
         observeEvent(input$tabset, {
-            if(!is.null(rv$lfq) & !is.null(rv$parsGrowth) & !is.null(rv$parsMort)){
+            if(!is.null(rv$lfq) && !is.null(rv$parsGrowth) && !is.null(rv$parsMort)){
                 shinyjs::enable("runYPR")
                 shinyjs::enable("resetYPR")
             }else{
@@ -1222,12 +1239,70 @@ shinyServer(
             }
         })
 
-
         ## only run if action button used
         observeEvent(input$runYPR, {
             rv$doYPR <- input$runYPR
         })
 
+        ## reset button
+        observeEvent(input$resetYPR, {
+            if(is.null(input$binSize)){
+                bsVal <- 2
+            }else{
+                bsVal <- input$binSize
+            }
+            updateSliderInput(session = session,
+                              inputId = "binSizeYPR",
+                              value = bsVal)
+            updateSliderInput(session = session,
+                              inputId = "l50",
+                              value = round(rv$resLCCC$L50,1),
+                              )
+            updateNumericInput(session = session,
+                              inputId = "lr",
+                              value = lrVal,
+                              )
+            updateNumericInput(session = session,
+                              inputId = "LWa",
+                              value = 0.001,
+                              )
+            updateNumericInput(session = session,
+                              inputId = "LWb",
+                              value = 3,
+                              )
+            updateSliderInput(session = session,
+                              inputId = "l50",
+                              value = round(rv$resLCCC$L50,1),
+                              )
+            updateSliderInput(session = session,
+                              inputId = "wqs",
+                              value = round((rv$resLCCC$L75 - rv$resLCCC$L50)*2,1),
+                              )
+            lc <- round(rv$resLCCC$L50)
+            updateSliderInput(session = session,
+                              inputId = "lcChange",
+                              value = range(0.6*lc, 1.4*lc),
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "fmChangeAbs",
+                              value = range(0, 10),
+                              )
+            updateSliderInput(session = session,
+                              inputId = "fmChangeRel",
+                              value = range(0, (rv$parsMort[3] * 10)),
+                              )
+            ##
+            rv$doYPR <- FALSE
+        })
+
+        ## observe ELEFAN and LCCC
+        observeEvent(input$runELEFAN, {
+            rv$doYPR <- FALSE
+        })
+        observeEvent(input$runLCCC, {
+            rv$doYPR <- FALSE
+        })
 
         ## update and create sliders
         observeEvent(input$binSize,{
@@ -1242,44 +1317,46 @@ shinyServer(
         })
 
         output$lr <- renderUI({
-            lrVal <- min(rv$Lrange, na.rm=TRUE)
-            sliderInput(
+            req(rv$Lrange)
+            req(rv$parsGrowth)
+            numericInput(
                 inputId = "lr",
-                label = "Length at recruitment to fishery",
-                value = lrVal,
+                label = "Length at recruitment to fishery (Lr)",
+                value = min(rv$Lrange, na.rm=TRUE),
                 min = 0,
-                max = round(rv$parsGrowth$Linf),
-                step = 0.1
+                width = '50%'
             )
         })
 
         output$l50 <- renderUI({
-            sliderInput(
+            req(rv$resLCCC)
+            req(rv$parsGrowth)
+            numericInput(
                 inputId = "l50",
-                label = "Length at 50% probability of selection",
+                label = "Length at which probability of selection = 50% (L50)",
                 value = round(rv$resLCCC$L50,1),
-                min = 0,
-                max = round(rv$parsGrowth$Linf),
-                step = 0.1
+                min = 0
             )
         })
 
         output$wqs <- renderUI({
-            sliderInput(
+            req(rv$resLCCC)
+            req(rv$parsGrowth)
+            numericInput(
                 inputId = "wqs",
-                label = "Width of selectivity ogive",
+                label = "Width of selectivity curve (L75 - L25)",
                 value = round((rv$resLCCC$L75 - rv$resLCCC$L50)*2,1),
-                min = 0,
-                max = round(rv$parsGrowth$Linf/2),
-                step = 0.1
+                min = 0
             )
         })
 
         output$lcChange <- renderUI({
+            req(rv$resLCCC)
+            req(rv$parsGrowth)
             lc <- round(rv$resLCCC$L50)
             sliderInput(
                 inputId = "lcChange",
-                label = "Lc vector",
+                label = "Selectivity (L50; absolute)",
                 dragRange = TRUE,
                 value = range(0.6*lc, 1.4*lc),
                 min = 0,
@@ -1288,22 +1365,12 @@ shinyServer(
             )
         })
 
-        output$fmChangeAbs <- renderUI({
-            sliderInput(
-                inputId = "fmChangeAbs",
-                label = "Absolute F vector",
-                dragRange = TRUE,
-                value = range(0, 10),
-                min = 0, max = 20,
-                step = 1
-            )
-        })
-
         output$fmChangeRel <- renderUI({
+            req(rv$parsMort)
             vals <- range(0, (rv$parsMort[3] * 10))
             sliderInput(
                 inputId = "fmChangeRel",
-                label = "Relative F vector (X factor)",
+                label = "Fishing mortality (relative to current F)",
                 dragRange = TRUE,
                 value = vals,
                 min = 0,
@@ -1326,41 +1393,24 @@ shinyServer(
                               value = vals)
         })
 
-        ## reset button
-        observeEvent(input$resetYPR, {
-            rv$doYPR <- FALSE
-        })
-
-        ## observe ELEFAN and LCCC
-        observeEvent(input$runELEFAN, {
-            rv$doYPR <- FALSE
-        })
-        observeEvent(input$runLCCC, {
-            rv$doYPR <- FALSE
-        })
-
-
         YPR_res <- function(){
             if(is.null(rv$lfq))
                 showNotification(paste("The yield per recruit model requires a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
             if(is.null(rv$parsGrowth))
                 showNotification(paste("The yield per recruit model requires estimated growth parameters. Please go to the tab 'Growth' and run ELEFAN."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
-            if(is.null(rv$resLCCC) | is.null(rv$resnatM))
-                showNotification(paste("The yield per recruit model requires estimated total and natural mortality rates. Please go to the tab 'Mortality' and run the length-converted catch curve (LCCC) and empirical formula for the estimation of the natural mortality."),
+            if(is.null(rv$resLCCC) || is.null(rv$resnatM))
+                showNotification(paste("The yield per recruit model requires estimated total and natural mortality rates. Please go to the tab 'Mortality' and run the length-converted catch curve (LCCC)."),
                                  type = "error",
                                  duration = 30,
-                                 closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 closeButton = TRUE
                                  )
 
             progress <- shiny::Progress$new()
@@ -1419,7 +1469,7 @@ shinyServer(
 
         output$yprPars <- renderTable({
             if(rv$doYPR == FALSE){
-                return()
+                data.frame()
             }else{
                 isolate({
                     YPR_res()
@@ -1432,22 +1482,22 @@ shinyServer(
         output$YPR_plot <- output$YPR_plot_ov <- renderPlot({
             if(rv$doYPR == FALSE)
                 return()
-            par(mar=c(5,5,2,1))
-            plot(rv$resYPR, mark=TRUE)
+            par(mar=c(5,5,2,4))
+            plotYPR(rv$resYPR, mark=TRUE)
         })
 
         output$YPR_Lc_plot <- output$YPR_Lc_plot_ov <- renderPlot({
             if(rv$doYPR == FALSE)
                 return()
             par(mar=c(5,5,2,1))
-            plot(rv$resYPR_Lc, mark=TRUE,xaxis1 = "FM", yaxis_iso = "Lc")
+            plotYPR(rv$resYPR_Lc, mark=TRUE,xaxis1 = "FM", yaxis_iso = "L50")
         })
 
         output$YPR_Lc2_plot <- output$YPR_Lc2_plot_ov <- renderPlot({
             if(rv$doYPR == FALSE)
                 return()
             par(mar=c(5,5,2,1))
-            plot(rv$resYPR_Lc, mark=TRUE, yaxis1 = "B_R",xaxis1 = "FM", yaxis_iso = "Lc")
+            plotYPR(rv$resYPR_Lc, mark=TRUE, yaxis1 = "B_R",xaxis1 = "FM", yaxis_iso = "L50")
         })
 
         ##-----------------------------------------------------------
@@ -1513,18 +1563,24 @@ shinyServer(
             ## system2('pdflatex', '--version')
             if(input$reportFormat == "pdf" &&
                (is.null(texAvail) || inherits(texAvail, "try-error") || texAvail == "")){
+                report$filepath <- NULL
                 showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
                                  closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 action = a(href = "https://www.latex-project.org/get/#tex-distributions",
+                                            "TeX webpage",
+                                            target="_blank")
                                  )
             }else if(input$reportFormat == "docx" && !pandocAvail){
+                report$filepath <- NULL
                 showNotification("The software 'pandoc' was not found. Install pandoc on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
                                  closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 action = a(href = "https://pandoc.org/installing.html",
+                                            "Pandoc webpage",
+                                            target="_blank")
                                  )
             }else {
                 progress <- shiny::Progress$new()
@@ -1535,15 +1591,16 @@ shinyServer(
                              detail = "This may take a while. This window will disappear
                      when the report is ready.", value = 1)
 
-                if(is.null(rv$lfq))
+                if(is.null(rv$lfq)){
+                    report$filepath <- NULL
                     showNotification(paste("The minimum requirements for the report is a length-frequency data set. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                      type = "error",
                                      duration = 30,
-                                     closeButton = TRUE,
-                                     action = a(href = "javascript:location.reload();", "Reload page")
+                                     closeButton = TRUE
                                      )
+                    }
 
-                params <- list(rv = rv)
+                params <- list(shinyRes = rv)
 
                 td <- tempdir()
                 tmp_file <- tempfile(fileext = paste0(".",input$reportFormat))
@@ -1720,7 +1777,8 @@ shinyServer(
                 paste0("ShinyTropFish_alldata_",filename,"_",Sys.Date(),".RData")
             },
             content = function(con){
-                save(reactiveValuesToList(rv), file = con)
+                shinyRes <- reactiveValuesToList(rv)
+                save(shinyRes, file = con)
             }
         )
 

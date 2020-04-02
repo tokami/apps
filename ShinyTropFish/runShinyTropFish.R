@@ -16,6 +16,9 @@ install.packages(needed[! needed %in% installed],
 ## download the development version of TropFishR if not downloaded already
 if(packageVersion("TropFishR") != "1.7.0")
     remotes::install_github("tokami/TropFishR@dev")
+## In case TeX installed but tlgmr not initalised:
+texAvail <- try(Sys.which('pdflatex'), silent=TRUE)
+if(!inherits(texAvail, "try-error") && texAvail != "") system("tlmgr init-usertree")
 
 
 ## Set working directory to script location
@@ -39,7 +42,7 @@ if(inherits(tried, "try-error")){
     gc()
 }
 writeLines(paste0("Setting working directory to script location ",
-             ifelse(!inherits(tried,"try-error"),"successfull.","not successfull. Please set the working directory to script location manually.")))
+                  ifelse(!inherits(tried,"try-error"),"successfull.","not successfull. Please set the working directory to script location manually.")))
 
 
 ## Run the application

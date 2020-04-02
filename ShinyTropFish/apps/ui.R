@@ -400,7 +400,8 @@ tabPanel("Growth", id = "growth",
                  br(),
                  br(),
                  br(),
-                 div(style="display:inline-block;width:95%;text-align:center;",
+                 div(
+                     style="display:inline-block;width:95%;text-align:center;",
                      actionButton("runELEFAN",
                                   label = " Run ELEFAN_GA",
                                   style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
@@ -409,7 +410,7 @@ tabPanel("Growth", id = "growth",
                                   style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
                                   label = " Reset",
                                   icon = icon("refresh", "fa-1.5x"))
-                     ),
+                 ),
                  br(),
                  br(),
                  br(),
@@ -577,6 +578,8 @@ tabPanel("Mortality/Selectivity", id = "mort",
                           br(),
                           br(),
                           br(),
+                          h3("Length converted catch curve (LCCC)"),
+                          tags$hr(),
                           div(
                               style="display:inline-block;width:95%;text-align: center;",
                               actionButton("runLCCC",
@@ -590,46 +593,47 @@ tabPanel("Mortality/Selectivity", id = "mort",
                           ),
                           br(),
                           br(),
-                          br(),
-                          br(),
-                          h3("LFQ restructuring"),
-                          tags$hr(),
-                          br(),
-
                           ## choose number of bin size for restruct
                           sliderInput(inputId = "binSizeMort",
-                                      label = "Bin size",
+                                      label = "Bin size for LCCC",
                                       min = 0.5,
                                       max = 20,
                                       step = 0.5,
                                       value = 1),
                           br(),
-                          br(),
-                          br(),
-                          h3("Length converted catch curve (LCCC) settings"),
-                          tags$hr(),
-
                           ## choose points for regression line
                           uiOutput("regInt"),
                           br(),
-
                           ## choose catch column (for lfq data spanning multiple years)
                           uiOutput("selYearsLCCC"),
                           "If more than one year is chosen, the mortality estimates reflect the average over the entire time period.",
 
                           br(),
                           br(),
-                          ## gotcha?
-                          uiOutput("gotcha"),
+                          br(),
+                          h3("Cohort catch curve (GOTCHA)"),
+                          tags$hr(),
+                          div(
+                              style="display:inline-block;width:95%;text-align: center;",
+                              actionButton("runGOTCHA",
+                                           label = " Run GOTCHA",
+                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                           icon = icon("cross", "fa-1.5x")),
+                              actionButton("resetGOTCHA",
+                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                           label = " Reset",
+                                           icon = icon("refresh", "fa-1.5x"))
+                          ),
+                          br(),
+                          br(),
                           br(),
                           ## choose points for regression line (gotcha)
-                          uiOutput("regIntGotcha"),
+                          uiOutput("regIntGOTCHA"),
                           br(),
                           ## use gotcha estimates?
                           checkboxInput(inputId = "gotchaEst",
-                                        label = "Use GOTCHA estimates?",
+                                        label = "Use GOTCHA estimates for further analysis?",
                                         value = FALSE),
-                          br(),
                           br(),
                           br(),
                           br(),
@@ -670,27 +674,33 @@ tabPanel("Mortality/Selectivity", id = "mort",
 
              ## Show a plot of the generated distribution
              mainPanel(
+                 tags$h4("LCCC"),
+                 tags$hr(style = "border-top: dashed 2px #3891BA;"),
+                 br(),
                  tags$style("#mortPars {text-align: center;}"),
-                 tags$h4("Fitted parameters:"),
+                 tags$h4("Fitted parameters"),
                  br(),
                  tableOutput("mortPars"),
                  br(),
                  ## LCCC plot
-                 tags$h4("LCCC plot:"),
+                 tags$h4("Catch curve"),
                  plotOutput(outputId = "LCCC_plot",
                             width = "100%"),
                  br(),
                  ## LCCC selectivity plot
-                 tags$h4("Selectivity plot:"),
+                 tags$h4("Selectivity plot"),
                  plotOutput(outputId = "LCCC_sel_plot",
                             width = "100%"),
                  br(),
-                 ## GOTCHA plot
-                 tags$h4("GOTCHA parameters:"),
-                 tableOutput("mortParsGotcha"),
+                 tags$h4("GOTCHA"),
+                 tags$hr(style = "border-top: dashed 2px #3891BA;"),
                  br(),
-                 tags$h4("GOTCH catch curve:"),
-                 plotOutput(outputId = "LCCC_gotcha_plot",
+                 ## GOTCHA plot
+                 tags$h4("Fitted parameters"),
+                 tableOutput("mortParsGOTCHA"),
+                 br(),
+                 tags$h4("Catch curve"),
+                 plotOutput(outputId = "GOTCHA_plot",
                             width = "100%"),
                  br()
              )
@@ -704,129 +714,133 @@ tabPanel("Reference levels", id = "refs",
          headerPanel(title = "Estimate reference levels"),
          br(),
          sidebarLayout(
-             sidebarPanel(id="sidebar",
+             sidebarPanel(
+                 id="sidebar",
+                 "Given estimated life history parameters, the length-based yield per recruit model (YPR) simulates the length-structured population dynamics under different exploitation rates (fishing mortality) and gear selectivity assumptions and thus, allows to estimate biological reference levels and the stock status in terms of fishing mortality. Please note that YPR does not account for a stock-recruitment relationship and assumes equilibrium conditions.",
+                 br(),
+                 br(),
+                 div(style="display:inline-block;width:95%;text-align: center;",
+                     actionButton("runYPR",
+                                  label = " Run YPR",
+                                  style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                  icon = icon("fish", "fa-1.5x")),
+                     actionButton("resetYPR",
+                                  label = " Reset",
+                                  style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
+                                  icon = icon("refresh", "fa-1.5x")
+                                  )
+                     ),
+                 br(),
+                 br(),
+                 br(),
+                 ## choose number of bin size for restruct
+                 sliderInput(inputId = "binSizeYPR",
+                             label = "Bin size for YPR",
+                             min = 0.5,
+                             max = 20,
+                             step = 0.5,
+                             value = 1),
+                 br(),
+                 br(),
 
-                          br(),
-                          div(style="display:inline-block;width:95%;text-align: center;",
-                              actionButton("runYPR",
-                                           label = " Run YPR",
-                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
-                                           icon = icon("fish", "fa-1.5x")),
-                              actionButton("resetYPR",
-                                           label = " Reset",
-                                           style="color: #3891BA; background-color: #3891BA; border-color: #3891BA",
-                                           icon = icon("refresh", "fa-1.5x")
-                                           )
+                 "Parameters of the length-weight relationship (W = a * L^b)",
+                 br(),
+                 wellPanel(
+                     fluidRow(
+                         ## a
+                         column(6,
+                                numericInput(inputId="LWa", label=" Constant  (a) ",
+                                             value = 0.001)),
+                         ## b
+                         column(6,
+                                numericInput(inputId="LWb", label="Exponent (b) ",
+                                             value = 3)))
+                 ),
+                 br(),
+                 br(),
+                 ## Lr
+                 uiOutput("lr"),
+                 br(),
+                 br(),
+                 ## selectivity from LCCC or knife edge?
+                 tags$style("#yprSel {text-align: center;}"),
+                 radioButtons(inputId = "yprSel",inline = TRUE,
+                              label = "Knife edge or trawl-like selectivity?",
+                              choiceValues = c("TL","KE"),
+                              choiceNames = c("Trawl-like","Knife edge"),
+                              selected = "TL",
+                              width = '50%'
                               ),
-                          br(),
-                          br(),
-                          br(),
-                          br(),
-                          h3("LFQ restructuring"),
-                          tags$hr(),
-                          br(),
+                 br(),
+                 wellPanel(
+                     fluidRow(
+                         ## L50
+                         column(6,
+                                uiOutput("l50")),
+                         ## wqs
+                         column(6,
+                                uiOutput("wqs")))
+                 ),
+                 br(),
+                 br(),
+                 "Range of simulated fishing mortality and selectivity. Absolute and relative fishing mortality are dependent on each other and change simulataneously.",
+                 br(),
+                 br(),
+                 ## FM change vector
+                 sliderInput(
+                     inputId = "fmChangeAbs",
+                     label = "Fishing mortality (absolute)",
+                     dragRange = TRUE,
+                     value = range(0, 10),
+                     min = 0, max = 20,
+                     step = 1
 
-                          ## choose number of bin size for restruct
-                          sliderInput(inputId = "binSizeYPR",
-                                      label = "Bin size",
-                                      min = 0.5,
-                                      max = 20,
-                                      step = 0.5,
-                                      value = 1),
-                          br(),
-                          br(),
-                          br(),
-                          h3("Length-based YPR settings"),
-                          tags$hr(),
-                          textInput3(inputId="LWa", label="Constant ('a') of L-W relationship",
-                                     value = 0.001, class="input-small"),
-                          textInput3(inputId="LWb", label="Exponent ('b') of L-W relationship",
-                                     value = 3, class="input-small"),
-                          br(),
-                          br(),
-
-                          ## Lmat
-                          uiOutput("Lmat"),
-                          uiOutput("wmat"),
-
-                          br(),
-                          br(),
-
-                          ## Lr
-                          uiOutput("lr"),
-
-                          ## selectivity from LCCC or knife edge?
-                          radioButtons(inputId = "yprSel",inline = TRUE,
-                                       label = "Knife edge or trawl-like selectivity?",
-                                       choiceValues = c("TL","KE"),
-                                       choiceNames = c("Trawl-like","Knife edge"),
-                                       selected = "TL",
-                                       width = '50%'
-                                       ),
-
-                          ## L50
-                          uiOutput("l50"),
-
-                          ## wqs
-                          uiOutput("wqs"),
-
-                          ## FM change vector
-                          uiOutput("fmChangeAbs"),
-                          uiOutput("fmChangeRel"),
-
-
-                          ## length out of fm vector
-                          numericInput(
-                              inputId = "fmLengthOut",
-                              label = "Number of steps for F vector",
-                              value = 50,
-                              min = 0,
-                              width = '20%'
-                          ),
-
-
-                          ## Lc change vector
-                          uiOutput("lcChange"),
-
-
-                          ## length out of lc vector
-                          numericInput(
-                              inputId = "lcLengthOut",
-                              label = "Number of steps for Lc vector",
-                              value = 50,
-                              min = 0,
-                              width = '20%'
-                          ),
-
-
-                          ## stock size
-                          numericInput(
-                              inputId = "stockSize",
-                              label = "Stock size",
-                              value = 1,
-                              min = 1,
-                              width = '20%'
-                          ),
-
-
-                          ## Target SPR
-                          sliderInput(
-                              inputId = "targetSPR",
-                              label = "Target SPR",
-                              value = 0.75,
-                              min = 0, max = 1,
-                              step = 0.05
-                          )
-
-                          ),
-
-
+                 ),
+                 uiOutput("fmChangeRel"),
+                 br(),
+                 ## Lc change vector
+                 uiOutput("lcChange"),
+                 br(),
+                 br(),
+                 "Number of steps within the simulated fishing mortality and selectivity range.",
+                 br(),
+                 br(),
+                 wellPanel(
+                     fluidRow(
+                         ## length out of fm vector
+                         column(6,
+                                numericInput(
+                                    inputId = "fmLengthOut",
+                                    label = "Fishing mortality",
+                                    value = 50,
+                                    min = 0
+                                )),
+                         ## length out of lc vector
+                         column(6, numericInput(
+                                       inputId = "lcLengthOut",
+                                       label = "Selectivity (L50)",
+                                       value = 50,
+                                       min = 0
+                                   )))
+                 ),
+                 br(),
+                 br(),
+                 "Yield and biomass is returned relative to following stock size in numbers.",
+                 br(),
+                 br(),
+                 ## stock size
+                 numericInput(
+                     inputId = "stockSize",
+                     label = "Stock size",
+                     value = 1,
+                     min = 1,
+                     width = '30%'
+                 )
+             ),
 
              # Show a plot of the generated distribution
              mainPanel(
-                 tags$h4("YPR"),
-                 tags$hr(style = "border-top: dashed 2px #3891BA;"),
-                 br(),
+                 tags$style("#yprPars {text-align: center;}"),
                  tags$h4("Fitted parameters:"),
                  tableOutput("yprPars"),
                  br(),
@@ -972,10 +986,10 @@ tabPanel("Summary", id = "summary",
                  plotOutput(outputId = "LCCC_sel_plot_ov",
                             width = "100%"),
                  br(),
-                 "Gotcha parameters:",
-                 tableOutput("mortParsGotcha_ov"),
+                 "GOTCHA parameters:",
+                 tableOutput("mortParsGOTCHA_ov"),
                  br(),
-                 plotOutput(outputId = "LCCC_gotcha_plot_ov",
+                 plotOutput(outputId = "GOTCHA_plot_ov",
                             width = "100%"),
                  br(),
                  br(),
@@ -983,10 +997,6 @@ tabPanel("Summary", id = "summary",
 
                  tags$h4("Reference levels"),
                  tags$hr(),
-                 br(),
-
-                 tags$h4("YPR"),
-                 tags$hr(style = "border-top: dashed 2px #3891BA;"),
                  br(),
                  tableOutput("yprPars_ov"),
                  br(),
@@ -1031,8 +1041,6 @@ tabPanel("References", id = "references",
          "Mildenberger, TK. 2017. Single-species fish stock assessment with TropFishR. ",a("Link",href="https://cran.r-project.org/web/packages/TropFishR/vignettes/tutorial.html"),
          tags$hr(),
          br(),
-         br(),
-         br(),
          br()
          ),
 tabPanel("About", id = "about",
@@ -1042,13 +1050,9 @@ tabPanel("About", id = "about",
          'The Shiny application for Tropical Fisheries Analysis in R - the click-based user interface for the R package TropFishR. TropFishR is a collection of fisheries models based on the FAO Manual "Introduction to tropical fish stock assessment" by Sparre and Venema (1998, 1999). Not only scientists working in the tropics will benefit from this new toolbox. The methods work with age-based or length-frequency data and assist in the assessment of data poor fish stocks. Overall, the package comes with 30 functions, 19 data sets and 10 s3 methods. All objects are documented and provide examples that allow reproducing the examples from the FAO manual.',
          br(),
          br(),
-         br(),
-         br(),
          tags$h2("Version"),
          tags$hr(),
          "Version number: 0.9.1 (Beta)",
-         br(),
-         br(),
          br(),
          br(),
          tags$h2("News"),
@@ -1056,13 +1060,9 @@ tabPanel("About", id = "about",
          "This is the beta version of ShinyTropFish. You can find detailed descriptions of new features, bug fixes, other changes of specific package versions concerning", a("ShinyTropFish",href="https://rawgit.com/tokami/TropFishR/master/inst/doc/news.html"), " and concerning", a("TropFishR",href="https://rawgit.com/tokami/TropFishR/master/inst/doc/news.html"),
          br(),
          br(),
-         br(),
-         br(),
          tags$h2("Installation"),
          tags$hr(),
          'Please download the application as a ', a("zip archive from GitHub",href="https://github.com/tokami/apps/archive/master.zip"), "and unzip (usually double-click) the archive to the file destination on your computer. Subsequently, source the R script 'runShinyTropFish.R' in the ShinyTropFish folder. The script installs all required and missing R packages and thus, can take some minutes when run for the first time. Note, that the software allows to generate a dynamic assessment report which can be downloaded as html, pdf, or word document. However, the generation of the pdf document requires a TeX distribution, which needs to be downloaded separatly (e.g. from",a("here",href="https://www.latex-project.org/get/#tex-distributions"),"). and the generation of the word document requires the software pandoc, which also needs to be downloaded separatly (e.g. from", a("here",href="https://pandoc.org/installing.html"),").",
-         br(),
-         br(),
          br(),
          br(),
          tags$h2("Citation"),
@@ -1071,15 +1071,11 @@ tabPanel("About", id = "about",
          "Mildenberger TK, Taylor MH, Kokkalis A, Pauly D. 2020, ShinyTropFish: the shiny application for TropFishR.",
          br(),
          br(),
-         br(),
-         br(),
          tags$h2("Questions/Issues"),
          tags$hr(),
          "In case you have questions or find bugs, please write an email to",
          a("Tobias Mildenberger",href="mailto:t.k.mildenberger@gmail.com"), "or post on",
          a("apps/issues",href="https://github.com/tokami/apps/issues"), ". If you want to be updated with the development of the application and underlying R package (TroFishR) or want to discuss with ShinyTropFish and TropFishR users and developers, follow the project on", a("ResearchGate", href="https://www.researchgate.net/project/TropFishR"),".",
-         br(),
-         br(),
          br(),
          br(),
          tags$h2("Developer team"),

@@ -481,8 +481,7 @@ shinyServer(function(input, output, session) {
                 paste("No data has been choosen. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                              type = "error",
                              duration = NULL,
-                             closeButton = TRUE,
-                             action = a(href = "javascript:location.reload();", "Reload page")
+                             closeButton = TRUE
                              )
         }else{
             ## update rv elements (only if GUI depend on them/each other)
@@ -760,8 +759,7 @@ shinyServer(function(input, output, session) {
                 paste("SPiCT requires an input list. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                 type = "error",
                 duration = NULL,
-                closeButton = TRUE,
-                action = a(href = "javascript:location.reload();", "Reload page")
+                closeButton = TRUE
             )
         }else{
             tmp <- try(update.inp(),silent=TRUE)
@@ -927,8 +925,7 @@ shinyServer(function(input, output, session) {
                 paste("The retrospective analysis requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
                 type = "error",
                 duration = NULL,
-                closeButton = TRUE,
-                action = a(href = "javascript:location.reload();", "Reload page")
+                closeButton = TRUE
             )
         }else{
             fit <- rv$fit
@@ -949,8 +946,7 @@ shinyServer(function(input, output, session) {
                 paste("The sensitivity analysis requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
                 type = "error",
                 duration = NULL,
-                closeButton = TRUE,
-                action = a(href = "javascript:location.reload();", "Reload page")
+                closeButton = TRUE
             )
         }else{
             fit <- rv$fit
@@ -1071,8 +1067,7 @@ shinyServer(function(input, output, session) {
                 paste("The management functionality requires a fitted SPiCT model. Please go to the tab 'Fit SPiCT' and fit the SPiCT model to your or example data."),
                 type = "error",
                 duration = NULL,
-                closeButton = TRUE,
-                action = a(href = "javascript:location.reload();", "Reload page")
+                closeButton = TRUE
             )
         }else{
             fit <- rv$fit
@@ -1418,18 +1413,24 @@ shinyServer(function(input, output, session) {
             ## system2('pdflatex', '--version')
             if(input$reportFormat == "pdf" &&
                (is.null(texAvail) || inherits(texAvail, "try-error") || texAvail == "")){
+                report$filepath <- NULL
                 showNotification("No TeX distribution found. Install the required TeX distribution on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
                                  closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 action = a(href = "https://www.latex-project.org/get/#tex-distributions",
+                                            "TeX webpage",
+                                            target="_blank")
                                  )
             }else if(input$reportFormat == "docx" && !pandocAvail){
+                report$filepath <- NULL
                 showNotification("The software 'pandoc' was not found. Install pandoc on your computer or generate the report in 'html' format.",
                                  type = "error",
                                  duration = 30,
                                  closeButton = TRUE,
-                                 action = a(href = "javascript:location.reload();", "Reload page")
+                                 action = a(href = "https://pandoc.org/installing.html",
+                                            "Pandoc webpage",
+                                            target="_blank")
                                  )
             }else {
 
@@ -1441,13 +1442,14 @@ shinyServer(function(input, output, session) {
                              detail = "This may take a while. This window will disappear
                      when the report is ready.", value = 1)
 
-                if(is.null(rv$inp))
+                if(is.null(rv$inp)){
+                report$filepath <- NULL
                     showNotification(paste("The minimum requirements for the report is input data. Please go to the tab 'Load data' and upload your own data or choose an example data set."),
                                      type = "error",
                                      duration = 30,
-                                     closeButton = TRUE,
-                                     action = a(href = "javascript:location.reload();", "Reload page")
+                                     closeButton = TRUE
                                      )
+                }
 
                 params <- list(rv = rv)
 
