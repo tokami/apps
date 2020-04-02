@@ -1244,7 +1244,8 @@ shinyServer(function(input, output, session) {
             paste0("spictapp_RData_",filename,"_",Sys.Date(),".RData")
         },
         content = function(con){
-            save(reactiveValuesToList(rv), file = con)
+            shinyRes <- reactiveValuesToList(rv)
+            save(shinyRes, file = con)
         }
     )
 
@@ -1451,7 +1452,7 @@ shinyServer(function(input, output, session) {
                                      )
                 }
 
-                params <- list(rv = rv)
+                params <- list(shinyRes = rv)
 
                 td <- tempdir()
                 tmp_file <- tempfile(fileext = paste0(".",input$reportFormat))

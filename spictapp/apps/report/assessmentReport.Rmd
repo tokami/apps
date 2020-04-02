@@ -19,7 +19,7 @@ output:
         toc: true
         toc_depth: 2
 params:
-  rv: NA
+  shinyRes: NA
 header-includes:
  \usepackage{booktabs}
  \usepackage{longtable}
@@ -81,19 +81,19 @@ This report was created with by spictapp (version `0.9.1`) based on the
 
 # Data
 The results in this report are based on the data set labelled
-`r paste0("'",strsplit(params$rv$filename,"Data: ")[[1]][2],"'")`.
+`r paste0("'",strsplit(params$shinyRes$filename,"Data: ")[[1]][2],"'")`.
 The columns in the uploaded data set (Table 1) were used in the
 analysis (first 10 rows of each column displayed). The complete data set is
 included in the appendix of this report.
 
 ```{r rawdat}
-if(!is.null(params$rv$dat)){
+if(!is.null(params$shinyRes$dat)){
     if(doc.type == "docx"){
         flextable(
-            head(params$rv$dat, 10))
+            head(params$shinyRes$dat, 10))
     }else{
         kable(
-            head(params$rv$dat, 10), booktabs = TRUE,
+            head(params$shinyRes$dat, 10), booktabs = TRUE,
             caption = "Input data.")
     }
 }
@@ -103,7 +103,7 @@ The input list used for the SPiCT assessment can also be displayed graphically
 with the standard data plot in the spict package as shown in Fig. \ref{fig:dataplot}.
 
 ```{r dataplot, fig.width=6, fig.height=7, fig.cap = "SPiCT data plot.\\label{fig:dataplot}"}
-if(!is.null(params$rv$inp)) plotspict.data(params$rv$inp)
+if(!is.null(params$shinyRes$inp)) plotspict.data(params$shinyRes$inp)
 ```
 
 <br><br>
@@ -111,9 +111,9 @@ if(!is.null(params$rv$inp)) plotspict.data(params$rv$inp)
 # Priors
 
 Following priors were defined:
-`r if(!is.null(params$rv$inp)) paste0(names(params$rv$inp$priors)[which(params$rv$inp$priorsuseflags == 1)], collapse = ", ")`.
+`r if(!is.null(params$shinyRes$inp)) paste0(names(params$shinyRes$inp$priors)[which(params$shinyRes$inp$priorsuseflags == 1)], collapse = ", ")`.
 
-```{r priorsplot, fig.width=5.5, fig.height=8, fig.cap = "Priors. \\label{fig:priorsplot}"}
+```{r priorsplot, out.width = "75%", fig.width=5.5, fig.height=8, fig.cap = "Priors. \\label{fig:priorsplot}"}
 plotspict.priors.inp <- function(x, do.plot=NULL, stamp=get.version(), automfrow=TRUE){
     ## if check.inp has not been run yet
     if(!inherits(x, "spictcls")){
@@ -241,8 +241,8 @@ plotspict.priors.inp <- function(x, do.plot=NULL, stamp=get.version(), automfrow
     }
 }
 
-if(!is.null(params$rv$inp)){
-    plotspict.priors.inp(params$rv$inp)
+if(!is.null(params$shinyRes$inp)){
+    plotspict.priors.inp(params$shinyRes$inp)
 }
 ```
 
@@ -250,13 +250,13 @@ if(!is.null(params$rv$inp)){
 
 # Assessment results
 
-The seed value for reproducible results was set to `r params$rv$seed`.
+The seed value for reproducible results was set to `r params$shinyRes$seed`.
 
 ## Convergence
 
 ```{r}
-if(!is.null(params$rv$fit)){
-    if(!params$rv$fit$opt$convergence)
+if(!is.null(params$shinyRes$fit)){
+    if(!params$shinyRes$fit$opt$convergence)
         writeLines(paste0("The SPiCT model reached convergence.")) else
         writeLines(paste0("Subsequent results have to be treated with caution as the model did not reach convergence."))
 }else{
@@ -271,14 +271,14 @@ upper 95% confidence intervals (`cilow` and `ciupp`, respectively), as well as
 the log estimates (`log.est`) of all fixed parameters of the SPiCT model.
 
 ```{r}
-if(!is.null(params$rv$fit)){
+if(!is.null(params$shinyRes$fit)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(round(sumspict.parest(params$rv$fit),3))
+            as.data.frame(round(sumspict.parest(params$shinyRes$fit),3))
         )
     }else{
         kable(
-            round(sumspict.parest(params$rv$fit),3),
+            round(sumspict.parest(params$shinyRes$fit),3),
             booktabs = TRUE,
             caption = "Model parameters.")
     }
@@ -308,14 +308,14 @@ intervals, the log estimates, and the relative difference to the deterministic
 reference points (`rel.diff.Drp`) are:
 
 ```{r}
-if(!is.null(params$rv$fit)){
+if(!is.null(params$shinyRes$fit)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(round(sumspict.srefpoints(params$rv$fit),3))
+            as.data.frame(round(sumspict.srefpoints(params$shinyRes$fit),3))
         )
     }else{
         kable(
-            round(sumspict.srefpoints(params$rv$fit),3),
+            round(sumspict.srefpoints(params$shinyRes$fit),3),
             booktabs = TRUE,
             caption = "Stochastic reference points.")
     }
@@ -335,14 +335,14 @@ deterministic reference points.
 Comparitively, the deterministic reference points are:
 
 ```{r}
-if(!is.null(params$rv$fit)){
+if(!is.null(params$shinyRes$fit)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(round(sumspict.drefpoints(params$rv$fit),3))
+            as.data.frame(round(sumspict.drefpoints(params$shinyRes$fit),3))
         )
     }else{
         kable(
-            round(sumspict.drefpoints(params$rv$fit),3),
+            round(sumspict.drefpoints(params$shinyRes$fit),3),
             booktabs = TRUE,
             caption = "Deterministic reference points.")
     }
@@ -357,14 +357,14 @@ time of last index observation) are called 'States' in SPiCT and estimated with
 confidence intervals as:
 
 ```{r}
-if(!is.null(params$rv$fit)){
+if(!is.null(params$shinyRes$fit)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(round(sumspict.states(params$rv$fit),3))
+            as.data.frame(round(sumspict.states(params$shinyRes$fit),3))
         )
     }else{
         kable(
-            round(sumspict.states(params$rv$fit),3),
+            round(sumspict.states(params$shinyRes$fit),3),
             booktabs = TRUE,
             caption = "Model states.")
     }
@@ -389,14 +389,14 @@ interval' or `maninterval`) and `E(B_inf)` is the predicted equilibrium biomass
 and current fishing mortality.
 
 ```{r fitpred}
-if(!is.null(params$rv$fit)){
+if(!is.null(params$shinyRes$fit)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(round(sumspict.predictions(params$rv$fit),3))
+            as.data.frame(round(sumspict.predictions(params$shinyRes$fit),3))
         )
     }else{
         kable(
-            round(sumspict.predictions(params$rv$fit),3),
+            round(sumspict.predictions(params$shinyRes$fit),3),
             booktabs = TRUE,
             caption = "Model predictions.")
     }
@@ -410,7 +410,7 @@ in terms of biomass and fishing mortality simultaneously. The shaded areas show
 the 95% confidence intervals.
 
 ```{r fitplot, fig.width=9, fig.height=8, fig.cap = "SPiCT plot.\\label{fig:fitplot}"}
-if(!is.null(params$rv$fit)) plot2(params$rv$fit)
+if(!is.null(params$shinyRes$fit)) plot2(params$shinyRes$fit)
 ```
 
 <font size="-3">
@@ -433,15 +433,15 @@ distributions of used priors. Additionally, the retrospective analysis and
 sensitivity analysis for intital values is recommended.
 
 ```{r}
-if(!is.null(params$rv$fit)){
+if(!is.null(params$shinyRes$fit)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(sumspict.diagnostics(params$rv$fit)),
+            as.data.frame(sumspict.diagnostics(params$shinyRes$fit)),
                           col_keys = c("shapiro","bias","acf","LBox","shapiro_2","bias_2","acf_2","LBox_2")
         )
     }else{
         kable(
-            sumspict.diagnostics(params$rv$fit),
+            sumspict.diagnostics(params$shinyRes$fit),
             booktabs = TRUE,
             caption = "Model diagnostics.")
     }
@@ -451,7 +451,7 @@ if(!is.null(params$rv$fit)){
 This can also be evaluated visually:
 
 ```{r diagplot, fig.width=7, fig.height=8, fig.cap = "Model diagnostics.\\label{fig:diagplot}"}
-if(!is.null(params$rv$fit)) plotspict.diagnostic(params$rv$fit)
+if(!is.null(params$shinyRes$fit)) plotspict.diagnostic(params$shinyRes$fit)
 ```
 
 Ideally, the prior and posterior distributions do not fully overlap. Overlapping
@@ -459,7 +459,7 @@ distributions indicate that the prior highly affects the model fit, which could
 potentially be due to low contrast in the data.
 
 ```{r priorplot, fig.width=5.5, fig.height=8, fig.cap = "Priors.\\label{fig:priorplot}"}
-if(!is.null(params$rv$fit)) plotspict.priors(params$rv$fit)
+if(!is.null(params$shinyRes$fit)) plotspict.priors(params$shinyRes$fit)
 ```
 
 ## Retrospective analysis
@@ -471,7 +471,7 @@ of biases rather than a random scattering' the assessment shows the
 'retrospective problem' [@mohn1999].
 
 ```{r retroplot, fig.width=9, fig.height=8, fig.cap = "Retrospective analysis\\label{fig:retroplot}"}
-if(!is.null(params$rv$retro)) plotspict.retro(params$rv$retro)
+if(!is.null(params$shinyRes$retro)) plotspict.retro(params$shinyRes$retro)
 ```
 
 <font size="-3">
@@ -490,14 +490,14 @@ different initial values. Disagreeing assessment outcomes for the different
 model fits indicate potential problems with underlying assessment.
 
 ```{r}
-if(!is.null(params$rv$sensi)){
+if(!is.null(params$shinyRes$sensi)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(sumspict.ini(params$rv$sensi[[1]]))
+            as.data.frame(sumspict.ini(params$shinyRes$sensi[[1]]))
         )
     }else{
         kable(
-            sumspict.ini(params$rv$sensi[[1]]),
+            sumspict.ini(params$shinyRes$sensi[[1]]),
               booktabs = TRUE,
               caption = "Relative difference between initial values of different trials and base run.")
     }
@@ -505,14 +505,14 @@ if(!is.null(params$rv$sensi)){
 ```
 
 ```{r}
-if(!is.null(params$rv$sensi)){
+if(!is.null(params$shinyRes$sensi)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(sumspict.ini(params$rv$sensi[[2]]))
+            as.data.frame(sumspict.ini(params$shinyRes$sensi[[2]]))
         )
     }else{
         kable(
-            sumspict.ini(params$rv$sensi[[2]]),
+            sumspict.ini(params$shinyRes$sensi[[2]]),
             booktabs = TRUE,
             caption = "Initial values (log scale) for the different trials used in the sensitivity analysis.")
     }
@@ -520,14 +520,14 @@ if(!is.null(params$rv$sensi)){
 ```
 
 ```{r}
-if(!is.null(params$rv$sensi)){
+if(!is.null(params$shinyRes$sensi)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(sumspict.ini(params$rv$sensi[[3]]))
+            as.data.frame(sumspict.ini(params$shinyRes$sensi[[3]]))
         )
     }else{
         kable(
-            sumspict.ini(params$rv$sensi[[3]]),
+            sumspict.ini(params$shinyRes$sensi[[3]]),
             booktabs = TRUE,
             caption = "Paramater estimates for all trials of the sensitivity analysis, as well as the distance from the parameters of each trial to the base run.")
     }
@@ -549,18 +549,18 @@ contrast in the input data.
 The management scenarios included in spictapp allow comparing and evaluating the
 implications of various strategies on predicted catches and stock status in
 future years. Following management scenarios were choosen:
-`r if(!is.null(params$rv$mana)) names(params$rv$mana$man) else print("No management scenarios analysed!")`
+`r if(!is.null(params$shinyRes$mana)) names(params$shinyRes$mana$man) else print("No management scenarios analysed!")`
 
 The SPiCT timeline visualises the period of observations, as well as the intermediate
 and management period$^*$.
 
 ```{r mantimeline}
-if(!is.null(params$rv$mana)){
-    man.timeline(params$rv$mana)
-}else if(!is.null(params$rv$fit)){
-    man.timeline(params$rv$fit)
+if(!is.null(params$shinyRes$mana)){
+    man.timeline(params$shinyRes$mana)
+}else if(!is.null(params$shinyRes$fit)){
+    man.timeline(params$shinyRes$fit)
 }else{
-    if(!is.null(params$rv$inp)) man.timeline(params$rv$inp)
+    if(!is.null(params$shinyRes$inp)) man.timeline(params$shinyRes$inp)
 }
 ```
 
@@ -577,20 +577,20 @@ The predicted trajectories of catches and states under various management
 scenarios are displayed in different colours in Fig. \ref{fig:manplot}.
 
 ```{r manplot, fig.width=9, fig.height=8, fig.cap = "Management scenarios\\label{fig:manplot}"}
-if(!is.null(params$rv$mana)) plot2(params$rv$mana)
+if(!is.null(params$shinyRes$mana)) plot2(params$shinyRes$mana)
 ```
 
 In detail, the differences between the management scenarios are:
 
 ```{r mansum}
-if(!is.null(params$rv$mana)){
+if(!is.null(params$shinyRes$mana)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(sumspict.manage(params$rv$mana))
+            as.data.frame(sumspict.manage(params$shinyRes$mana))
         )
     }else{
         kable(
-            sumspict.manage(params$rv$mana),
+            sumspict.manage(params$shinyRes$mana),
             booktabs = TRUE,
             caption = "Management scenarios.")
     }
@@ -598,11 +598,11 @@ if(!is.null(params$rv$mana)){
 ```
 
 The total allowable catch for each management scenario for the period
-`r if(!is.null(params$rv$mana)) params$rv$mana$man[[1]]$inp$maninterval`
+`r if(!is.null(params$shinyRes$mana)) params$shinyRes$mana$man[[1]]$inp$maninterval`
 is:
 
 ```{r mantac}
-if(!is.null(params$rv$mana)) lapply(man.tac(params$rv$mana),round,3)
+if(!is.null(params$shinyRes$mana)) lapply(man.tac(params$shinyRes$mana),round,3)
 ```
 
 <br><br>
@@ -610,7 +610,7 @@ if(!is.null(params$rv$mana)) lapply(man.tac(params$rv$mana),round,3)
 # Summary
 
 ```{r summary}
-if(is.null(params$rv$fit)){
+if(is.null(params$shinyRes$fit)){
     datapoints <- 0
     datastart <- NaN
     dataend <- NaN
@@ -625,25 +625,25 @@ if(is.null(params$rv$fit)){
     bpbmsy <- NaN
     predcatch <- NaN
 }else{
-    datapoints <- length(params$rv$inp$obssrt)
-    datastart <- params$rv$inp$timerange[1]
-    dataend <- params$rv$inp$timerange[2]
-    bbmsy <- round(get.par("logBlBmsy",params$rv$fit, exp = TRUE)[,2],2)
+    datapoints <- length(params$shinyRes$inp$obssrt)
+    datastart <- params$shinyRes$inp$timerange[1]
+    dataend <- params$shinyRes$inp$timerange[2]
+    bbmsy <- round(get.par("logBlBmsy",params$shinyRes$fit, exp = TRUE)[,2],2)
     stockstatusB <- ifelse(bbmsy < 1,"overfished","not overfished")
-    ffmsy <- round(get.par("logFlFmsynotS",params$rv$fit, exp = TRUE)[,2],2)
+    ffmsy <- round(get.par("logFlFmsynotS",params$shinyRes$fit, exp = TRUE)[,2],2)
     stockstatusF <- ifelse(ffmsy > 1,"overfished","not overfished")
-    manstart <- params$rv$inp$maninterval[1]
-    if(round(params$rv$fit$inp$ffac,2) == 1.0){
+    manstart <- params$shinyRes$inp$maninterval[1]
+    if(round(params$shinyRes$fit$inp$ffac,2) == 1.0){
         ffac <- "Continuing the F process,"
-    }else if(params$rv$fit$inp$ffac > 1){
-        ffac <- paste0("Increasing the F process by ",round(params$rv$fit$inp$ffac*100), "% in ",manstart,",")
+    }else if(params$shinyRes$fit$inp$ffac > 1){
+        ffac <- paste0("Increasing the F process by ",round(params$shinyRes$fit$inp$ffac*100), "% in ",manstart,",")
     }else{
-        ffac <- paste0("Decreasing the F process by ",round(params$rv$fit$inp$ffac*100), "% in ",manstart,",")
+        ffac <- paste0("Decreasing the F process by ",round(params$shinyRes$fit$inp$ffac*100), "% in ",manstart,",")
     }
-    predcatch <- paste0(round(get.par("logCp",params$rv$fit, exp = TRUE)[,2],2),params$rv$fit$inp$catchunit)
-    manend <- params$rv$inp$maninterval[2]
-    maneval <- params$rv$inp$maneval
-    bpbmsy <- round(get.par("logBpBmsy",params$rv$fit, exp = TRUE)[,2],2)
+    predcatch <- paste0(round(get.par("logCp",params$shinyRes$fit, exp = TRUE)[,2],2),params$shinyRes$fit$inp$catchunit)
+    manend <- params$shinyRes$inp$maninterval[2]
+    maneval <- params$shinyRes$inp$maneval
+    bpbmsy <- round(get.par("logBpBmsy",params$shinyRes$fit, exp = TRUE)[,2],2)
 }
 
 ```
@@ -685,14 +685,14 @@ continuous time. Fish and Fisheries, 18(2), 226-243.
 The complete data set used for the analysis:
 
 ```{r}
-if(!is.null(params$rv$dat)){
+if(!is.null(params$shinyRes$dat)){
     if(doc.type == "docx"){
         flextable(
-            as.data.frame(params$rv$dat)
+            as.data.frame(params$shinyRes$dat)
         )
     }else{
         kable(
-            params$rv$dat,
+            params$shinyRes$dat,
             booktabs = TRUE,
             caption = "Full uploaded data.")
     }
@@ -704,15 +704,15 @@ if(!is.null(params$rv$dat)){
 The complete SPiCT model summary:
 
 ```{r}
-if(!is.null(params$rv$fit)) summary(params$rv$fit)
+if(!is.null(params$shinyRes$fit)) summary(params$shinyRes$fit)
 ```
 
 ## SPiCT default plots {#app:plots}
 
 ```{r fitplotFull, fig.width=9, fig.height=10, fig.cap = "Full SPiCT default plot.\\label{fig:fitplotFull}"}
-if(!is.null(params$rv$fit)) plot(params$rv$fit)
+if(!is.null(params$shinyRes$fit)) plot(params$shinyRes$fit)
 ```
 
 ```{r manplotFull, fig.width=9, fig.height=10, fig.cap = "Management scenarios default SPiCT plot.\\label{fig:maplotFull}"}
-if(!is.null(params$rv$mana)) plot(params$rv$mana)
+if(!is.null(params$shinyRes$mana)) plot(params$shinyRes$mana)
 ```

@@ -652,7 +652,7 @@ shinyServer(
 
             updateSliderInput(session = session,
                               inputId = "popSize",
-                              value = 50
+                              value = 100
                               )
 
             updateSliderInput(session = session,
@@ -662,12 +662,12 @@ shinyServer(
 
             updateSliderInput(session = session,
                               inputId = "maxiter",
-                              value = 20
+                              value = 50
                               )
 
             updateSliderInput(session = session,
                               inputId = "run",
-                              value = 20,
+                              value = 20
                               )
 
             if(is.null(input$binSize)){

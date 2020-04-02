@@ -503,8 +503,8 @@ tabPanel("Growth", id = "growth",
                  sliderInput(
                      inputId = "popSize",
                      label = "Population size",
-                     value = 50, min = 10, max = 500,
-                     step = 5, round = TRUE
+                     value = 100, min = 10, max = 1000,
+                     step = 10, round = TRUE
                  ),
 
                  sliderInput(
@@ -517,7 +517,7 @@ tabPanel("Growth", id = "growth",
                  sliderInput(
                      inputId = "maxiter",
                      label = "Maximum number of generations",
-                     value = 20, min = 10, max = 190,
+                     value = 50, min = 10, max = 190,
                      step = 5, round = TRUE
                  ),
 

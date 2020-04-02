@@ -47,4 +47,4 @@ writeLines(paste0("Setting working directory to script location ",
 
 ## Run the application
 ## -------------------------
-shiny::runApp("apps/")
+shiny::runApp("apps/", launch.browser = TRUE)
