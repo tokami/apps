@@ -418,7 +418,7 @@ shinyServer(
             sliderInput(inputId = "binSize",
                         label = "Bin size",
                         min = isolate(rv$lfqORI$midLengths[2] - rv$lfqORI$midLengths[1]),
-                        max = 8,
+                        max = 20,
                         step = 0.5,
                         value = isolate(rv$binSize),
                         round = TRUE)
@@ -605,34 +605,94 @@ shinyServer(
 
         ## GROWTH
         ##-----------------------------------------------------------
+        observeEvent(input$tabset, {
+            if(!is.null(rv$lfq)){
+                shinyjs::enable("runELEFAN")
+                shinyjs::enable("resetELEFAN")
+            }else{
+                shinyjs::disable("runELEFAN")
+                shinyjs::disable("resetELEFAN")
+            }
+        })
 
-        ## output$binSizeGrowth <- renderUI({
-        ##     sliderInput(inputId = "binSizeGrowth",
-        ##                 label = "Bin size",
-        ##                 min = rv$lfqORI$midLengths[2] - rv$lfqORI$midLengths[1],
-        ##                 max = 8,
-        ##                 step = 0.5,
-        ##                 value = rv$binSize,
-        ##                 round = TRUE)
-        ## })
+        ## only run if action button used
+        observeEvent(input$runELEFAN, {
+            rv$doELEFAN <- input$runELEFAN
+        })
 
-        ## observeEvent(input$tabset,{
-        ##     if(is.null(input$binSizeGrowth) & is.null(rv$binSize)){
-        ##         binSizeMin <- 0.5
-        ##         binSizeVal <- 1
-        ##     }else if(is.null(input$binSizeGrowth) & !is.null(rv$binSize)){
-        ##         binSizeMin <- rv$lfqORI$midLengths[2] - rv$lfqORI$midLengths[1]
-        ##         binSizeVal <- rv$binSize
-        ##     }else{
-        ##         binSizeMin <- rv$lfqORI$midLengths[2] - rv$lfqORI$midLengths[1]
-        ##         binSizeVal <- input$binSizeGrowth
-        ##     }
-        ##     rv$binSize <- binSizeVal
-        ##     updateSliderInput(session = session,
-        ##                       inputId = "binSizeGrowth",
-        ##                       min = binSizeMin,
-        ##                       value = binSizeVal)
-        ## })
+        ## reset button
+        observeEvent(input$resetELEFAN, {
+            updateCheckboxInput(session = session,
+                                inputId = "seasonalized",
+                                value = FALSE)
+            lrange <- rv$Lrange
+            updateSliderInput(session = session,
+                              "Linfrange",
+                              value = round(c(0.8,1.2) * lrange[2]))
+
+            updateSliderInput(session = session,
+                              inputId = "Krange",
+                              value = range(0.01, 1)
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "tarange",
+                              value = range(0, 1)
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "Crange",
+                              value = c(0,1)
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "tsrange",
+                              value = range(0, 1)
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "popSize",
+                              value = 50
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "pmutation",
+                              value = 0.2
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "maxiter",
+                              value = 20
+                              )
+
+            updateSliderInput(session = session,
+                              inputId = "run",
+                              value = 20,
+                              )
+
+            if(is.null(input$binSize)){
+                bsVal <- 2
+            }else{
+                bsVal <- input$binSize
+            }
+            updateSliderInput(session = session,
+                              inputId = "binSizeGrowth",
+                              value = bsVal)
+
+            if(is.null(input$ma)){
+                maVal <- 5
+            }else{
+                maVal <- input$ma
+            }
+            rv$ma <- maVal
+            updateSliderInput(session = session,
+                              inputId = "maGrowth",
+                              value = maVal)
+
+            rv$doELEFAN <- FALSE
+            rv$resGA <- NULL
+            rv$parsGrowth <- NULL
+        })
 
         observeEvent(input$binSize,{
             if(is.null(input$binSize)){
@@ -668,16 +728,6 @@ shinyServer(
                         dragRange = TRUE, round = TRUE)
         })
 
-        observeEvent(input$tabset, {
-            if(!is.null(rv$lfq)){
-                shinyjs::enable("runELEFAN")
-                shinyjs::enable("resetELEFAN")
-            }else{
-                shinyjs::disable("runELEFAN")
-                shinyjs::disable("resetELEFAN")
-            }
-        })
-
         ## inactive C and ts sliders if not seasonal
         observeEvent(input$seasonalized, {
             if(input$seasonalized){
@@ -687,16 +737,6 @@ shinyServer(
                 shinyjs::disable("Crange")
                 shinyjs::disable("tsrange")
             }
-        })
-
-        ## only run if action button used
-        observeEvent(input$runELEFAN, {
-            rv$doELEFAN <- input$runELEFAN
-        })
-
-        ## reset button
-        observeEvent(input$resetELEFAN, {
-            rv$doELEFAN <- FALSE
         })
 
         GA_res <- function(){
@@ -827,7 +867,6 @@ shinyServer(
             if(rv$doELEFAN == FALSE){
                 return()
             }else{
-
                 lfq <- rv$lfq
                 lfq$par <- rv$parsGrowth
                 par(mar=c(5,5,2,1))
@@ -867,6 +906,7 @@ shinyServer(
 
         ## only run if action button used
         observeEvent(input$runGOTCHA, {
+            rv$doLCCC <- TRUE
             rv$doGOTCHA <- input$runGOTCHA
         })
 
@@ -887,7 +927,15 @@ shinyServer(
             updateSliderInput(session=session,
                               inputId="regInt",
                               value=tmp$opt)
+            updateSelectInput(session=session,
+                              inputId = "natM",
+                              selected = "Then_growth")
             rv$doLCCC <- FALSE
+            rv$parsMort <- NULL
+            rv$parsMortGOTCHA <- NULL
+            rv$parsMortFinal <- NULL
+            rv$resLCCC <- NULL
+            rv$resnatM <- NULL
         })
 
         ## reset button
@@ -900,6 +948,8 @@ shinyServer(
                               inputId="regIntGOTCHA",
                               value=tmp$opt)
             rv$doGOTCHA <- FALSE
+            rv$parsMortGOTCHA <- NULL
+            rv$resGOTCHA <- NULL
         })
 
         getNumYears <- function(){
@@ -1130,21 +1180,26 @@ shinyServer(
             rv$resnatM <- resnatM
         }
 
+        observeEvent(input$gotchaEst,{
+            rv$doYPR  <- FALSE
+            if(input$gotchaEst && is.null(rv$resGOTCHA)){
+                showNotification(paste("No GOTCHA estimates found. Please run GOTCHA to use the GOTCHA estimates for further analysis (press 'Run GOTCHA')."),
+                                 type = "error",
+                                 duration = 30,
+                                 closeButton = TRUE
+                                 )
+            }
+        }, ignoreInit = TRUE)
 
-        parsMort <- function(){
-            if(input$gotchaEst && !is.null(rv$resGOTCHA)){
+        observe({
+            if(input$gotchaEst){
                 pars <- list(Z=rv$resGOTCHA$par$Z,
                              M=rv$resnatM,
                              F=rv$resGOTCHA$par$Z - rv$resnatM,
                              E=(rv$resGOTCHA$par$Z- rv$resnatM) / rv$resGOTCHA$par$Z,
                              L50=rv$resLCCC$L50,
                              L75=rv$resLCCC$L75)
-            }else if(input$gotchaEst && is.null(rv$resGOTCHA)){
-                showNotification(paste("No results of GOTCHA found. Please run GOTCHA first (press 'Run GOTCHA')."),
-                                 type = "error",
-                                 duration = 30,
-                                 closeButton = TRUE
-                                 )
+                rv$parsMortFinal <- unlist(pars)
             }else{
                 pars <- list(Z=rv$resLCCC$par$Z,
                              M=rv$resnatM,
@@ -1152,15 +1207,9 @@ shinyServer(
                              E=(rv$resLCCC$par$Z- rv$resnatM) / rv$resLCCC$par$Z,
                              L50=rv$resLCCC$L50,
                              L75=rv$resLCCC$L75)
+                rv$parsMortFinal <- unlist(pars)
             }
-            rv$parsMort <- unlist(pars)
-            if(is.null(rv$resLCCC$L50))
-                showNotification(paste("The selectivity parameters could not be estimated. Try another regression interval."),
-                                 type = "error",
-                                 duration = 30,
-                                 closeButton = TRUE
-                                 )
-        }
+        })
 
         output$mortPars <- renderTable({
             if(rv$doLCCC == FALSE){
@@ -1169,8 +1218,20 @@ shinyServer(
                 isolate({
                     LCCC_res()
                 })
+                if(is.null(rv$resLCCC$L50))
+                    showNotification(paste("The selectivity parameters could not be estimated. Try another regression interval."),
+                                     type = "error",
+                                     duration = 30,
+                                     closeButton = TRUE
+                                     )
                 natM_res()
-                parsMort()
+                pars <- list(Z=rv$resLCCC$par$Z,
+                             M=rv$resnatM,
+                             F=rv$resLCCC$par$Z - rv$resnatM,
+                             E=(rv$resLCCC$par$Z- rv$resnatM) / rv$resLCCC$par$Z,
+                             L50=rv$resLCCC$L50,
+                             L75=rv$resLCCC$L75)
+                rv$parsMort <- unlist(pars)
                 tmp <- as.data.frame(t(as.matrix(rv$parsMort)))
                 tmp
             }
@@ -1194,7 +1255,7 @@ shinyServer(
             }
         })
 
-        output$mortParsGOTCHA <- output$mortParsGOTCHA_ov <- renderTable({
+        output$mortParsGOTCHA <- renderTable({
             if(rv$doGOTCHA == FALSE){
                 data.frame()
             }else{
@@ -1202,11 +1263,10 @@ shinyServer(
                     GOTCHA_res()
                 })
                 natM_res()
-                parsMort()
                 pars <- c(rv$resGOTCHA$Z,
                           rv$resnatM,
-                          rv$resGOTCHA$Z- rv$resnatM,
-                          (rv$resGOTCHA$Z- rv$resnatM ) / rv$resGOTCHA$Z)
+                          rv$resGOTCHA$Z - rv$resnatM,
+                          (rv$resGOTCHA$Z - rv$resnatM ) / rv$resGOTCHA$Z)
                 names(pars) <- c("Z", "M", "F", "E")
                 rv$parsMortGOTCHA <- pars
                 tmp <- as.data.frame(t(as.matrix(rv$parsMortGOTCHA)))
@@ -1230,7 +1290,7 @@ shinyServer(
         ## REF LEVELS
         ##-----------------------------------------------------------
         observeEvent(input$tabset, {
-            if(!is.null(rv$lfq) && !is.null(rv$parsGrowth) && !is.null(rv$parsMort)){
+            if(!is.null(rv$lfq) && !is.null(rv$parsGrowth) && !is.null(rv$parsMortFinal)){
                 shinyjs::enable("runYPR")
                 shinyjs::enable("resetYPR")
             }else{
@@ -1290,10 +1350,13 @@ shinyServer(
                               )
             updateSliderInput(session = session,
                               inputId = "fmChangeRel",
-                              value = range(0, (rv$parsMort[3] * 10)),
+                              value = range(0, (rv$parsMortFinal[3] * 10)),
                               )
             ##
             rv$doYPR <- FALSE
+            rv$resYPR <- NULL
+            rv$resYPR_Lc <- NULL
+            rv$parsRef <- NULL
         })
 
         ## observe ELEFAN and LCCC
@@ -1366,8 +1429,8 @@ shinyServer(
         })
 
         output$fmChangeRel <- renderUI({
-            req(rv$parsMort)
-            vals <- range(0, (rv$parsMort[3] * 10))
+            req(rv$parsMortFinal)
+            vals <- range(0, (rv$parsMortFinal[3] * 10))
             sliderInput(
                 inputId = "fmChangeRel",
                 label = "Fishing mortality (relative to current F)",
@@ -1380,14 +1443,14 @@ shinyServer(
         })
 
         observeEvent(input$fmChangeAbs,{
-            vals <- round(input$fmChangeAbs * rv$parsMort[3])
+            vals <- round(input$fmChangeAbs * rv$parsMortFinal[3])
             updateSliderInput(session = session,
                               inputId = "fmChangeRel",
                               value = vals)
         })
 
         observeEvent(input$fmChangeRel,{
-            vals <- round(input$fmChangeRel / rv$parsMort[3])
+            vals <- round(input$fmChangeRel / rv$parsMortFinal[3])
             updateSliderInput(session = session,
                               inputId = "fmChangeAbs",
                               value = vals)
@@ -1446,7 +1509,7 @@ shinyServer(
                 FM_change = seq(min(input$fmChangeAbs), max(input$fmChangeAbs),
                                 length.out = input$fmLengthOut),
                 stock_size_1 = input$stockSize,
-                curr.E = rv$parsMort[4],
+                curr.E = rv$parsMortFinal[4],
                 curr.Lc = rv$resLCCC$L50)
 
             resYPR_Lc <- YPR_shiny(
@@ -1457,7 +1520,7 @@ shinyServer(
                 Lc_change = seq(min(input$lcChange), max(input$lcChange),
                                 length.out = input$lcLengthOut),
                 stock_size_1 = input$stockSize,
-                curr.E = rv$parsMort[4],
+                curr.E = rv$parsMortFinal[4],
                 curr.Lc = rv$resLCCC$L50)
 
             rv$resYPR <- resYPR
@@ -1506,50 +1569,51 @@ shinyServer(
 
         ## SUMMARY
         ##-----------------------------------------------------------
-        output$allpars_ov <- renderTable({
-            if(is.null(rv$allpars))
-                return()
-            isolate({
-                t(rv$allpars)
-            })
-        })
-
-
-        output$growthPars_ov <- renderTable({
+        output$growthPars_ov <-renderTable({
             if(rv$doELEFAN == FALSE){
-                return()
+                data.frame()
             }else{
-                isolate({
-                    tmp <- as.data.frame(c(rv$parsGrowth,
-                                           list(Rn_max = rv$resGA@fitnessValue)) )
-                    names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
-                    names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phi'")
-                    rv$allpars <- t(round(tmp,3))
-                    tmp
-                })
+                tmp <- as.data.frame( c(rv$parsGrowth,
+                                        list(Rn_max = rv$resGA@fitnessValue)) )
+                names(tmp) <- replace(names(tmp), names(tmp)=="Rn_max", "Rn")
+                names(tmp) <- replace(names(tmp), names(tmp)=="phiL", "phi'")
+                tmp
             }
         })
 
         output$mortPars_ov <- renderTable({
             if(rv$doLCCC == FALSE){
-                return()
+                data.frame()
             }else{
-                isolate({
-                    tmp <- as.data.frame(t(as.matrix(rv$parsMort)))
-                    rv$allpars <- rbind(rv$allpars,t(round(tmp,3)))
-                    tmp
-                })
+                as.data.frame(t(rv$parsMort))
+            }
+        })
+
+        output$mortParsGOTCHA_ov <- renderTable({
+            if(rv$doGOTCHA == FALSE){
+                data.frame()
+            }else{
+                as.data.frame(t(rv$parsMortGOTCHA))
             }
         })
 
         output$yprPars_ov <- renderTable({
-            if(rv$doYPR == FALSE)
-                return()
-            isolate({
-                tmp <- as.data.frame(rv$parsRef)
-                rv$allpars <- rbind(rv$allpars,t(round(tmp,3)))
-                tmp
-            })
+            if(rv$doYPR == FALSE){
+                data.frame()
+            }else{
+                as.data.frame(rv$parsRef)
+            }
+        })
+
+        output$allpars_ov <- renderTable({
+            if(rv$doYPR){
+               return(cbind(rv$parsGrowth, t(rv$parsMortFinal),rv$parsRef))
+            }else if(rv$doLCCC){
+               return(cbind(rv$parsGrowth, t(rv$parsMortFinal)))
+            }else if(rv$doELEFAN){
+               return(rv$parsGrowth)
+            }else
+                return(data.frame())
         })
 
         report <- reactiveValues(filepath = NULL) #This creates a short-term storage location for a filepath

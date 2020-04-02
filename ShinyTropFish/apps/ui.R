@@ -435,7 +435,7 @@ tabPanel("Growth", id = "growth",
                  sliderInput(inputId = "binSizeGrowth",
                              label = "Bin size",
                              min = 0.5,
-                             max = 8,
+                             max = 20,
                              step = 0.5,
                              value = 1),
 
@@ -648,7 +648,7 @@ tabPanel("Mortality/Selectivity", id = "mort",
                                                   "Pauly_Linf",
                                                   "Then_tmax"),
                                       selected = "Then_growth",
-                                      width ='30%'),
+                                      width ='70%'),
 
                           ## schooling correction in Pauly's formula?
                           checkboxInput(inputId = "schooling",
