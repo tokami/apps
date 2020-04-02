@@ -1,12 +1,13 @@
-## Shiny app for TropFishR related data exploration
-## server script
+## SERVER for spictapp
+## Tobias K. Mildenberger
+## January 2020
 
+## Load packages
+##-----------------------------------------------------------------------------------
 library(shiny)
 library(shinydashboard)
-##library(markdown)
 library(TropFishR)
 library(rmarkdown)
-##library(jsonlite)
 library(shinyjs)
 library(reshape2)
 library(flextable)
@@ -23,7 +24,8 @@ source("../funcs/natM_fun.R")
 source("../funcs/YPR_fun.R")
 
 
-
+## Server
+##-----------------------------------------------------------------------------------
 shinyServer(
     function(input, output, session){
 
@@ -424,20 +426,6 @@ shinyServer(
                         round = TRUE)
         })
 
-        ##         observeEvent(input$tabset,{
-        ##             if(is.null(input$binSize) & is.null(rv$binSize)){
-        ##                 binSizeVal <- 1
-        ##             }else if(is.null(input$binSize) & !is.null(rv$binSize)){
-        ##                 binSizeVal <- rv$binSize
-        ##             }else{
-        ##                 binSizeVal <- input$binSize
-        ##             }
-        ## ##            rv$binSize <- binSizeVal
-        ##             updateSliderInput(session = session,
-        ##                               inputId = "binSize",
-        ##                               value = binSizeVal)
-        ##         })
-
         output$selYears <- renderUI({
             selectInput(inputId = "selYears",
                         label = "Select years (multiple possible):",
@@ -446,20 +434,6 @@ shinyServer(
                         multiple = TRUE,
                         width ='60%')
         })
-
-        ##         observeEvent(input$tabset,{
-        ##             if(is.null(rv$lfq)){
-        ## ##                years <- NA
-        ##                 yearsSEL <- rv$years
-        ##             }else{
-        ## ##                years <- unique(format(rv$lfqORI$dates, "%Y"))
-        ##                 yearsSEL <- rv$years
-        ##             }
-        ## ##            rv$years <- years
-        ##             updateSelectInput(session = session,
-        ##                               inputId = "selYears",
-        ##                               selected = yearsSEL)
-        ##         })
 
         output$plusGroup <- renderUI({
             if(!is.null(rv$lfq)){
@@ -473,16 +447,6 @@ shinyServer(
                         selected = "FALSE",
                         width ='30%')
         })
-        ## observeEvent(input$tabset,{
-        ##     if(is.null(rv$lfq)){
-        ##         potPGs <- c("FALSE")
-        ##     }else{
-        ##         potPGs <- c("FALSE", rv$lfq$midLengths[2:length(rv$lfq$midLengths)])
-        ##     }
-        ##     updateSelectInput(session = session,
-        ##                       inputId = "plusGroup",
-        ##                       choices = potPGs)
-        ## })
 
         lfqUp <- reactive({
             req(input$selYears)
@@ -554,32 +518,30 @@ shinyServer(
             if(rv$doDatLoad == FALSE){
                 return()
             }else{
-                paste0(c("Years in data: ", paste0(rv$years,collapse=", ")))
+                paste0(c("Years in data: ", paste0(rv$years, collapse=", ")))
             }
         })
 
-
-        ## output$lfqPlotDetailed <- renderPlot({
-        ##     if(rv$doDatLoad == FALSE){
-        ##         return()
-        ##     }else{
-        ##         x <- lfqUp()
-        ##         years <- unique(format(x$dates,"%Y"))
-        ##         nyears <- length(years)
-        ##         opar <- par(mfrow=c(nyears,1), mar=c(1,4,1,3), oma=c(4,0,1,2))
-        ##         for(i in 1:nyears){
-        ##             xi <- x
-        ##             xi$catch <- as.matrix(x$catch[,which(format(x$dates,"%Y") == years[i])])
-        ##             xi$dates <- x$dates[which(format(x$dates,"%Y") == years[i])]
-        ##             try(plot(xi, Fname = input$catchVSrcounts,
-        ##                      date.axis = ifelse(i == nyears, "modern","no"),
-        ##                      date.format = "%b",
-        ##                      rel = input$relLFQ),silent=TRUE)
-        ##             mtext(text = as.character(years[i]),font = 2, line=0.25, side=3)
-        ##         }
-        ##         par(opar)
-        ##     }
-        ## })
+        output$lfqPlotDetailed <- renderPlot({
+            if(rv$doDatLoad == FALSE){
+                return()
+            }else{
+                years <- unique(format(rv$lfqre$dates,"%Y"))
+                nyears <- length(years)
+                opar <- par(mfrow=c(nyears,1), mar=c(1,4,1,3), oma=c(4,0,1,2))
+                for(i in 1:nyears){
+                    xi <- rv$lfqre
+                    xi$catch <- as.matrix(rv$lfqre$catch[,which(format(rv$lfqre$dates,"%Y") == years[i])])
+                    xi$dates <- rv$lfq$dates[which(format(rv$lfq$dates,"%Y") == years[i])]
+                    try(plot(xi, Fname = input$catchVSrcounts,
+                             date.axis = ifelse(i == nyears, "modern","no"),
+                             date.format = "%b",
+                             rel = input$relLFQ),silent=TRUE)
+                    mtext(text = as.character(years[i]),font = 2, line=0.25, side=3)
+                }
+                par(opar)
+            }
+        })
 
         output$minL <- renderText({
             if(rv$doDatLoad == FALSE){
@@ -688,10 +650,26 @@ shinyServer(
             updateSliderInput(session = session,
                               inputId = "maGrowth",
                               value = maVal)
-
+            ## growth
             rv$doELEFAN <- FALSE
             rv$resGA <- NULL
             rv$parsGrowth <- NULL
+            ## lccc
+            rv$doLCCC <- FALSE
+            rv$parsMort <- NULL
+            rv$parsMortGOTCHA <- NULL
+            rv$parsMortFinal <- NULL
+            rv$resLCCC <- NULL
+            rv$resnatM <- NULL
+            ## gotcha
+            rv$doGOTCHA <- FALSE
+            rv$parsMortGOTCHA <- NULL
+            rv$resGOTCHA <- NULL
+            ## ypr
+            rv$doYPR <- FALSE
+            rv$resYPR <- NULL
+            rv$resYPR_Lc <- NULL
+            rv$parsRef <- NULL
         })
 
         observeEvent(input$binSize,{
@@ -753,8 +731,11 @@ shinyServer(
                 rv$ma <- input$maGrowth
                 ## use growth tab info
                 lfq <- lfqModify(rv$lfqORI,
-                                 bin_size = input$binSizeGrowth)
-                lfqre <- lfqRestructure(lfq, MA = input$maGrowth)
+                                 bin_size = input$binSizeGrowth,
+                                 years = rv$years,
+                                 aggregate = rv$agg,
+                                 plus_group = rv$plusGroup)
+                lfqre <- lfqRestructure(lfq, MA = input$maGrowth, addl.sqrt = rv$addlSqrt)
                 rv$lfq <- lfq
                 rv$lfqre <- lfqre
                 withProgress(message = "Running ELEFAN", value = 0, {
@@ -930,12 +911,18 @@ shinyServer(
             updateSelectInput(session=session,
                               inputId = "natM",
                               selected = "Then_growth")
+            ## lccc
             rv$doLCCC <- FALSE
             rv$parsMort <- NULL
             rv$parsMortGOTCHA <- NULL
             rv$parsMortFinal <- NULL
             rv$resLCCC <- NULL
             rv$resnatM <- NULL
+            ## ypr
+            rv$doYPR <- FALSE
+            rv$resYPR <- NULL
+            rv$resYPR_Lc <- NULL
+            rv$parsRef <- NULL
         })
 
         ## reset button
@@ -947,6 +934,7 @@ shinyServer(
             updateSliderInput(session=session,
                               inputId="regIntGOTCHA",
                               value=tmp$opt)
+            ## gotcha
             rv$doGOTCHA <- FALSE
             rv$parsMortGOTCHA <- NULL
             rv$resGOTCHA <- NULL
@@ -1352,7 +1340,7 @@ shinyServer(
                               inputId = "fmChangeRel",
                               value = range(0, (rv$parsMortFinal[3] * 10)),
                               )
-            ##
+            ## ypr
             rv$doYPR <- FALSE
             rv$resYPR <- NULL
             rv$resYPR_Lc <- NULL
@@ -1746,7 +1734,7 @@ shinyServer(
                 ## lfq data plot
                 i = 1
                 if(!is.null(rv$lfqre)){
-                    path <- paste0(graphs[i], ".pdf")
+                    path <- paste0(tmpdir,"/",graphs[i], ".pdf")
                     fs <- c(fs, path)
                     pdf(path)
                     lfqre <- rv$lfqre
@@ -1830,7 +1818,7 @@ shinyServer(
                     dev.off()
                 }
                 ##
-                zip(zipfile=con, files=fs)
+                zip(zipfile=con, files=fs, flags = "-j")
             },
             contentType = "application/zip"
         )

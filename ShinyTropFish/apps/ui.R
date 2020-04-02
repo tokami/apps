@@ -264,20 +264,11 @@ tabPanel("Explore data", id = "explodat",
          sidebarLayout(
              sidebarPanel(id="sidebar",
                           br(),
-                          ## tags$div(
-                          ##          HTML("<font size='3'><b>LFQ restructuring</b></font>")),
                           h3("LFQ restructuring"),
                           tags$hr(),
 
                           ## choose number of bin size for restruct
                           uiOutput("binSize"),
-
-                          ## sliderInput(inputId = "binSize",
-                          ##                      label = "Bin size",
-                          ##                      min = 0.5,
-                          ##                      max = 8,
-                          ##                      step = 0.5,
-                          ##                      value = 1),
 
                           ## choose number of mas for restruct
                           sliderInput(inputId = "ma",
@@ -306,19 +297,17 @@ tabPanel("Explore data", id = "explodat",
                           br(),
                           br(),
                           br(),
-                          ## tags$div(
-                          ##          HTML("<font size='3'><b>Display options</b></font>")),
                           h3("Display options"),
                           tags$hr(),
                           checkboxInput(inputId = "relLFQ",
                                         label = "Display relative LFQ?",
-                                        value = FALSE)
+                                        value = FALSE),
 
-                          ## radioButtons(inputId = "catchVSrcounts",inline = TRUE,
-                          ##              label = "Display catch or rcounts?",
-                          ##              choiceValues = c("catch","rcounts"),
-                          ##              choiceNames = c("catch","rcounts"),
-                          ##              selected = "catch")
+                          radioButtons(inputId = "catchVSrcounts",inline = TRUE,
+                                       label = "Display raw catch or restructured data?",
+                                       choiceValues = c("catch","rcounts"),
+                                       choiceNames = c("catch","rcounts"),
+                                       selected = "catch")
 
                           ),
 
@@ -349,8 +338,6 @@ tabPanel("Explore data", id = "explodat",
 
                  br(),
 
-
-
                  tags$div(
                           HTML("<font size='4'>Overall LFQ plots:</font>")),
 
@@ -368,13 +355,13 @@ tabPanel("Explore data", id = "explodat",
                  ## Sample size per month per year
                  tableOutput(outputId = "sampPermonth"),
 
-                 ## br(),
+                 br(),
 
-                 ## tags$div(
-                 ##          HTML("<font size='4'>Detailed LFQ plots:</font>")),
+                 tags$div(
+                          HTML("<font size='4'>Detailed LFQ plots:</font>")),
 
-                 ## ## LFQ plot
-                 ## plotOutput(outputId = "lfqPlotDetailed"),
+                 ## LFQ plot
+                 plotOutput(outputId = "lfqPlotDetailed"),
 
                  br()
              )
@@ -575,7 +562,6 @@ tabPanel("Mortality/Selectivity", id = "mort",
          sidebarLayout(
              sidebarPanel(id="sidebar",
                           "The Length-Converted Catch Curve (LCCC) is a length-based version of the catch curve for the estimation of the instantaneous total mortality rate (Z) from the slope of catches descending with increasing relative age. As t0 cannot be estimated with length-frequency data, the ages are relative.",
-                          br(),
                           br(),
                           br(),
                           h3("Length converted catch curve (LCCC)"),

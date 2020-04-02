@@ -42,7 +42,7 @@ if(inherits(tried, "try-error")){
     gc()
 }
 writeLines(paste0("Setting working directory to script location ",
-                  ifelse(!inherits(tried,"try-error"),"successfull.","not successfull. Please set the working directory to script location manually.")))
+                  ifelse(!inherits(tried,"try-error"),"successful.","not successfull. Please set the working directory to script location manually.")))
 
 
 ## Run the application

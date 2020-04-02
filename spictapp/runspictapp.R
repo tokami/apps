@@ -32,7 +32,7 @@ if(inherits(tried, "try-error")){
     tried <- try(setwd(dirname(parent.frame(1)$ofile)), silent=TRUE)
 }
 if(inherits(tried, "try-error")){
-    Dirname <- "ShinyTropFish"
+    Dirname <- "spictapp"
     Dirs <- R.utils::withTimeout(list.dirs(path=file.path("~/.."),recursive=T),
                                  timeout=120, onTimeout = "silent")
     tried <- try(setwd(names(unlist(sapply(Dirs,grep,pattern=Dirname))[1])), silent=TRUE)
@@ -40,7 +40,7 @@ if(inherits(tried, "try-error")){
     gc()
 }
 writeLines(paste0("Setting working directory to script location ",
-                  ifelse(!inherits(tried,"try-error"),"successfull.","not successfull. Please set the working directory to script location manually.")))
+                  ifelse(!inherits(tried,"try-error"),"successful.","not successfull. Please set the working directory to script location manually.")))
 
 
 ## Run the application

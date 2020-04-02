@@ -9,10 +9,7 @@ library(shiny)
 library(shinyjs)
 library(shinythemes)
 library(shinydashboard)
-## library(shinyWidgets)
-## library(markdown)
 library(rmarkdown)
-## library(googleAuthR)
 library(htmltools)
 library(spict)
 
@@ -1308,7 +1305,7 @@ shinyServer(function(input, output, session) {
                 write.csv(tab, path)
             }
             ##
-            zip(zipfile=con, files=fs)
+            zip(zipfile=con, files=fs, flags = "-j")
         },
         contentType = "application/zip"
     )
@@ -1395,7 +1392,7 @@ shinyServer(function(input, output, session) {
                 dev.off()
             }
             ##
-            zip(zipfile=con, files=fs)
+            zip(zipfile=con, files=fs, flags = "-j")
         },
         contentType = "application/zip"
     )
