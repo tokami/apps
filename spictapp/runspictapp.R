@@ -12,8 +12,8 @@ needed <- c("shiny", "shinyjs", "shinythemes", "shinydashboard", "rmarkdown",
 install.packages(needed[! needed %in% installed],
                  repos="https://cloud.r-project.org/")
 ## download the development version of spict if not downloaded already
-if(packageVersion("spict") != "1.3.0")
-    remotes::install_github("tokami/spict/spict@FIDEA")
+## if(packageVersion("spict") != "1.3.0")
+##     remotes::install_github("tokami/spict/spict@FIDEA")
 ## In case TeX installed but tlgmr not initalised:
 texAvail <- try(Sys.which('pdflatex'), silent=TRUE)
 if(!inherits(texAvail, "try-error") && texAvail != "") system("tlmgr init-usertree")
