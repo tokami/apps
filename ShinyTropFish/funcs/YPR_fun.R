@@ -316,7 +316,10 @@ YPR_shiny <- function(
         ts <- ifelse("ts" %in% names(par), res$par$ts, 0)
 
         a <- par$a  # might be NULL
-        b <- par$b  # might be NULL
+      b <- par$b  # might be NULL
+
+      Lmat <- par$Lmat
+      wmat <- par$wmat
 
 
       # Selectivity - knife edge or with selctivtiy ogive
@@ -409,7 +412,66 @@ YPR_shiny <- function(
           pred_res_list[[x7]] <- resL$totals
         }
 
-        pred_res_df <- do.call(rbind, pred_res_list)
+          ## SSB0 for SPR
+          lfq$par$FM <- pred_mat[,1] * 0.0
+          lfq$par$Z <- lfq$par$FM + nM
+          tmp <- stock_sim(lfq, age_unit = age_unit,
+                           stock_size_1 = stock_size_1, plus_group = plus_group)
+          SSB0 <- tmp$totals$meanSSB
+
+        ## pred_res_df <- do.call(rbind, pred_res_list)
+        ## pred_res_df$FM_change <- FM_change
+        ## pred_res_df$E_change <- E_change
+
+        ## res2 <- pred_res_df
+        ## res3 <- c(res,res2)
+
+
+        ## reference points
+        ## ## Fmax
+        ## Nmax <- which.max(pred_res_df$totY)
+        ## ## F01 (proxy for Fmsy in ICES)
+        ## slopeOrg <- (pred_res_df$totY[2] - pred_res_df$totY[1]) / (FM_change[2] - FM_change[1])
+        ## slope01 <- round(0.1*slopeOrg, 2)
+        ## slopes <- rep(NA, length(FM_change))
+        ## slopes[1] <- slopeOrg
+        ## for(i in 3:length(FM_change)){
+        ##   slopes[i-1] <- round((pred_res_df$totY[i] - pred_res_df$totY[i-1]) /
+        ##                          (FM_change[i] - FM_change[i-1]),2)
+        ## }
+        ## dif <- abs(slopes - slope01)
+        ## dif[is.na(dif)] <- 1e+11
+        ## difpot <- dif[1:Nmax]
+        ## N01 <- which.min(difpot)
+        ## ## F05
+        ## Bper <- rep(NA,length(pred_res_df$meanB))
+        ## Bper[1] <- 100
+        ## for(ix in 2:length(Bper)){
+        ##   Bper[ix] <- pred_res_df$meanB[ix]/pred_res_df$meanB[1] * 100
+        ## }
+        ## N05 <- which.min(abs(Bper - 50))
+
+        ## if(!is.null(Lc[1]) & !is.null(tc[1])){
+        ##   df_Es <- data.frame(Lc = Lc,
+        ##                       tc = tc,
+        ##                       F01 = FM_change[N01],
+        ##                       Fmax = FM_change[Nmax],
+        ##                       F05 = FM_change[N05],
+        ##                       E01 = E_change[N01],
+        ##                       Emax = E_change[Nmax],
+        ##                       E05 = E_change[N05])
+        ## }else{
+        ##   df_Es <- data.frame(F01 = FM_change[N01],
+        ##                       Fmax = FM_change[Nmax],
+        ##                       F05 = FM_change[N05],
+        ##                       E01 = E_change[N01],
+        ##                       Emax = E_change[Nmax],
+        ##                       E05 = E_change[N05])
+          ## }
+pred_res_df <- do.call(rbind, pred_res_list)
+        if(!is.null(SSB0) && !is.null(pred_res_df$meanSSB)){
+            pred_res_df$SPR <- pred_res_df$meanSSB/SSB0
+        }
         pred_res_df$FM_change <- FM_change
         pred_res_df$E_change <- E_change
 
@@ -417,46 +479,126 @@ YPR_shiny <- function(
         res3 <- c(res,res2)
 
 
-        ## reference points
-        ## Fmax
-        Nmax <- which.max(pred_res_df$totY)
-        ## F01 (proxy for Fmsy in ICES)
-        slopeOrg <- (pred_res_df$totY[2] - pred_res_df$totY[1]) / (FM_change[2] - FM_change[1])
-        slope01 <- round(0.1*slopeOrg, 2)
-        slopes <- rep(NA, length(FM_change))
-        slopes[1] <- slopeOrg
-        for(i in 3:length(FM_change)){
-          slopes[i-1] <- round((pred_res_df$totY[i] - pred_res_df$totY[i-1]) /
-                                 (FM_change[i] - FM_change[i-1]),2)
+        ## reference points  NEW
+        spr <- pred_res_df$SPR
+        ypr <- pred_res_df$totY
+        bpr <- pred_res_df$meanB
+        splSPR <- try(smooth.spline(x = FM_change, y = spr, spar = 0.4), silent = TRUE)
+        splYPR <- smooth.spline(x = FM_change, y = ypr, spar = 0.4)
+        splBPR <- smooth.spline(x = FM_change, y = bpr, spar = 0.4)
+        newdat <- data.frame(F=seq(0,5,length.out = 500))
+        newdat$YPR <- predict(splYPR, x=newdat$F)$y
+        newdat$YPR.d1 <- predict(splYPR, x=newdat$F, deriv = 1)$y
+        newdat$BPR <- predict(splBPR, x=newdat$F)$y
+        newdat$SPR <- try(predict(splSPR, x=newdat$F)$y, silent = TRUE)
+        Nmax <- which.max(newdat$YPR)
+        ##                Fmax <- newdat[Nmax,1]
+        ##                Emax <- Fmax/Z
+        N01 <- which.min(((newdat$YPR.d1/newdat$YPR.d1[1])-0.1)^2)
+        ##   F01 <- newdat[N01,1]
+        ##                E01 <- F01/Z
+        N05 <- which.min((newdat$BPR - newdat$BPR[1]/2)^2)
+        ##                F05 <- newdat[N05,1]
+        ##                E05 <- F05/Z
+        N04 <- try(which.min((newdat$SPR - 0.4)^2), silent = TRUE)
+        ##                F04 <- newdat[N04,1]
+        ##                E04 <- F04/Z
+
+        ## current SPR
+        ## SPR <- newdat$SPR[which.min((newdat$F - FM)^2)]
+
+        ## ref level
+        N01 <- ifelse(is.integer(N01),N01,NA)
+        Nmax <- ifelse(is.integer(Nmax),Nmax,NA)
+        N05 <- ifelse(is.integer(N05),N05,NA)
+        N04 <- ifelse(is.integer(N04),N04,NA)
+        ##
+        F01 <- ifelse(is.integer(N01),newdat[N01,1],NA)
+        Fmax <- ifelse(is.integer(Nmax),newdat[Nmax,1],NA)
+        F05 <- ifelse(is.integer(N05),newdat[N05,1],NA)
+        F04 <- ifelse(is.integer(N04),newdat[N04,1],NA)
+        ## E
+        newdat$E <- newdat$F/mean(Z, na.rm = TRUE)
+        E01 <- ifelse(is.integer(N01),newdat$E[N01],NA)
+        Emax <- ifelse(is.integer(Nmax),newdat$E[Nmax],NA)
+        E05 <- ifelse(is.integer(N05),newdat$E[N05],NA)
+        E04 <- ifelse(is.integer(N04),newdat$E[N04],NA)
+        ## for y axis
+        F01_ypr <- ifelse(is.integer(N01),newdat$YPR[N01],NA)
+        Fmax_ypr <- ifelse(is.integer(Nmax),newdat$YPR[Nmax],NA)
+        F05_ypr <- ifelse(is.integer(N05),newdat$YPR[N05],NA)
+        F04_ypr <- ifelse(is.integer(N04),newdat$YPR[N04],NA)
+        F01_bpr <- ifelse(is.integer(N01),newdat$BPR[N01],NA)
+        Fmax_bpr <- ifelse(is.integer(Nmax),newdat$BPR[Nmax],NA)
+        F05_bpr <- ifelse(is.integer(N05),newdat$BPR[N05],NA)
+        F04_bpr <- ifelse(is.integer(N04),newdat$BPR[N04],NA)
+        if(is.numeric(Lmat) && is.numeric(wmat)){
+            F01_spr <- try(ifelse(is.integer(N01),newdat$SPR[N01],NA),silent=TRUE)
+            Fmax_spr <- try(ifelse(is.integer(Nmax),newdat$SPR[Nmax],NA),silent=TRUE)
+            F05_spr <- try(ifelse(is.integer(N05),newdat$SPR[N05],NA),silent=TRUE)
+            F04_spr <- try(ifelse(is.integer(N04),newdat$SPR[N04],NA),silent=TRUE)
+        }else{
+            F01_spr <- NA
+            Fmax_spr <- NA
+            F05_spr <- NA
+            F04_spr <- NA
         }
-        dif <- abs(slopes - slope01)
-        dif[is.na(dif)] <- 1e+11
-        difpot <- dif[1:Nmax]
-        N01 <- which.min(difpot)
-        ## F05
-        Bper <- rep(NA,length(pred_res_df$meanB))
-        Bper[1] <- 100
-        for(ix in 2:length(Bper)){
-          Bper[ix] <- pred_res_df$meanB[ix]/pred_res_df$meanB[1] * 100
-        }
-        N05 <- which.min(abs(Bper - 50))
+
+##   ## reference points
+      ##   Bper <- rep(NA,length(pred_res_df$meanB))
+      ##   Bper[1] <- 100
+      ##   for(ix in 2:length(Bper)){
+      ##       Bper[ix] <- pred_res_df$meanB[ix]/pred_res_df$meanB[1] * 100
+      ##   }
+      ##   N05 <- which.min(abs(Bper - 50))
+      ##   Nmax <- which.max(pred_res_df$totY)
 
         if(!is.null(Lc[1]) & !is.null(tc[1])){
-          df_Es <- data.frame(Lc = Lc,
-                              tc = tc,
-                              F01 = FM_change[N01],
-                              Fmax = FM_change[Nmax],
-                              F05 = FM_change[N05],
-                              E01 = E_change[N01],
-                              Emax = E_change[Nmax],
-                              E05 = E_change[N05])
+            df_Es <- data.frame(Lc = Lc,
+                                tc = tc,
+                                F01 = F01,
+                                Fmax = Fmax,
+                                F05 = F05,
+                                F04 = F04,
+                                E01 = E01,
+                                Emax = Emax,
+                                E05 = E05,
+                                E04 = E04,
+                                YPR_F01 = F01_ypr,
+                                YPR_Fmax = Fmax_ypr,
+                                YPR_F05 = F05_ypr,
+                                YPR_F04 = F04_ypr,
+                                YPR_F01 = F01_bpr,
+                                BPR_Fmax = Fmax_bpr,
+                                BPR_F05 = F05_bpr,
+                                BPR_F04 = F04_bpr,
+                                SPR_F01 = F01_spr,
+                                SPR_Fmax = Fmax_spr,
+                                SPR_F05 = F05_spr,
+                                SPR_F04 = F04_spr
+                                )
         }else{
-          df_Es <- data.frame(F01 = FM_change[N01],
-                              Fmax = FM_change[Nmax],
-                              F05 = FM_change[N05],
-                              E01 = E_change[N01],
-                              Emax = E_change[Nmax],
-                              E05 = E_change[N05])
+            df_Es <- data.frame(F01 = F01,
+                                Fmax = Fmax,
+                                F05 = F05,
+                                F04 = F04,
+                                E01 = E01,
+                                Emax = Emax,
+                                E05 = E05,
+                                E04 = E04,
+                                YPR_F01 = F01_ypr,
+                                YPR_Fmax = Fmax_ypr,
+                                YPR_F05 = F05_ypr,
+                                YPR_F04 = F04_ypr,
+                                YPR_F01 = F01_bpr,
+                                BPR_Fmax = Fmax_bpr,
+                                BPR_F05 = F05_bpr,
+                                BPR_F04 = F04_bpr,
+                                SPR_F01 = F01_spr,
+                                SPR_Fmax = Fmax_spr,
+                                SPR_F05 = F05_spr,
+                                SPR_F04 = F04_spr
+                                )
         }
 
 
@@ -490,6 +632,16 @@ YPR_shiny <- function(
                             stock_size_1 = stock_size_1, plus_group=plus_group)
           mati2 <- res2$totals
 
+
+          ## SPR
+        parloop <- res
+        parloop$FM <- sel * 0.0
+        parloop$Z <- parloop$FM + nM
+        res2 <- stock_sim(parloop, age_unit = age_unit,
+                          stock_size_1 = stock_size_1, plus_group=plus_group)
+        SSB0 <- res2$totals$meanSSB
+        SPR <- mati2$meanSSB/SSB0
+
           df_currents <- data.frame(curr.Lc = curr.Lc,
                                     curr.tc = curr.tc,
                                     curr.E = curr.E,
@@ -497,7 +649,9 @@ YPR_shiny <- function(
                                     curr.C = mati2$totC,
                                     curr.Y = mati2$totY,
                                     curr.V = mati2$totV,
-                                    curr.B = mati2$meanB)
+                                  curr.B = mati2$meanB,
+                                  curr.SSB = mati2$meanSSB,
+                                  curr.SPR = SPR)
           ret$currents <- df_currents
         }
       }
@@ -537,10 +691,17 @@ YPR_shiny <- function(
 
         parloop <- res
 
-        pred.FM_Lc_com_res_loopC_list <- vector("list",length(FM_Lc_com_mat.list))
+        ## pred.FM_Lc_com_res_loopC_list <- vector("list",length(FM_Lc_com_mat.list))
+        ## pred.FM_Lc_com_res_loopY_list <- vector("list",length(FM_Lc_com_mat.list))
+        ## pred.FM_Lc_com_res_loopB_list <- vector("list",length(FM_Lc_com_mat.list))
+        ##   pred.FM_Lc_com_res_loopV_list <- vector("list",length(FM_Lc_com_mat.list))
+
+    pred.FM_Lc_com_res_loopC_list <- vector("list",length(FM_Lc_com_mat.list))
         pred.FM_Lc_com_res_loopY_list <- vector("list",length(FM_Lc_com_mat.list))
         pred.FM_Lc_com_res_loopB_list <- vector("list",length(FM_Lc_com_mat.list))
         pred.FM_Lc_com_res_loopV_list <- vector("list",length(FM_Lc_com_mat.list))
+        pred.FM_Lc_com_res_loopSSB_list <- vector("list",length(FM_Lc_com_mat.list))
+        pred.FM_Lc_com_res_loopSPR_list <- vector("list",length(FM_Lc_com_mat.list))
 
         if (!hide.progressbar) {
           nlk <- prod(length(FM_Lc_com_mat.list),dim(FM_Lc_com_mat.list[[1]])[2])
@@ -565,16 +726,28 @@ YPR_shiny <- function(
               counter <- counter + 1
             }
           }
+
+## SSB0 for SPR
+        parloop$FM <- 0.0 * FM_Lc_com_mat.list[[1]][,1]
+        parloop$Z <- parloop$FM + nM
+        tmp <- stock_sim(parloop, age_unit = age_unit,
+                         stock_size_1 = stock_size_1, plus_group=plus_group)
+          SSB0 <- tmp$totals$meanSSB
+
           prev_mat <- do.call(rbind, pred.FM_Lc_com_res_loop1_list)
           prev_matC <- prev_mat[,'totC']
           prev_matY <- prev_mat[,'totY']
           prev_matB <- prev_mat[,'meanB']
+           prev_matSSB <- prev_mat[,'meanSSB']
           prev_matV <- prev_mat[,'totV']
+           prev_matSPR <- prev_mat[,'meanSSB'] / SSB0
 
           pred.FM_Lc_com_res_loopC_list[[x21]] <- prev_matC
           pred.FM_Lc_com_res_loopY_list[[x21]] <- prev_matY
           pred.FM_Lc_com_res_loopB_list[[x21]] <- prev_matB
+          pred.FM_Lc_com_res_loopSSB_list[[x21]] <- prev_matSSB
           pred.FM_Lc_com_res_loopV_list[[x21]] <- prev_matV
+          pred.FM_Lc_com_res_loopSPR_list[[x21]] <- prev_matSPR
         }
 
         #for catch
@@ -590,17 +763,35 @@ YPR_shiny <- function(
         #for biomass
         mat_FM_Lc_com.B <- do.call(rbind, pred.FM_Lc_com_res_loopB_list)
         rownames(mat_FM_Lc_com.B) <- Lc
-        colnames(mat_FM_Lc_com.B) <- FM_change
+           colnames(mat_FM_Lc_com.B) <- FM_change
+
+                                        #for SSB
+        mat_FM_Lc_com.SSB <- do.call(rbind, pred.FM_Lc_com_res_loopSSB_list)
+        rownames(mat_FM_Lc_com.SSB) <- Lc
+        colnames(mat_FM_Lc_com.SSB) <- FM_change
+
+                                        #for SPR
+        mat_FM_Lc_com.SPR <- do.call(rbind, pred.FM_Lc_com_res_loopSPR_list)
+        rownames(mat_FM_Lc_com.SPR) <- Lc
+        colnames(mat_FM_Lc_com.SPR) <- FM_change
 
         #for value
         mat_FM_Lc_com.V <- do.call(rbind, pred.FM_Lc_com_res_loopV_list)
         rownames(mat_FM_Lc_com.V) <- Lc
         colnames(mat_FM_Lc_com.V) <- FM_change
 
-        # transvers matrices for plotting (the opposite arrangement from book)
+        ## # transvers matrices for plotting (the opposite arrangement from book)
+        ## mat_FM_Lc_com.C <- t(mat_FM_Lc_com.C)
+        ## mat_FM_Lc_com.Y <- t(mat_FM_Lc_com.Y)
+        ## mat_FM_Lc_com.B <- t(mat_FM_Lc_com.B)
+          ## mat_FM_Lc_com.V <- t(mat_FM_Lc_com.V)
+
+## transvers matrices for plotting (the opposite arrangement from book)
         mat_FM_Lc_com.C <- t(mat_FM_Lc_com.C)
         mat_FM_Lc_com.Y <- t(mat_FM_Lc_com.Y)
         mat_FM_Lc_com.B <- t(mat_FM_Lc_com.B)
+        mat_FM_Lc_com.SSB <- t(mat_FM_Lc_com.SSB)
+        mat_FM_Lc_com.SPR <- t(mat_FM_Lc_com.SPR)
         mat_FM_Lc_com.V <- t(mat_FM_Lc_com.V)
 
 
@@ -612,20 +803,20 @@ YPR_shiny <- function(
         slopes <- matrix(NA,ncol=dim(mat_FM_Lc_com.Y)[2],
                          nrow=dim(mat_FM_Lc_com.Y)[1])
         slopeOrg <- (mat_FM_Lc_com.Y[2,] - mat_FM_Lc_com.Y[1,]) /
-          (rep(FM_change[2],dim(mat_FM_Lc_com.Y)[2]) -
+            (rep(FM_change[2],dim(mat_FM_Lc_com.Y)[2]) -
              rep(FM_change[1],dim(mat_FM_Lc_com.Y)[2]))
         slope01 <- round(0.1*slopeOrg, 2)
         slopes[1,] <- slopeOrg
         for(i in 3:length(FM_change)){
-          slopes[i-1,] <- round((mat_FM_Lc_com.Y[i,] - mat_FM_Lc_com.Y[i-1,]) /
+            slopes[i-1,] <- round((mat_FM_Lc_com.Y[i,] - mat_FM_Lc_com.Y[i-1,]) /
                                   (rep(FM_change[i],dim(mat_FM_Lc_com.Y)[2]) -
-                                     rep(FM_change[i-1],dim(mat_FM_Lc_com.Y)[2])),2)
+                                   rep(FM_change[i-1],dim(mat_FM_Lc_com.Y)[2])),2)
         }
         dif <- t(apply(slopes,1,function(x) abs(x - slope01)))
         dif[is.na(dif)] <- 1e+11
         difpot <- dif
         for(i in 1:ncol(dif)){
-          difpot[(Nmax[i]:nrow(difpot)),i] <- 1e+11
+            difpot[(Nmax[i]:nrow(difpot)),i] <- 1e+11
         }
         N01 <- apply(difpot, MARGIN = 2, FUN = which.min)
         ## F05
@@ -633,34 +824,115 @@ YPR_shiny <- function(
                                      nrow=dim(mat_FM_Lc_com.B)[1])
         mat_FM_Lc_com.Bper[1,] <- 100
         for(ix in 2:dim(mat_FM_Lc_com.B)[1]){
-          mat_FM_Lc_com.Bper[ix,] <- mat_FM_Lc_com.B[ix,]/mat_FM_Lc_com.B[1,] *100
+            mat_FM_Lc_com.Bper[ix,] <- mat_FM_Lc_com.B[ix,]/mat_FM_Lc_com.B[1,] *100
         }
         N05 <- apply(mat_FM_Lc_com.Bper, MARGIN = 2,
                      FUN = function(x) which.min(abs(x - 50)))
 
         if((!is.null(Lc[1]) & !is.null(tc[1])) | (!is.na(Lc[1]) & !is.na(tc[1])) ){
-          df_Es <- data.frame(Lc = Lc,
-                              tc = tc,
-                              F01 = FM_change[N01],
-                              Fmax = FM_change[Nmax],
-                              F05 = FM_change[N05],
-                              E01 = E_change[N01],
-                              Emax = E_change[Nmax],
-                              E05 = E_change[N05])
+            df_Es <- data.frame(Lc = Lc,
+                                tc = tc,
+                                F01 = FM_change[N01],
+                                Fmax = FM_change[Nmax],
+                                F05 = FM_change[N05],
+                                E01 = E_change[N01],
+                                Emax = E_change[Nmax],
+                                E05 = E_change[N05])
         }else{
-          df_Es <- data.frame(
-            F01 = FM_change[N01],
-            Fmax = FM_change[Nmax],
-            F05 = FM_change[N05],
-            E01 = E_change[N01],
-            Emax = E_change[Nmax],
-            E05 = E_change[N05])
+            df_Es <- data.frame(
+                F01 = FM_change[N01],
+                Fmax = FM_change[Nmax],
+                F05 = FM_change[N05],
+                E01 = E_change[N01],
+                Emax = E_change[Nmax],
+                E05 = E_change[N05])
         }
+
+
+        ## ## reference points
+        ## ## Fmax
+        ## Nmax <- apply(mat_FM_Lc_com.Y, MARGIN = 2, FUN = which.max)
+
+        ## ## F01 (proxy for Fmsy in ICES)
+        ## slopes <- matrix(NA,ncol=dim(mat_FM_Lc_com.Y)[2],
+        ##                  nrow=dim(mat_FM_Lc_com.Y)[1])
+        ## slopeOrg <- (mat_FM_Lc_com.Y[2,] - mat_FM_Lc_com.Y[1,]) /
+        ##   (rep(FM_change[2],dim(mat_FM_Lc_com.Y)[2]) -
+        ##      rep(FM_change[1],dim(mat_FM_Lc_com.Y)[2]))
+        ## slope01 <- round(0.1*slopeOrg, 2)
+        ## slopes[1,] <- slopeOrg
+        ## for(i in 3:length(FM_change)){
+        ##   slopes[i-1,] <- round((mat_FM_Lc_com.Y[i,] - mat_FM_Lc_com.Y[i-1,]) /
+        ##                           (rep(FM_change[i],dim(mat_FM_Lc_com.Y)[2]) -
+        ##                              rep(FM_change[i-1],dim(mat_FM_Lc_com.Y)[2])),2)
+        ## }
+        ## dif <- t(apply(slopes,1,function(x) abs(x - slope01)))
+        ## dif[is.na(dif)] <- 1e+11
+        ## difpot <- dif
+        ## for(i in 1:ncol(dif)){
+        ##   difpot[(Nmax[i]:nrow(difpot)),i] <- 1e+11
+        ## }
+        ## N01 <- apply(difpot, MARGIN = 2, FUN = which.min)
+        ## ## F05
+        ## mat_FM_Lc_com.Bper <- matrix(NA,ncol=dim(mat_FM_Lc_com.B)[2],
+        ##                              nrow=dim(mat_FM_Lc_com.B)[1])
+        ## mat_FM_Lc_com.Bper[1,] <- 100
+        ## for(ix in 2:dim(mat_FM_Lc_com.B)[1]){
+        ##   mat_FM_Lc_com.Bper[ix,] <- mat_FM_Lc_com.B[ix,]/mat_FM_Lc_com.B[1,] *100
+        ## }
+        ## N05 <- apply(mat_FM_Lc_com.Bper, MARGIN = 2,
+        ##              FUN = function(x) which.min(abs(x - 50)))
+
+        ## if((!is.null(Lc[1]) & !is.null(tc[1])) | (!is.na(Lc[1]) & !is.na(tc[1])) ){
+        ##   df_Es <- data.frame(Lc = Lc,
+        ##                       tc = tc,
+        ##                       F01 = FM_change[N01],
+        ##                       Fmax = FM_change[Nmax],
+        ##                       F05 = FM_change[N05],
+        ##                       E01 = E_change[N01],
+        ##                       Emax = E_change[Nmax],
+        ##                       E05 = E_change[N05])
+        ## }else{
+        ##   df_Es <- data.frame(
+        ##     F01 = FM_change[N01],
+        ##     Fmax = FM_change[Nmax],
+        ##     F05 = FM_change[N05],
+        ##     E01 = E_change[N01],
+        ##     Emax = E_change[Nmax],
+        ##     E05 = E_change[N05])
+        ## }
+
+
+        ## ret <- c(res,
+        ##          list(FM_change = FM_change,
+        ##               # FM_relative = FM_relative,
+        ##               E_change = E_change,
+        ##               Lc_change = Lc_change,
+        ##               tc_change = tc_change,
+        ##               Lt = Lt,
+        ##               sel = sel,
+        ##               mat_FM_Lc_com.C = mat_FM_Lc_com.C,
+        ##               mat_FM_Lc_com.Y = mat_FM_Lc_com.Y,
+        ##               mat_FM_Lc_com.V = mat_FM_Lc_com.V,
+        ##               mat_FM_Lc_com.B = mat_FM_Lc_com.B,
+        ##               df_Es = df_Es))
+
+## # reference points
+      ## mat_FM_Lc_com.Bper <- matrix(NA,ncol=dim(mat_FM_Lc_com.B)[2],
+      ##                                      nrow=dim(mat_FM_Lc_com.B)[1])
+      ## mat_FM_Lc_com.Bper[1,] <- 100
+      ## for(ix in 2:dim(mat_FM_Lc_com.B)[1]){
+      ##   mat_FM_Lc_com.Bper[ix,] <- mat_FM_Lc_com.B[ix,]/mat_FM_Lc_com.B[1,] *100
+      ## }
+      ## N05 <- apply(mat_FM_Lc_com.Bper, MARGIN = 2,
+      ##              FUN = function(x) which.min(abs(x - 50)))
+
+      ## Nmax <- apply(mat_FM_Lc_com.Y, MARGIN = 2, FUN = which.max)
 
 
         ret <- c(res,
                  list(FM_change = FM_change,
-                      # FM_relative = FM_relative,
+                                        # FM_relative = FM_relative,
                       E_change = E_change,
                       Lc_change = Lc_change,
                       tc_change = tc_change,
@@ -670,8 +942,9 @@ YPR_shiny <- function(
                       mat_FM_Lc_com.Y = mat_FM_Lc_com.Y,
                       mat_FM_Lc_com.V = mat_FM_Lc_com.V,
                       mat_FM_Lc_com.B = mat_FM_Lc_com.B,
+                      mat_FM_Lc_com.SSB = mat_FM_Lc_com.SSB,
+                      mat_FM_Lc_com.SPR = mat_FM_Lc_com.SPR,
                       df_Es = df_Es))
-
 
         if(!is.na(curr.E)){
           if(!is.na(curr.Lc)){
@@ -697,14 +970,32 @@ YPR_shiny <- function(
                             stock_size_1, plus_group=plus_group)
           mati2 <- res2$totals
 
+## SPR
+        parloop <- res
+        parloop$FM <- 0.0 * sel
+        parloop$Z <- nM + parloop$FM
+        res2 <- stock_sim(parloop, age_unit = age_unit,
+                          stock_size_1 = stock_size_1, plus_group=plus_group)
+        SSB0 <- res2$totals$meanSSB
+        SPR <- mati2$meanSSB/SSB0
+
           df_currents <- data.frame(curr.Lc = curr.Lc,
-                                    curr.tc = curr.tc,
-                                    curr.E = curr.E,
-                                    curr.F = curr.F,
-                                    curr.C = mati2$totC,
-                                    curr.Y = mati2$totY,
-                                    curr.V = mati2$totV,
-                                    curr.B = mati2$meanB)
+                                    ## curr.tc = curr.tc,
+                                    ## curr.E = curr.E,
+                                    ## curr.F = curr.F,
+                                    ## curr.C = mati2$totC,
+                                    ## curr.Y = mati2$totY,
+                                    ## curr.V = mati2$totV,
+                                    ## curr.B = mati2$meanB)
+     curr.tc = curr.tc,
+                                              curr.E = curr.E,
+                                              curr.F = curr.F,
+                                              curr.C = mati2$totC,
+                                              curr.Y = mati2$totY,
+                                              curr.V = mati2$totV,
+                                              curr.B = mati2$meanB,
+                                              curr.SSB = mati2$meanSSB,
+                                              curr.SPR = SPR)
           ret$currents <- df_currents
         }
       }
@@ -720,6 +1011,8 @@ YPR_shiny <- function(
 plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
     yaxis2 = "B_R.rel", yaxis_iso = "L50", identify = FALSE, mark = FALSE,
     contour = TRUE, xlab = NA, ylab1 = NA, ylab2 = NA, ylab3 = NA,
+    plot_refs = c("F01","Fmax","F05","F04"),
+    cols_refs = c("goldenrod2","darkred","darkgreen","darkorange"),
     ...)
 {
     pes <- x
@@ -761,15 +1054,20 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
                 xlabel1 <- "rel. Fishing mortality"
             }
             N01 <- df_Es$F01
+            N04 <- df_Es$F04
             N05 <- df_Es$F05
             Nmax <- df_Es$Fmax
-            legend.lab <- c("Fmax")
-            if (length(N01) == 1) {
-                legend.lab <- c("F0.1",legend.lab)
-            }
-            if (length(N05) == 1) {
-                legend.lab <- c("F0.5",legend.lab)
-            }
+            ## legend.lab <- c("Fmax")
+            ## if (length(N01) == 1) {
+            ##     legend.lab <- c("F0.1",legend.lab)
+            ## }
+            ## if (length(N05) == 1) {
+            ##     legend.lab <- c("F0.5",legend.lab)
+            ## }
+            refs <- c("F01","Fmax","F05","F04")
+            ind <- which(refs %in% plot_refs & !is.na(df_Es[names(df_Es) %in% refs]))
+            legend.lab <- refs[ind]
+
             if ("currents" %in% names(pes))
                 curr_markX <- pes$currents$curr.F
         }
@@ -780,11 +1078,18 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
                 xlabel1 <- "rel. Exploitation rate"
             }
             N05 <- df_Es$E05
+            ## Nmax <- df_Es$Emax
+            ## if (length(N05) == 1) {
+            ##     legend.lab <- c("E0.5", "Emax")
+            ## }
+            ## else legend.lab <- c("Emax")
             Nmax <- df_Es$Emax
-            if (length(N05) == 1) {
-                legend.lab <- c("E0.5", "Emax")
-            }
-            else legend.lab <- c("Emax")
+            N01 <- df_Es$E01
+            N04 <- df_Es$E04
+
+            refs <- c("E01","Emax","E05","E04")
+            ind <- which(refs %in% plot_refs & !is.na(df_Es[names(df_Es) %in% refs]))
+            legend.lab <- refs[ind]
             if ("currents" %in% names(pes))
                 curr_markX <- pes$currents$curr.E
         }
@@ -817,19 +1122,56 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
         dim_bio <- 10^(nchar(max_bio) - 1)
         py <- pes$totY[1:length(px)]
         py2 <- pes$meanB[1:length(px)]
+
+        ## NEW:
+        yprFmax <- df_Es$YPR_Fmax
+        yprF01 <- df_Es$YPR_F01
+        yprF04 <- df_Es$YPR_F04
+        bprF05 <- df_Es$BPR_F05
+        cols <- cols_refs
+
         plot(px, py, type = "l", ylab = ylabel1, xlab = xlabel1,
             col = "black", ylim = c(0, ceiling(max_yiel/dim_yiel) *
                                        dim_yiel), lwd = 1.6)
-        segments(x0 = -3, x1 = Nmax, y0 = py[which(px == Nmax)],
-            y1 = py[which(px == Nmax)], col = "goldenrod1", lty = 2,
-            lwd = 1.6)
-        segments(x0 = Nmax, x1 = Nmax, y0 = -3, y1 = py[which(px ==
-                                                              Nmax)], col = "goldenrod1", lty = 2, lwd = 1.6)
-        segments(x0 = -3, x1 = N01, y0 = py[which(px == N01)],
-            y1 = py[which(px == N01)], col = "darkgreen", lty = 2,
-            lwd = 1.6)
-        segments(x0 = N01, x1 = N01, y0 = -3, y1 = py[which(px ==
-            N01)], col = "darkgreen", lty = 2, lwd = 1.6)
+
+        ## segments(x0 = -3, x1 = Nmax, y0 = py[which(px == Nmax)],
+        ##     y1 = py[which(px == Nmax)], col = "goldenrod1", lty = 2,
+        ##     lwd = 1.6)
+        ## segments(x0 = Nmax, x1 = Nmax, y0 = -3, y1 = py[which(px ==
+        ##                                                       Nmax)], col = "goldenrod1", lty = 2, lwd = 1.6)
+        ## segments(x0 = -3, x1 = N01, y0 = py[which(px == N01)],
+        ##     y1 = py[which(px == N01)], col = "darkgreen", lty = 2,
+        ##     lwd = 1.6)
+        ## segments(x0 = N01, x1 = N01, y0 = -3, y1 = py[which(px ==
+        ##     N01)], col = "darkgreen", lty = 2, lwd = 1.6)
+
+
+      ## F or E max
+      if(any(plot_refs == "F01")){
+          points(N01,yprF01, pch = 21, col=cols[1], bg=cols[1])
+          segments(x0 = N01, x1 = N01, y0 = -1000, y1 = yprF01,
+                   col= cols[1],lty = 3, lwd=1.6)
+          ## abline(h = yprF01,
+          ##        col= 'goldenrod1',lty = 2, lwd=1.6)
+      }
+      if(any(plot_refs == "Fmax")){
+          ## segments(x0 = -1, x1 = Nmax, y0 = yprFmax,
+          ##          y1 = yprFmax,
+          ##          col= 'goldenrod1',lty = 2, lwd=1.6)
+          points(Nmax,yprFmax, pch = 22, col=cols[2], bg=cols[2])
+          segments(x0 = Nmax, x1 = Nmax, y0 = -1000, y1 = yprFmax,
+                   col= cols[2],lty = 3, lwd=1.6)
+          ## abline(h = yprFmax,
+          ##        col= 'goldenrod1',lty = 2, lwd=1.6)
+      }
+      if(any(plot_refs == "F04")){
+          points(N04,yprF04, pch = 24, col=cols[4], bg=cols[4])
+          segments(x0 = N04, x1 = N04, y0 = -1000, y1 = yprF04,
+                   col= cols[4],lty = 3, lwd=1.6)
+          ## abline(h = yprF04,
+          ##        col= 'goldenrod1',lty = 2, lwd=1.6)
+      }
+
         if (!is.null(pes$currents) & mark) {
             currents <- pes$currents
             if (!is.na(currents$curr.E) & yaxis1 == "Y_R" | yaxis1 ==
@@ -837,21 +1179,40 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
                 px1 <- ifelse(xaxis1 == "FM", currents$curr.F,
                   currents$curr.E)
                 py1 <- currents$curr.Y
-                points(px1, py1, pch = 16, col = "grey30")
-                abline(v = px1, col = "grey30", lty = 2)
+                ## points(px1, py1, pch = 16, col = "grey30")
+                ## abline(v = px1, col = "grey30", lty = 2)
+                points(px1,py1, pch = 4, col="grey30")
+                segments(x0=px1, x1=px1, y0 = -1000, y1 = py1,
+                         col="grey30",lty=3, lwd=1.6)
             }
         }
-        par(new = TRUE)
-        plot(px, py2, type = "l", ylab = "", xlab = "", col = "blue",
-            lwd = 1.6, axes = FALSE)
-        axis(4, at = pretty(c(0, max(pes$meanB))), col = "blue",
-            col.axis = "blue")
-        mtext(ylabel2, side = 4, line = 2.5, col = "blue", cex = 1)
-        segments(x0 = -1, x1 = N05, y0 = py2[which(px == N05)],
-            y1 = py2[which(px == N05)], col = "red", lty = 2,
-            lwd = 1.5)
-        segments(x0 = N05, x1 = N05, y0 = -1, y1 = py2[which(px ==
-            N05)], col = "red", lty = 2, lwd = 1.5)
+        ## par(new = TRUE)
+        ## plot(px, py2, type = "l", ylab = "", xlab = "", col = "blue",
+        ##     lwd = 1.6, axes = FALSE)
+        ## axis(4, at = pretty(c(0, max(pes$meanB))), col = "blue",
+        ##     col.axis = "blue")
+        ## mtext(ylabel2, side = 4, line = 2.5, col = "blue", cex = 1)
+        ## segments(x0 = -1, x1 = N05, y0 = py2[which(px == N05)],
+        ##     y1 = py2[which(px == N05)], col = "red", lty = 2,
+        ##     lwd = 1.5)
+        ## segments(x0 = N05, x1 = N05, y0 = -1, y1 = py2[which(px ==
+        ##     N05)], col = "red", lty = 2, lwd = 1.5)
+        ## Biomass
+        par(new=TRUE)
+        plot(px,py2,type ='l',ylab='',xlab='',
+             col='darkblue',lwd=1.6,axes=FALSE)
+        axis(4,at=pretty(c(0,max(pes$meanB))),
+             col = "darkblue", col.axis="darkblue")
+        mtext(ylabel2, side=4, line=2.5, col = "darkblue", cex=1)
+
+        ## F or E 05
+        if(any(plot_refs == "F05")){
+            ## segments(x0 = 1000, x1 = N05, y0 = bprF05, y1 = bprF05,
+            ##        col= 'red',lty = 3, lwd=1.5)
+            points(N05,bprF05, pch = 25, col=cols[3], bg=cols[3])
+            segments(x0 = N05, x1 = N05, y0 = -1000, y1 = bprF05,
+                     col= cols[3],lty = 3, lwd=1.5)
+        }
         if (!is.null(pes$currents) & mark) {
             currents <- pes$currents
             if (!is.na(currents$curr.E) & yaxis1 == "B_R" | yaxis1 ==
@@ -859,15 +1220,28 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
                 px1 <- ifelse(xaxis1 == "FM", currents$curr.F,
                   currents$curr.E)
                 py1 <- currents$curr.B
-                points(px1, py1, pch = 16, col = "grey30")
-                abline(v = px1, col = "grey30", lty = 2)
+                ## points(px1, py1, pch = 16, col = "grey30")
+                ## abline(v = px1, col = "grey30", lty = 2)
+                points(px1,py1, pch = 4, col="grey30")
+                segments(x0=px1, x1=px1, y0 = -1000, y1 = py1,
+                         col="grey30",lty=3, lwd=1.6)
             }
         }
-        legend("top", legend = legend.lab, xpd = TRUE, horiz = TRUE,
-            inset = c(0, 0), bty = "n", lty = c(2), col = c("red","darkgreen",
-                "goldenrod1"), seg.len = 1, pt.cex = 2, x.intersp = c(0.7,0.7,
-                0.7), merge = TRUE, y.intersp = -2, box.lty = 0,
-            cex = 1, lwd = 2)
+        ## legend("top", legend = legend.lab, xpd = TRUE, horiz = TRUE,
+        ##     inset = c(0, 0), bty = "n", lty = c(2), col = c("red","darkgreen",
+        ##         "goldenrod1"), seg.len = 1, pt.cex = 2, x.intersp = c(0.7,0.7,
+        ##         0.7), merge = TRUE, y.intersp = -2, box.lty = 0,
+        ##     cex = 1, lwd = 2)
+        ## Legend
+        if(any(!is.na(plot_refs)) && plot_refs[1] != FALSE){
+
+            legend("top", legend = legend.lab, xpd = TRUE, horiz = TRUE,
+                   bty = "n", lty = 3,
+                   col = cols[ind], pt.bg = cols[ind],
+                   pch = c(21,22,25,24)[ind],
+                   seg.len = 2.5, x.intersp = 0.3, merge=TRUE,
+                   y.intersp = -2.5, box.lty=0, cex=0.9, lwd =2)
+        }
         if (any(pes$totV != 0)) {
             py3 <- pes$totV[1:length(px)]
             par(new = TRUE)
@@ -878,6 +1252,7 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
                 col.axis = "darkgreen", col = "darkgreen")
             mtext(ylabel3, side = 4, line = 5.7, col = "darkgreen")
         }
+        box(lwd=1.2)
     }
     if ("mat_FM_Lc_com.C" %in% names(pes)) {
         p.yield <- yaxis1
