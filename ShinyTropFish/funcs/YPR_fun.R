@@ -1143,7 +1143,7 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
         cols <- cols_refs
 
         plot(px2, py, type = "l", ylab = ylabel1, xlab = xlabel1,
-             col = "black", ylim = c(0, max(c(ceiling(py),ceiling(max_yiel/dim_yiel) * dim_yiel))),
+             col = "black", ylim = c(0, max(c(max(py),ceiling(max_yiel/dim_yiel) * dim_yiel))),
              lwd = 1.6)
 
         ## segments(x0 = -3, x1 = Nmax, y0 = py[which(px == Nmax)],
