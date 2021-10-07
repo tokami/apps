@@ -479,15 +479,16 @@ pred_res_df <- do.call(rbind, pred_res_list)
         res3 <- c(res,res2)
 
 
-        ## reference points  NEW
+          ## reference points  NEW:
         spr <- pred_res_df$SPR
         ypr <- pred_res_df$totY
         bpr <- pred_res_df$meanB
         splSPR <- try(smooth.spline(x = FM_change, y = spr, spar = 0.4), silent = TRUE)
         splYPR <- smooth.spline(x = FM_change, y = ypr, spar = 0.4)
         splBPR <- smooth.spline(x = FM_change, y = bpr, spar = 0.4)
-        newdat <- data.frame(F=seq(0,5,length.out = 500))
-        newdat$YPR <- predict(splYPR, x=newdat$F)$y
+        newdat <- data.frame(F=seq(0,20,length.out = 1e3))
+          newdat$YPR <- predict(splYPR, x=newdat$F)$y
+          ## newdat$YPR[1] <- ypr[1]  ## NEW: because predict YPR for F=0 doesn't need to be 0, but in theory yes
         newdat$YPR.d1 <- predict(splYPR, x=newdat$F, deriv = 1)$y
         newdat$BPR <- predict(splBPR, x=newdat$F)$y
         newdat$SPR <- try(predict(splSPR, x=newdat$F)$y, silent = TRUE)
@@ -602,7 +603,7 @@ pred_res_df <- do.call(rbind, pred_res_list)
         }
 
 
-        ret <- c(res3, list(df_Es = df_Es))
+        ret <- c(res3, list(df_Es = df_Es), list(newdat = newdat))
 
 
         if(!is.na(curr.E)){
@@ -632,6 +633,9 @@ pred_res_df <- do.call(rbind, pred_res_list)
                             stock_size_1 = stock_size_1, plus_group=plus_group)
           mati2 <- res2$totals
 
+          ## NEW:
+          currYPR <- newdat$YPR[which.min((newdat$F - curr.F)^2)]
+
 
           ## SPR
         parloop <- res
@@ -647,7 +651,7 @@ pred_res_df <- do.call(rbind, pred_res_list)
                                     curr.E = curr.E,
                                     curr.F = curr.F,
                                     curr.C = mati2$totC,
-                                    curr.Y = mati2$totY,
+                                    curr.Y = currYPR, ## mati2$totY,
                                     curr.V = mati2$totV,
                                   curr.B = mati2$meanB,
                                   curr.SSB = mati2$meanSSB,
@@ -1120,8 +1124,16 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
         dim_yiel <- 10^(nchar(max_yiel) - 1)
         max_bio <- round(max(pes$meanB, na.rm = TRUE), digits = 0)
         dim_bio <- 10^(nchar(max_bio) - 1)
+
         py <- pes$totY[1:length(px)]
         py2 <- pes$meanB[1:length(px)]
+        px2 <- px
+
+        ## NEW: TODO: this does not necessarily go through (0,0)
+        ## ind <- which(pes$newdat$F >= min(px) & pes$newdat$F <= max(px))
+        ## px2 <- pes$newdat$F[ind]
+        ## py <- pes$newdat$YPR[ind]
+        ## py2 <- pes$newdat$BPR[ind]
 
         ## NEW:
         yprFmax <- df_Es$YPR_Fmax
@@ -1130,9 +1142,9 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
         bprF05 <- df_Es$BPR_F05
         cols <- cols_refs
 
-        plot(px, py, type = "l", ylab = ylabel1, xlab = xlabel1,
-            col = "black", ylim = c(0, ceiling(max_yiel/dim_yiel) *
-                                       dim_yiel), lwd = 1.6)
+        plot(px2, py, type = "l", ylab = ylabel1, xlab = xlabel1,
+             col = "black", ylim = c(0, max(c(ceiling(py),ceiling(max_yiel/dim_yiel) * dim_yiel))),
+             lwd = 1.6)
 
         ## segments(x0 = -3, x1 = Nmax, y0 = py[which(px == Nmax)],
         ##     y1 = py[which(px == Nmax)], col = "goldenrod1", lty = 2,
@@ -1199,7 +1211,7 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
         ##     N05)], col = "red", lty = 2, lwd = 1.5)
         ## Biomass
         par(new=TRUE)
-        plot(px,py2,type ='l',ylab='',xlab='',
+        plot(px2,py2,type ='l',ylab='',xlab='',
              col='darkblue',lwd=1.6,axes=FALSE)
         axis(4,at=pretty(c(0,max(pes$meanB))),
              col = "darkblue", col.axis="darkblue")

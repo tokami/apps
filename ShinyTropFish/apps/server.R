@@ -52,7 +52,7 @@ shinyServer(
             rv$seed <- NULL
             rv$filename <- "Data: -"
             rv$Lrange <- c(NaN,NaN)
-            rv$binSize <- 4
+            rv$binSize <- 1
             rv$ma <- 5
             rv$addlSqrt <- FALSE
             rv$years <- NA
@@ -194,7 +194,7 @@ shinyServer(
             rv$lfq <- NULL
             rv$filename <- ""
             rv$Lrange <- c(NaN,NaN)
-            rv$binSize <- 4
+            rv$binSize <- 1
             rv$ma <- 5
             rv$addlSqrt <- FALSE
             rv$years <- NA
@@ -293,7 +293,7 @@ shinyServer(
                         ## length range
                         rv$Lrange <- range(dat$length,na.rm=TRUE)
                         ## bin size
-                        rv$binSize <- diff(dat$length)[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
+                        rv$binSize <- 1 ## diff(sort(dat$length))[1]  # ifelse(min(dat$length) %% 1 > 0, 0.5, 1)
                         rv$ma <- 5
                         rv$addlSqrt <- FALSE
                         rv$years <- unique(format(lfq$dates, "%Y"))
@@ -1308,7 +1308,7 @@ shinyServer(
                               )
             updateNumericInput(session = session,
                               inputId = "lr",
-                              value = lrVal,
+                              value = min(rv$Lrange, na.rm=TRUE),
                               )
             updateNumericInput(session = session,
                               inputId = "LWa",
@@ -1317,6 +1317,14 @@ shinyServer(
             updateNumericInput(session = session,
                               inputId = "LWb",
                               value = 3,
+                              )
+            updateNumericInput(session = session,
+                              inputId = "Lmat",
+                              value = NULL,
+                              )
+            updateNumericInput(session = session,
+                              inputId = "wmat",
+                              value = NULL,
                               )
             updateSliderInput(session = session,
                               inputId = "l50",
@@ -1334,12 +1342,12 @@ shinyServer(
 
             updateSliderInput(session = session,
                               inputId = "fmChangeAbs",
-                              value = range(0, 10),
+                              value = range(0, 5),
                               )
-            updateSliderInput(session = session,
-                              inputId = "fmChangeRel",
-                              value = range(0, (rv$parsMortFinal[3] * 10)),
-                              )
+            ## updateSliderInput(session = session,
+            ##                   inputId = "fmChangeRel",
+            ##                   value = range(0, (rv$parsMortFinal[3] * 10)),
+            ##                   )
             ## ypr
             rv$doYPR <- FALSE
             rv$resYPR <- NULL
@@ -1416,33 +1424,33 @@ shinyServer(
             )
         })
 
-        output$fmChangeRel <- renderUI({
-            req(rv$parsMortFinal)
-            vals <- range(0, (rv$parsMortFinal[3] * 10))
-            sliderInput(
-                inputId = "fmChangeRel",
-                label = "Fishing mortality (relative to current F)",
-                dragRange = TRUE,
-                value = vals,
-                min = 0,
-                max = 20,##ifelse((rv$parsMort[3] * 10) < 10, 10, round(rv$parsMort[3] * 10)),
-                step = 1
-            )
-        })
+        ## output$fmChangeRel <- renderUI({
+        ##     req(rv$parsMortFinal)
+        ##     vals <- range(0, (rv$parsMortFinal[3] * 10))
+        ##     sliderInput(
+        ##         inputId = "fmChangeRel",
+        ##         label = "Fishing mortality (relative to current F)",
+        ##         dragRange = TRUE,
+        ##         value = vals,
+        ##         min = 0,
+        ##         max = 20,##ifelse((rv$parsMort[3] * 10) < 10, 10, round(rv$parsMort[3] * 10)),
+        ##         step = 0.01
+        ##     )
+        ## })
 
-        observeEvent(input$fmChangeAbs,{
-            vals <- round(input$fmChangeAbs * rv$parsMortFinal[3])
-            updateSliderInput(session = session,
-                              inputId = "fmChangeRel",
-                              value = vals)
-        })
+        ## observeEvent(input$fmChangeAbs,{
+        ##     vals <- round(input$fmChangeAbs * rv$parsMortFinal[3])
+        ##     updateSliderInput(session = session,
+        ##                       inputId = "fmChangeRel",
+        ##                       value = vals)
+        ## })
 
-        observeEvent(input$fmChangeRel,{
-            vals <- round(input$fmChangeRel / rv$parsMortFinal[3])
-            updateSliderInput(session = session,
-                              inputId = "fmChangeAbs",
-                              value = vals)
-        })
+        ## observeEvent(input$fmChangeRel,{
+        ##     vals <- round(input$fmChangeRel / rv$parsMortFinal[3])
+        ##     updateSliderInput(session = session,
+        ##                       inputId = "fmChangeAbs",
+        ##                       value = vals)
+        ## })
 
         YPR_res <- function(){
             if(is.null(rv$lfq))
@@ -1464,12 +1472,16 @@ shinyServer(
                                  closeButton = TRUE
                                  )
 
-            progress <- shiny::Progress$new()
-            ## Make sure it closes when we exit this reactive, even if there's an error
-            on.exit(progress$close())
-            progress$set(message = "Running YPR.",
-                         detail = "This may take a while. This window will disappear
-                     automatically.", value = 1)
+            ## progress <- shiny::Progress$new()
+            ## ## Make sure it closes when we exit this reactive, even if there's an error
+            ## on.exit(progress$close())
+            ## progress$set(message = "Running YPR.",
+            ##              detail = "This may take a while. This window will disappear
+            ##          automatically.", value = 1)
+            showNotification(paste(" Running YPR. This may take a while. This window will disappear automatically."),
+                             duration = 30,
+                             closeButton = TRUE
+                             )
 
             lfq <- rv$lfq
             lfq <- lfqModify(lfq, vectorise_catch = TRUE,
@@ -1477,6 +1489,8 @@ shinyServer(
             lfq$par <- rv$parsGrowth
             lfq$par$a <- as.numeric(input$LWa)
             lfq$par$b <- as.numeric(input$LWb)
+            lfq$par$Lmat <- input$Lmat
+            lfq$par$wmat <- input$wmat
             lfq$par$M <- rv$resnatM
             lfq$par$FM <- rv$resLCCC$Z - rv$resnatM ## rep(1,length(rv$lfq$midLengths))
             lfq$par$Lr <- input$lr
@@ -1515,7 +1529,8 @@ shinyServer(
             rv$resYPR_Lc <- resYPR_Lc
             pars <- resYPR$df_Es
             names(pars) <- names(resYPR$df_Es)
-            rv$parsRef <- pars
+            ind <- sapply(pars, is.numeric)
+            rv$parsRef <- pars[ind]
         }
 
         output$yprPars <- renderTable({
@@ -1595,11 +1610,11 @@ shinyServer(
 
         output$allpars_ov <- renderTable({
             if(rv$doYPR){
-               return(cbind(rv$parsGrowth, t(rv$parsMortFinal),rv$parsRef))
+                return(cbind(rv$parsGrowth, t(rv$parsMortFinal),rv$parsRef))
             }else if(rv$doLCCC){
-               return(cbind(rv$parsGrowth, t(rv$parsMortFinal)))
+                return(cbind(rv$parsGrowth, t(rv$parsMortFinal)))
             }else if(rv$doELEFAN){
-               return(rv$parsGrowth)
+                return(rv$parsGrowth)
             }else
                 return(data.frame())
         })
@@ -1650,7 +1665,7 @@ shinyServer(
                                      duration = 30,
                                      closeButton = TRUE
                                      )
-                    }
+                }
 
                 params <- list(shinyRes = rv)
 

@@ -736,13 +736,31 @@ tabPanel("Reference levels", id = "refs",
                          ## a
                          column(6,
                                 numericInput(inputId="LWa", label=" Constant  (a) ",
+                                             min = 0,
                                              value = 0.001)),
                          ## b
                          column(6,
                                 numericInput(inputId="LWb", label="Exponent (b) ",
+                                             min = 0,
                                              value = 3)))
                  ),
                  br(),
+
+                 "Maturity (optional)",
+                 br(),
+                 wellPanel(
+                     fluidRow(
+                         ## Lmat
+                         column(6,
+                                numericInput(inputId="Lmat", label="Lmat ",
+                                             min = 0,
+                                             value = NULL)),
+                         ## wmat
+                         column(6,
+                                numericInput(inputId="wmat", label="wmat ",
+                                             min = 0,
+                                             value = NULL)))
+                 ),
                  br(),
                  ## Lr
                  uiOutput("lr"),
@@ -777,12 +795,12 @@ tabPanel("Reference levels", id = "refs",
                      inputId = "fmChangeAbs",
                      label = "Fishing mortality (absolute)",
                      dragRange = TRUE,
-                     value = range(0, 10),
+                     value = range(0, 5),
                      min = 0, max = 20,
                      step = 1
 
                  ),
-                 uiOutput("fmChangeRel"),
+                 ## uiOutput("fmChangeRel"),
                  br(),
                  ## Lc change vector
                  uiOutput("lcChange"),
@@ -798,7 +816,7 @@ tabPanel("Reference levels", id = "refs",
                                 numericInput(
                                     inputId = "fmLengthOut",
                                     label = "Fishing mortality",
-                                    value = 50,
+                                    value = 150,
                                     min = 0
                                 )),
                          ## length out of lc vector
