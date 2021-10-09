@@ -1610,11 +1610,14 @@ shinyServer(
 
         output$allpars_ov <- renderTable({
             if(rv$doYPR){
-                return(cbind(rv$parsGrowth, t(rv$parsMortFinal),rv$parsRef))
+                rv$allpars <- cbind(rv$parsGrowth, t(rv$parsMortFinal),rv$parsRef)
+                return(rv$allpars)
             }else if(rv$doLCCC){
-                return(cbind(rv$parsGrowth, t(rv$parsMortFinal)))
+                rv$allpars <- cbind(rv$parsGrowth, t(rv$parsMortFinal))
+                return(rv$allpars)
             }else if(rv$doELEFAN){
-                return(rv$parsGrowth)
+                rv$allpars <- rv$parsGrowth
+                return(rv$allpars)
             }else
                 return(data.frame())
         })
@@ -1731,7 +1734,7 @@ shinyServer(
                 paste0("ShinyTropFish_allpars_",filename,"_",Sys.Date(),".csv")
             },
             content = function(con){
-                write.csv(rv$allpars, con)
+                write.csv(round(rv$allpars,3), con)
             }
         )
 
