@@ -1158,6 +1158,8 @@ plotYPR <- function (x, type = "ypr", xaxis1 = "FM", yaxis1 = "Y_R.rel",
         ##     N01)], col = "darkgreen", lty = 2, lwd = 1.6)
 
 
+
+
       ## F or E max
       if(any(plot_refs == "F01")){
           points(N01,yprF01, pch = 21, col=cols[1], bg=cols[1])

@@ -1743,7 +1743,7 @@ shinyServer(
             content = function(con){
                 graphs <- c("lfq","ELEFANfit","ELEFANscore",
                             "cohorts","recruitment","catchcurve",
-                            "ypr")
+                            "ypr","ypr_lc","ypr_lc2")
                 fs <- c()
                 tmpdir <- tempdir()
                 ## lfq data plot
@@ -1829,7 +1829,27 @@ shinyServer(
                     fs <- c(fs, path)
                     pdf(path)
                     par(mar=c(5,5,2,1))
-                    plot(rv$resYPR)
+                    plotYPR(rv$resYPR)
+                    dev.off()
+                }
+                ## yield per recruit plot 2
+                i = 8
+                if(!is.null(rv$resYPR)){
+                    path <- paste0(tmpdir,"/",graphs[i], ".pdf")
+                    fs <- c(fs, path)
+                    pdf(path)
+                    par(mar=c(5,5,2,1))
+                    plotYPR(rv$resYPR_Lc, mark=TRUE,xaxis1 = "FM", yaxis_iso = "L50")
+                    dev.off()
+                }
+                ## yield per recruit plot 3
+                i = 9
+                if(!is.null(rv$resYPR)){
+                    path <- paste0(tmpdir,"/",graphs[i], ".pdf")
+                    fs <- c(fs, path)
+                    pdf(path)
+                    par(mar=c(5,5,2,1))
+                    plotYPR(rv$resYPR_Lc, mark=TRUE, yaxis1 = "B_R",xaxis1 = "FM", yaxis_iso = "L50")
                     dev.off()
                 }
                 ##
